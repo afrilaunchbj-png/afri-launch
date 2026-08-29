@@ -49,3 +49,18 @@ func TestStripCodeFences(t *testing.T) {
 		}
 	}
 }
+
+func TestEnsureChapterPageBreaks(t *testing.T) {
+	// Sans la règle CSS → on l'injecte avant </head>.
+	html := []byte("<html><head><style>body{}</style></head><body><section class=\"chapter\">Chapitre 1</section></body></html>")
+	out := string(ensureChapterPageBreaks(html))
+	if !strings.Contains(out, "break-before:page") {
+		t.Errorf("expected injected page-break rule, got %q", out)
+	}
+
+	// Déjà présente → inchangé.
+	with := []byte("<html><head><style>section.chapter{break-before: page;}</style></head><body></body></html>")
+	if string(ensureChapterPageBreaks(with)) != string(with) {
+		t.Errorf("expected no-op when rule already present")
+	}
+}

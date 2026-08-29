@@ -49,7 +49,10 @@ func BuildEbookPrompt(req EbookRequest) Prompt {
 - One continuous HTML page styled for print (PDF, A4).
 - Use @page { size: A4; margin: 2cm; } and print-friendly typography.
 - Structure: cover (title + subtitle), introduction, chapters (with headings),
-  short sections, a practical checklist, and a conclusion with a call to action.`
+  short sections, a practical checklist, and a conclusion with a call to action.
+- Wrap each chapter in a <section class="chapter"> element.
+- In the CSS, add: section.chapter { break-before: page; } so that each chapter
+  starts on a new page. Do NOT apply a page break to the cover or the introduction.`
 
 	user := fmt.Sprintf(
 		"Write an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s. Aim for about 3000 words, clear and actionable.",
