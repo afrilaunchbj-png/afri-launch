@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "react-router"
 import { useTranslation } from "react-i18next"
-import { Search, SearchX, SlidersHorizontal } from "lucide-react"
+import { Globe, Search, SearchX, SlidersHorizontal } from "lucide-react"
+import { toast } from "sonner"
 
 import { EmptyState } from "@/components/states/empty-state"
 import { ErrorState } from "@/components/states/error-state"
@@ -9,7 +10,9 @@ import { LoadingState } from "@/components/states/loading-state"
 import { Pagination } from "@/components/pagination"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Sheet,
   SheetContent,
@@ -18,15 +21,27 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
+import { useJob } from "@/features/generation/hooks"
 import { OpportunityCard } from "@/features/opportunities/components/opportunity-card"
 import { OpportunityFilters } from "@/features/opportunities/components/opportunity-filters"
 import { useOpportunities } from "@/features/opportunities/hooks"
 import type { OpportunityFilters as Filters } from "@/features/opportunities/types"
+import { useStartResearch } from "@/features/research/hooks"
+import { isAppError } from "@/lib/errors"
 
 const PAGE_SIZE = 10
 
+const MARKETS = [
+  { code: "SN", name: "Sénégal" },
+  { code: "CI", name: "Côte d'Ivoire" },
+  { code: "BJ", name: "Bénin" },
+  { code: "NG", name: "Nigeria" },
+  { code: "KE", name: "Kenya" },
+  { code: "GH", name: "Ghana" },
+]
+
 export default function OpportunitiesPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [searchDraft, setSearchDraft] = useState(searchParams.get("q") ?? "")
 
@@ -39,6 +54,25 @@ export default function OpportunitiesPage() {
   const filters: Filters = { country, sector, difficulty: difficulty as Filters["difficulty"], q, page, pageSize: PAGE_SIZE }
 
   const { data, isLoading, isError, refetch, isFetching } = useOpportunities(filters)
+
+  const research = useStartResearch()
+  const [researchQuery, setResearchQuery] = useState("")
+  const [researchSector, setResearchSector] = useState("")
+  const [researchMarkets, setResearchMarkets] = useState<string[]>([])
+  const [researchJobId, setResearchJobId] = useState<string | null>(null)
+  const { data: researchJob } = useJob(researchJobId)
+
+  useEffect(() => {
+    if (!researchJob) return
+    if (researchJob.status === "completed") {
+      toast.success(t("opportunities:researchDone"))
+      refetch()
+      setResearchJobId(null)
+    } else if (researchJob.status === "failed") {
+      toast.error(t("common.generationFailed", { error: researchJob.error ?? "" }))
+      setResearchJobId(null)
+    }
+  }, [researchJob, refetch, t])
 
   const updateParams = (patch: Record<string, string>) => {
     setSearchParams((prev) => {
@@ -69,6 +103,23 @@ export default function OpportunitiesPage() {
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchDraft])
+
+  const toggleMarket = (code: string) => {
+    setResearchMarkets((prev) => (prev.includes(code) ? prev.filter((m) => m !== code) : [...prev, code]))
+  }
+
+  const handleResearch = () => {
+    if (!researchQuery.trim()) return
+    research.mutate(
+      { query: researchQuery.trim(), sector: researchSector.trim(), markets: researchMarkets, language: i18n.language },
+      {
+        onSuccess: (j) => setResearchJobId(j.id),
+        onError: (e) => toast.error(isAppError(e) ? e.message : t("common.genericError")),
+      },
+    )
+  }
+
+  const researching = research.isPending || (researchJob && (researchJob.status === "pending" || researchJob.status === "processing"))
 
   const totalPages = data?.pagination.totalPages ?? 0
 
@@ -101,6 +152,58 @@ export default function OpportunitiesPage() {
           />
         </div>
       </header>
+
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm">
+            <Globe className="h-4 w-4" />
+            {t("opportunities:exploreOnline")}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{t("opportunities:researchTitle")}</SheetTitle>
+            <SheetDescription>{t("opportunities:researchDesc")}</SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="research-query">{t("opportunities:queryLabel")}</Label>
+              <Input
+                id="research-query"
+                placeholder={t("opportunities:queryPlaceholder")}
+                value={researchQuery}
+                onChange={(e) => setResearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="research-sector">{t("opportunities:sectorLabel")}</Label>
+              <Input
+                id="research-sector"
+                placeholder={t("opportunities:sectorPlaceholder")}
+                value={researchSector}
+                onChange={(e) => setResearchSector(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t("opportunities:marketsLabel")}</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {MARKETS.map((m) => (
+                  <label key={m.code} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={researchMarkets.includes(m.code)}
+                      onCheckedChange={() => toggleMarket(m.code)}
+                    />
+                    {m.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <Button size="touch" className="w-full" onClick={handleResearch} disabled={researching || !researchQuery.trim() || researchMarkets.length === 0} loading={researching}>
+              {researching ? t("opportunities:researching") : t("opportunities:launchResearch")}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <div className="grid gap-6 lg:grid-cols-12">
         <aside className="hidden lg:col-span-3 lg:block">

@@ -19,6 +19,7 @@ import (
 	"afrilaunch/backend/internal/application/jobs"
 	opportunitiesapp "afrilaunch/backend/internal/application/opportunities"
 	projectsapp "afrilaunch/backend/internal/application/projects"
+	researchapp "afrilaunch/backend/internal/application/research"
 	"afrilaunch/backend/internal/config"
 	authinfra "afrilaunch/backend/internal/infra/auth"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
@@ -53,9 +54,11 @@ func main() {
 	oppRepo := postgres.NewOpportunityRepository(store)
 	marketRepo := postgres.NewMarketRepository(store)
 	ideaRepo := postgres.NewIdeaRepository(store)
+	ideaMessageRepo := postgres.NewIdeaMessageRepository(store)
 	projectRepo := postgres.NewProjectRepository(store)
 	assetRepo := postgres.NewAssetRepository(store)
 	jobRepo := postgres.NewJobRepository(store)
+	researchRepo := postgres.NewResearchRepository(store)
 	objStorage := storage.NewLocalStorage(cfg.StorageDir)
 
 	verifier, err := authinfra.NewNeonVerifier(cfg.NeonAuthBaseURL, cfg.NeonAuthJWKSURL)
@@ -69,23 +72,24 @@ func main() {
 	creditSvc := creditsapp.NewService(creditRepo)
 	oppSvc := opportunitiesapp.NewService(oppRepo)
 
-	// Providers IA (OpenAI = LLM + image, HeyGen = vidéo) + routage de modèle.
+	// Providers IA (OpenAI = LLM + image + recherche, HeyGen = vidéo) + routage.
 	openaiClient := aiinfra.NewOpenAI(cfg.OpenAIAPIKey, "")
 	heyGenClient := aiinfra.NewHeyGen(cfg.HeyGenAPIKey, cfg.HeyGenAPIURL)
 	modelRouter := appai.NewModelRouter(cfg.OpenAIResearchModel, cfg.OpenAIIdeationModel, cfg.OpenAIImageModel)
-	aiSvc := appai.NewService(openaiClient, openaiClient, heyGenClient, modelRouter)
+	aiSvc := appai.NewService(openaiClient, openaiClient, heyGenClient, openaiClient, modelRouter)
 
 	// Rendu documents (HTML → PDF/PPTX via Chrome headless).
 	renderer := renderinfra.NewChromedpRenderer(cfg.ChromePath)
 	docSvc := documentapp.NewService(aiSvc, renderer)
 
-	// Worker asynchrone de génération (idées, ebook, assets).
-	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, objStorage, aiSvc, docSvc)
+	// Worker asynchrone de génération (idées, ebook, assets, recherche).
+	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, ideaMessageRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc)
 
 	// Services applicatifs.
-	ideaSvc := ideasapp.NewService(worker, ideaRepo, oppRepo)
+	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo)
 	projectSvc := projectsapp.NewService(worker, projectRepo)
 	assetSvc := assetsapp.NewService(assetRepo, objStorage)
+	researchSvc := researchapp.NewService(worker, researchRepo)
 
 	// Handlers HTTP.
 	authH := handler.NewAuthHandler(authSvc, int64(cfg.WelcomeCredits))
@@ -96,6 +100,7 @@ func main() {
 	projectH := handler.NewProjectHandler(projectSvc)
 	assetH := handler.NewAssetHandler(assetSvc)
 	jobH := handler.NewJobHandler(jobRepo)
+	researchH := handler.NewResearchHandler(researchSvc)
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
@@ -110,6 +115,7 @@ func main() {
 		Projects:      projectH,
 		Assets:        assetH,
 		Jobs:          jobH,
+		Research:      researchH,
 		AI:            aiSvc,
 		Documents:     docSvc,
 	})

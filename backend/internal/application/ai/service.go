@@ -11,15 +11,16 @@ import (
 // Service expose les providers IA aux use cases/workers, avec le routage de
 // modèle par tâche.
 type Service struct {
-	llm    port.LLMProvider
-	images port.ImageProvider
-	video  port.VideoProvider
-	router ModelRouter
+	llm      port.LLMProvider
+	images   port.ImageProvider
+	video    port.VideoProvider
+	research port.ResearchProvider
+	router   ModelRouter
 }
 
 // NewService construit le service IA.
-func NewService(llm port.LLMProvider, images port.ImageProvider, video port.VideoProvider, router ModelRouter) *Service {
-	return &Service{llm: llm, images: images, video: video, router: router}
+func NewService(llm port.LLMProvider, images port.ImageProvider, video port.VideoProvider, research port.ResearchProvider, router ModelRouter) *Service {
+	return &Service{llm: llm, images: images, video: video, research: research, router: router}
 }
 
 // Complete génère du texte pour une tâche donnée (modèle choisi par le routeur).
@@ -50,6 +51,15 @@ func (s *Service) GenerateImage(ctx context.Context, prompt string) (port.Image,
 	return s.images.Generate(ctx, port.ImageRequest{
 		Model:  s.router.ModelFor(TaskImage),
 		Prompt: prompt,
+	})
+}
+
+// Research recherche en ligne (web search) avec le provider configuré.
+func (s *Service) Research(ctx context.Context, system, query string) (port.ResearchResult, error) {
+	return s.research.Research(ctx, port.ResearchRequest{
+		Model:  s.router.ModelFor(TaskResearch),
+		System: system,
+		Query:  query,
 	})
 }
 

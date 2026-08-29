@@ -19,6 +19,7 @@ func NewOpportunityRepository(s *Store) *opportunityRepo { return &opportunityRe
 
 func (r *opportunityRepo) List(ctx context.Context, f port.OpportunityFilter, limit, offset int) ([]domain.Opportunity, int64, error) {
 	total, err := r.s.q.CountOpportunities(ctx, db.CountOpportunitiesParams{
+		UserID:     strPtrToUUID(&f.UserID),
 		Country:    f.Country,
 		Sector:     f.Sector,
 		Difficulty: f.Difficulty,
@@ -28,6 +29,7 @@ func (r *opportunityRepo) List(ctx context.Context, f port.OpportunityFilter, li
 		return nil, 0, err
 	}
 	rows, err := r.s.q.ListOpportunities(ctx, db.ListOpportunitiesParams{
+		UserID:     strPtrToUUID(&f.UserID),
 		Country:    f.Country,
 		Sector:     f.Sector,
 		Difficulty: f.Difficulty,
@@ -54,6 +56,29 @@ func (r *opportunityRepo) Get(ctx context.Context, id string) (domain.Opportunit
 		return domain.Opportunity{}, err
 	}
 	return toOpportunity(o), nil
+}
+
+func (r *opportunityRepo) Create(ctx context.Context, o domain.Opportunity) (domain.Opportunity, error) {
+	scores, _ := json.Marshal(o.Scores)
+	evidence, _ := json.Marshal(o.Evidence)
+	row, err := r.s.q.CreateOpportunity(ctx, db.CreateOpportunityParams{
+		UserID:     strPtrToUUID(o.UserID),
+		ResearchID: strPtrToUUID(o.ResearchID),
+		Title:      o.Title,
+		Summary:    o.Summary,
+		Country:    o.Country,
+		Sector:     o.Sector,
+		Language:   o.Language,
+		Difficulty: o.Difficulty,
+		Signal:     o.Signal,
+		Score:      int32(o.Score),
+		Scores:     scores,
+		Evidence:   evidence,
+	})
+	if err != nil {
+		return domain.Opportunity{}, err
+	}
+	return toOpportunity(row), nil
 }
 
 func (r *opportunityRepo) ListSavedIDs(ctx context.Context, userID string) ([]string, error) {
@@ -83,6 +108,8 @@ func (r *opportunityRepo) Sectors(ctx context.Context) ([]string, error) {
 func toOpportunity(o db.Opportunity) domain.Opportunity {
 	opp := domain.Opportunity{
 		ID:         o.ID,
+		UserID:     uuidPtr(o.UserID),
+		ResearchID: uuidPtr(o.ResearchID),
 		Title:      o.Title,
 		Summary:    o.Summary,
 		Country:    o.Country,

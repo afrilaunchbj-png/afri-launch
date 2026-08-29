@@ -1,6 +1,6 @@
 -- name: CreateJob :one
-INSERT INTO generation_jobs (user_id, project_id, opportunity_id, kind, status, cost)
-VALUES ($1, $2, $3, $4, 'pending', $5)
+INSERT INTO generation_jobs (user_id, project_id, opportunity_id, research_id, idea_id, kind, status, cost)
+VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
 RETURNING *;
 
 -- name: GetJob :one

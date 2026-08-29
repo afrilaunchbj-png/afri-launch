@@ -1,6 +1,6 @@
 -- name: CreateIdea :one
-INSERT INTO product_ideas (user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+INSERT INTO product_ideas (user_id, opportunity_id, title, hook, explanation, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 RETURNING *;
 
 -- name: ListIdeasByUser :many
@@ -17,3 +17,15 @@ UPDATE product_ideas SET is_selected = true WHERE id = $1 AND user_id = $2 RETUR
 
 -- name: UnselectIdea :exec
 UPDATE product_ideas SET is_selected = false WHERE id = $1 AND user_id = $2;
+
+-- name: UpdateIdeaContent :one
+UPDATE product_ideas
+SET title = $2, hook = $3, explanation = $4, updated_at = now()
+WHERE id = $1
+RETURNING *;
+
+-- name: SetIdeaStatus :one
+UPDATE product_ideas
+SET status = $3, updated_at = now()
+WHERE id = $1 AND user_id = $2
+RETURNING *;

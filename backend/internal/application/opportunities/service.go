@@ -22,6 +22,7 @@ func NewService(repo port.OpportunityRepository) *Service {
 // List renvoie les opportunités filtrées (paginées) avec l'état « sauvegardée »
 // pour l'utilisateur courant.
 func (s *Service) List(ctx context.Context, userID string, f port.OpportunityFilter, limit, offset int) ([]domain.Opportunity, int64, error) {
+	f.UserID = userID
 	items, total, err := s.repo.List(ctx, f, limit, offset)
 	if err != nil {
 		return nil, 0, err

@@ -20,6 +20,8 @@ func (r *ideaRepo) Create(ctx context.Context, idea domain.ProductIdea) (domain.
 		UserID:           idea.UserID,
 		OpportunityID:    strPtrToUUID(idea.OpportunityID),
 		Title:            idea.Title,
+		Hook:             idea.Hook,
+		Explanation:      idea.Explanation,
 		Subtitle:         idea.Subtitle,
 		Audience:         idea.Audience,
 		Problem:          idea.Problem,
@@ -87,12 +89,41 @@ func (r *ideaRepo) Unselect(ctx context.Context, userID, id string) error {
 	return r.s.q.UnselectIdea(ctx, db.UnselectIdeaParams{ID: id, UserID: userID})
 }
 
+func (r *ideaRepo) UpdateContent(ctx context.Context, idea domain.ProductIdea) (domain.ProductIdea, error) {
+	row, err := r.s.q.UpdateIdeaContent(ctx, db.UpdateIdeaContentParams{
+		ID:          idea.ID,
+		Title:       idea.Title,
+		Hook:        idea.Hook,
+		Explanation: idea.Explanation,
+	})
+	if err != nil {
+		if isNoRows(err) {
+			return domain.ProductIdea{}, domain.ErrNotFound
+		}
+		return domain.ProductIdea{}, err
+	}
+	return toIdea(row), nil
+}
+
+func (r *ideaRepo) SetStatus(ctx context.Context, userID, id, status string) (domain.ProductIdea, error) {
+	row, err := r.s.q.SetIdeaStatus(ctx, db.SetIdeaStatusParams{ID: id, UserID: userID, Status: status})
+	if err != nil {
+		if isNoRows(err) {
+			return domain.ProductIdea{}, domain.ErrNotFound
+		}
+		return domain.ProductIdea{}, err
+	}
+	return toIdea(row), nil
+}
+
 func toIdea(i db.ProductIdea) domain.ProductIdea {
 	return domain.ProductIdea{
 		ID:               i.ID,
 		UserID:           i.UserID,
 		OpportunityID:    uuidPtr(i.OpportunityID),
 		Title:            i.Title,
+		Hook:             i.Hook,
+		Explanation:      i.Explanation,
 		Subtitle:         i.Subtitle,
 		Audience:         i.Audience,
 		Problem:          i.Problem,
@@ -104,6 +135,7 @@ func toIdea(i db.ProductIdea) domain.ProductIdea {
 		WhyNow:           i.WhyNow,
 		CompetitiveAngle: i.CompetitiveAngle,
 		IsSelected:       i.IsSelected,
+		Status:           i.Status,
 		CreatedAt:        i.CreatedAt,
 	}
 }

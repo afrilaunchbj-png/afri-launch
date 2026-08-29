@@ -27,6 +27,7 @@ type Deps struct {
 	Projects      *handler.ProjectHandler
 	Assets        *handler.AssetHandler
 	Jobs          *handler.JobHandler
+	Research      *handler.ResearchHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -73,6 +74,11 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/opportunities/{id}/ideas", d.Ideas.List)
 
 			r.Get("/ideas", d.Ideas.List)
+			r.Get("/ideas/{id}/messages", d.Ideas.ListMessages)
+			r.Post("/ideas/{id}/messages", d.Ideas.SendMessage)
+			r.Post("/ideas/{id}/confirm", d.Ideas.Confirm)
+
+			r.Post("/research", d.Research.Start)
 
 			r.Get("/projects", d.Projects.List)
 			r.Post("/projects", d.Projects.Create)

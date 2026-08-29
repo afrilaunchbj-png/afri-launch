@@ -4,23 +4,48 @@ import "time"
 
 // ProductIdea est un concept de produit généré pour une opportunité.
 type ProductIdea struct {
-	ID              string
-	UserID          string
-	OpportunityID   *string
-	Title           string
-	Subtitle        string
-	Audience        string
-	Problem         string
-	Promise         string
-	Format          string
-	EstimatedPrice  string
-	Difficulty      string
-	MarketEvidence  string
-	WhyNow          string
+	ID               string
+	UserID           string
+	OpportunityID    *string
+	Title            string
+	Hook             string
+	Explanation      string
+	Subtitle         string
+	Audience         string
+	Problem          string
+	Promise          string
+	Format           string
+	EstimatedPrice   string
+	Difficulty       string
+	MarketEvidence   string
+	WhyNow           string
 	CompetitiveAngle string
-	IsSelected      bool
-	CreatedAt       time.Time
+	IsSelected       bool
+	Status           string
+	CreatedAt        time.Time
 }
+
+// Statuts d'une idée de produit.
+const (
+	IdeaDraft     = "draft"
+	IdeaConfirmed = "confirmed"
+)
+
+// IdeaMessage est un message de la conversation d'itération d'une idée.
+type IdeaMessage struct {
+	ID        string
+	IdeaID    string
+	UserID    string
+	Role      string
+	Content   string
+	CreatedAt time.Time
+}
+
+// Rôles d'un message de conversation d'idée.
+const (
+	IdeaMessageUser      = "user"
+	IdeaMessageAssistant = "assistant"
+)
 
 // Project est un projet de produit issu d'une idée.
 type Project struct {
@@ -73,6 +98,8 @@ type GenerationJob struct {
 	UserID        string
 	ProjectID     *string
 	OpportunityID *string
+	ResearchID    *string
+	IdeaID        *string
 	Kind          string
 	Status        string
 	Error         string
@@ -85,11 +112,13 @@ type GenerationJob struct {
 
 // Kinds et statuts de job.
 const (
-	JobIdeas     = "ideas"
-	JobEbook     = "ebook"
-	JobCover     = "cover"
-	JobPosters   = "posters"
-	JobSalesPage = "sales_page"
+	JobIdeas      = "ideas"
+	JobEbook      = "ebook"
+	JobCover      = "cover"
+	JobPosters    = "posters"
+	JobSalesPage  = "sales_page"
+	JobResearch   = "research"
+	JobIdeaRevise = "idea_revise"
 )
 
 const (

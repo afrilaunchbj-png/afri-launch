@@ -87,6 +87,17 @@ type GenerationJob struct {
 	CreatedAt     time.Time          `json:"created_at"`
 	UpdatedAt     time.Time          `json:"updated_at"`
 	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
+	ResearchID    pgtype.UUID        `json:"research_id"`
+	IdeaID        pgtype.UUID        `json:"idea_id"`
+}
+
+type IdeaMessage struct {
+	ID        string    `json:"id"`
+	IdeaID    string    `json:"idea_id"`
+	UserID    string    `json:"user_id"`
+	Role      string    `json:"role"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Market struct {
@@ -99,19 +110,21 @@ type Market struct {
 }
 
 type Opportunity struct {
-	ID         string    `json:"id"`
-	Title      string    `json:"title"`
-	Summary    string    `json:"summary"`
-	Country    string    `json:"country"`
-	Sector     string    `json:"sector"`
-	Language   string    `json:"language"`
-	Difficulty string    `json:"difficulty"`
-	Signal     string    `json:"signal"`
-	Score      int32     `json:"score"`
-	Scores     []byte    `json:"scores"`
-	Evidence   []byte    `json:"evidence"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID         string      `json:"id"`
+	Title      string      `json:"title"`
+	Summary    string      `json:"summary"`
+	Country    string      `json:"country"`
+	Sector     string      `json:"sector"`
+	Language   string      `json:"language"`
+	Difficulty string      `json:"difficulty"`
+	Signal     string      `json:"signal"`
+	Score      int32       `json:"score"`
+	Scores     []byte      `json:"scores"`
+	Evidence   []byte      `json:"evidence"`
+	CreatedAt  time.Time   `json:"created_at"`
+	UpdatedAt  time.Time   `json:"updated_at"`
+	UserID     pgtype.UUID `json:"user_id"`
+	ResearchID pgtype.UUID `json:"research_id"`
 }
 
 type Organization struct {
@@ -164,6 +177,10 @@ type ProductIdea struct {
 	CompetitiveAngle string      `json:"competitive_angle"`
 	IsSelected       bool        `json:"is_selected"`
 	CreatedAt        time.Time   `json:"created_at"`
+	Hook             string      `json:"hook"`
+	Explanation      string      `json:"explanation"`
+	Status           string      `json:"status"`
+	UpdatedAt        time.Time   `json:"updated_at"`
 }
 
 type Project struct {
@@ -186,6 +203,19 @@ type RefreshToken struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 	ReplacedBy pgtype.UUID        `json:"replaced_by"`
 	CreatedAt  time.Time          `json:"created_at"`
+}
+
+type ResearchRequest struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Query     string    `json:"query"`
+	Sector    string    `json:"sector"`
+	Markets   []byte    `json:"markets"`
+	Language  string    `json:"language"`
+	Status    string    `json:"status"`
+	Error     *string   `json:"error"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type SavedOpportunity struct {

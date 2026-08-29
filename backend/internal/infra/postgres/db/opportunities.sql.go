@@ -7,25 +7,30 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const countOpportunities = `-- name: CountOpportunities :one
 SELECT count(*) FROM opportunities
-WHERE ($1::text = '' OR country = $1::text)
-  AND ($2::text = '' OR sector = $2::text)
-  AND ($3::text = '' OR difficulty = $3::text)
-  AND ($4::text = '' OR title ILIKE '%' || $4::text || '%')
+WHERE (user_id IS NULL OR user_id = $1)
+  AND ($2::text = '' OR country = $2::text)
+  AND ($3::text = '' OR sector = $3::text)
+  AND ($4::text = '' OR difficulty = $4::text)
+  AND ($5::text = '' OR title ILIKE '%' || $5::text || '%')
 `
 
 type CountOpportunitiesParams struct {
-	Country    string `json:"country"`
-	Sector     string `json:"sector"`
-	Difficulty string `json:"difficulty"`
-	Query      string `json:"query"`
+	UserID     pgtype.UUID `json:"user_id"`
+	Country    string      `json:"country"`
+	Sector     string      `json:"sector"`
+	Difficulty string      `json:"difficulty"`
+	Query      string      `json:"query"`
 }
 
 func (q *Queries) CountOpportunities(ctx context.Context, arg CountOpportunitiesParams) (int64, error) {
 	row := q.db.QueryRow(ctx, countOpportunities,
+		arg.UserID,
 		arg.Country,
 		arg.Sector,
 		arg.Difficulty,
@@ -36,8 +41,65 @@ func (q *Queries) CountOpportunities(ctx context.Context, arg CountOpportunities
 	return count, err
 }
 
+const createOpportunity = `-- name: CreateOpportunity :one
+INSERT INTO opportunities (user_id, research_id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence, created_at, updated_at, user_id, research_id
+`
+
+type CreateOpportunityParams struct {
+	UserID     pgtype.UUID `json:"user_id"`
+	ResearchID pgtype.UUID `json:"research_id"`
+	Title      string      `json:"title"`
+	Summary    string      `json:"summary"`
+	Country    string      `json:"country"`
+	Sector     string      `json:"sector"`
+	Language   string      `json:"language"`
+	Difficulty string      `json:"difficulty"`
+	Signal     string      `json:"signal"`
+	Score      int32       `json:"score"`
+	Scores     []byte      `json:"scores"`
+	Evidence   []byte      `json:"evidence"`
+}
+
+func (q *Queries) CreateOpportunity(ctx context.Context, arg CreateOpportunityParams) (Opportunity, error) {
+	row := q.db.QueryRow(ctx, createOpportunity,
+		arg.UserID,
+		arg.ResearchID,
+		arg.Title,
+		arg.Summary,
+		arg.Country,
+		arg.Sector,
+		arg.Language,
+		arg.Difficulty,
+		arg.Signal,
+		arg.Score,
+		arg.Scores,
+		arg.Evidence,
+	)
+	var i Opportunity
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Summary,
+		&i.Country,
+		&i.Sector,
+		&i.Language,
+		&i.Difficulty,
+		&i.Signal,
+		&i.Score,
+		&i.Scores,
+		&i.Evidence,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserID,
+		&i.ResearchID,
+	)
+	return i, err
+}
+
 const getOpportunity = `-- name: GetOpportunity :one
-SELECT id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence, created_at, updated_at FROM opportunities WHERE id = $1
+SELECT id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence, created_at, updated_at, user_id, research_id FROM opportunities WHERE id = $1
 `
 
 func (q *Queries) GetOpportunity(ctx context.Context, id string) (Opportunity, error) {
@@ -57,6 +119,8 @@ func (q *Queries) GetOpportunity(ctx context.Context, id string) (Opportunity, e
 		&i.Evidence,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.UserID,
+		&i.ResearchID,
 	)
 	return i, err
 }
@@ -110,26 +174,29 @@ func (q *Queries) ListDistinctSectors(ctx context.Context) ([]string, error) {
 }
 
 const listOpportunities = `-- name: ListOpportunities :many
-SELECT id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence, created_at, updated_at FROM opportunities
-WHERE ($1::text = '' OR country = $1::text)
-  AND ($2::text = '' OR sector = $2::text)
-  AND ($3::text = '' OR difficulty = $3::text)
-  AND ($4::text = '' OR title ILIKE '%' || $4::text || '%')
+SELECT id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence, created_at, updated_at, user_id, research_id FROM opportunities
+WHERE (user_id IS NULL OR user_id = $1)
+  AND ($2::text = '' OR country = $2::text)
+  AND ($3::text = '' OR sector = $3::text)
+  AND ($4::text = '' OR difficulty = $4::text)
+  AND ($5::text = '' OR title ILIKE '%' || $5::text || '%')
 ORDER BY score DESC, created_at DESC
-LIMIT $6 OFFSET $5
+LIMIT $7 OFFSET $6
 `
 
 type ListOpportunitiesParams struct {
-	Country    string `json:"country"`
-	Sector     string `json:"sector"`
-	Difficulty string `json:"difficulty"`
-	Query      string `json:"query"`
-	Offset     int32  `json:"offset"`
-	Limit      int32  `json:"limit"`
+	UserID     pgtype.UUID `json:"user_id"`
+	Country    string      `json:"country"`
+	Sector     string      `json:"sector"`
+	Difficulty string      `json:"difficulty"`
+	Query      string      `json:"query"`
+	Offset     int32       `json:"offset"`
+	Limit      int32       `json:"limit"`
 }
 
 func (q *Queries) ListOpportunities(ctx context.Context, arg ListOpportunitiesParams) ([]Opportunity, error) {
 	rows, err := q.db.Query(ctx, listOpportunities,
+		arg.UserID,
 		arg.Country,
 		arg.Sector,
 		arg.Difficulty,
@@ -158,6 +225,8 @@ func (q *Queries) ListOpportunities(ctx context.Context, arg ListOpportunitiesPa
 			&i.Evidence,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.UserID,
+			&i.ResearchID,
 		); err != nil {
 			return nil, err
 		}

@@ -1,4 +1,4 @@
-// Package ideas expose la génération et la lecture des idées de produit.
+// Package ideas expose la génération, la lecture et l'itération des idées.
 package ideas
 
 import (
@@ -9,16 +9,17 @@ import (
 	"afrilaunch/backend/internal/domain"
 )
 
-// Service orchestre la génération d'idées.
+// Service orchestre la génération et l'itération des idées.
 type Service struct {
 	jobs          *jobs.Worker
 	ideas         port.IdeaRepository
+	ideaMessages  port.IdeaMessageRepository
 	opportunities port.OpportunityRepository
 }
 
 // NewService construit le service d'idées.
-func NewService(jobs *jobs.Worker, ideas port.IdeaRepository, opportunities port.OpportunityRepository) *Service {
-	return &Service{jobs: jobs, ideas: ideas, opportunities: opportunities}
+func NewService(jobs *jobs.Worker, ideas port.IdeaRepository, ideaMessages port.IdeaMessageRepository, opportunities port.OpportunityRepository) *Service {
+	return &Service{jobs: jobs, ideas: ideas, ideaMessages: ideaMessages, opportunities: opportunities}
 }
 
 // Generate lance la génération d'idées pour une opportunité (asynchrone).
@@ -26,7 +27,7 @@ func (s *Service) Generate(ctx context.Context, userID, opportunityID string) (d
 	if _, err := s.opportunities.Get(ctx, opportunityID); err != nil {
 		return domain.GenerationJob{}, err
 	}
-	return s.jobs.Dispatch(ctx, userID, nil, &opportunityID, domain.JobIdeas)
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, OpportunityID: &opportunityID, Kind: domain.JobIdeas})
 }
 
 // ListByOpportunity renvoie les idées d'une opportunité.
@@ -42,4 +43,39 @@ func (s *Service) List(ctx context.Context, userID string) ([]domain.ProductIdea
 // Get renvoie une idée.
 func (s *Service) Get(ctx context.Context, userID, id string) (domain.ProductIdea, error) {
 	return s.ideas.Get(ctx, userID, id)
+}
+
+// SendMessage enregistre le feedback de l'utilisateur et lance la révision.
+func (s *Service) SendMessage(ctx context.Context, userID, ideaID, content string) (domain.GenerationJob, error) {
+	if content == "" {
+		return domain.GenerationJob{}, domain.ErrInvalidInput
+	}
+	if _, err := s.ideas.Get(ctx, userID, ideaID); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	if _, err := s.ideaMessages.Create(ctx, domain.IdeaMessage{
+		IdeaID:  ideaID,
+		UserID:  userID,
+		Role:    domain.IdeaMessageUser,
+		Content: content,
+	}); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, IdeaID: &ideaID, Kind: domain.JobIdeaRevise})
+}
+
+// ListMessages renvoie l'historique de conversation d'une idée.
+func (s *Service) ListMessages(ctx context.Context, userID, ideaID string) ([]domain.IdeaMessage, error) {
+	if _, err := s.ideas.Get(ctx, userID, ideaID); err != nil {
+		return nil, err
+	}
+	return s.ideaMessages.ListByIdea(ctx, ideaID)
+}
+
+// Confirm valide le résultat final d'une idée (draft → confirmed).
+func (s *Service) Confirm(ctx context.Context, userID, ideaID string) (domain.ProductIdea, error) {
+	if _, err := s.ideas.Get(ctx, userID, ideaID); err != nil {
+		return domain.ProductIdea{}, err
+	}
+	return s.ideas.SetStatus(ctx, userID, ideaID, domain.IdeaConfirmed)
 }

@@ -43,6 +43,8 @@ type Evidence struct {
 // Opportunity est une niche de marché scorée.
 type Opportunity struct {
 	ID         string
+	UserID     *string // nil = catalogue global ; sinon propre à l'utilisateur
+	ResearchID *string
 	Title      string
 	Summary    string
 	Country    string

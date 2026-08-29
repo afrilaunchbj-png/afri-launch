@@ -49,7 +49,7 @@ func (s *Service) GenerateEbook(ctx context.Context, userID, projectID string) (
 	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
-	return s.jobs.Dispatch(ctx, userID, &projectID, nil, domain.JobEbook)
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobEbook})
 }
 
 // GenerateCover lance la génération de la couverture.
@@ -57,7 +57,7 @@ func (s *Service) GenerateCover(ctx context.Context, userID, projectID string) (
 	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
-	return s.jobs.Dispatch(ctx, userID, &projectID, nil, domain.JobCover)
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobCover})
 }
 
 // GeneratePosters lance la génération des affiches publicitaires (x3).
@@ -65,7 +65,7 @@ func (s *Service) GeneratePosters(ctx context.Context, userID, projectID string)
 	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
-	return s.jobs.Dispatch(ctx, userID, &projectID, nil, domain.JobPosters)
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobPosters})
 }
 
 // GenerateSalesPage lance la génération de la page de vente.
@@ -73,5 +73,5 @@ func (s *Service) GenerateSalesPage(ctx context.Context, userID, projectID strin
 	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
-	return s.jobs.Dispatch(ctx, userID, &projectID, nil, domain.JobSalesPage)
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobSalesPage})
 }

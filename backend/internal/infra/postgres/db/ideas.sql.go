@@ -12,15 +12,17 @@ import (
 )
 
 const createIdea = `-- name: CreateIdea :one
-INSERT INTO product_ideas (user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at
+INSERT INTO product_ideas (user_id, opportunity_id, title, hook, explanation, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
 `
 
 type CreateIdeaParams struct {
 	UserID           string      `json:"user_id"`
 	OpportunityID    pgtype.UUID `json:"opportunity_id"`
 	Title            string      `json:"title"`
+	Hook             string      `json:"hook"`
+	Explanation      string      `json:"explanation"`
 	Subtitle         string      `json:"subtitle"`
 	Audience         string      `json:"audience"`
 	Problem          string      `json:"problem"`
@@ -38,6 +40,8 @@ func (q *Queries) CreateIdea(ctx context.Context, arg CreateIdeaParams) (Product
 		arg.UserID,
 		arg.OpportunityID,
 		arg.Title,
+		arg.Hook,
+		arg.Explanation,
 		arg.Subtitle,
 		arg.Audience,
 		arg.Problem,
@@ -67,12 +71,16 @@ func (q *Queries) CreateIdea(ctx context.Context, arg CreateIdeaParams) (Product
 		&i.CompetitiveAngle,
 		&i.IsSelected,
 		&i.CreatedAt,
+		&i.Hook,
+		&i.Explanation,
+		&i.Status,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getIdea = `-- name: GetIdea :one
-SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at FROM product_ideas WHERE id = $1 AND user_id = $2
+SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at FROM product_ideas WHERE id = $1 AND user_id = $2
 `
 
 type GetIdeaParams struct {
@@ -100,12 +108,16 @@ func (q *Queries) GetIdea(ctx context.Context, arg GetIdeaParams) (ProductIdea, 
 		&i.CompetitiveAngle,
 		&i.IsSelected,
 		&i.CreatedAt,
+		&i.Hook,
+		&i.Explanation,
+		&i.Status,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const listIdeasByOpportunity = `-- name: ListIdeasByOpportunity :many
-SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at FROM product_ideas WHERE user_id = $1 AND opportunity_id = $2 ORDER BY created_at ASC
+SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at FROM product_ideas WHERE user_id = $1 AND opportunity_id = $2 ORDER BY created_at ASC
 `
 
 type ListIdeasByOpportunityParams struct {
@@ -139,6 +151,10 @@ func (q *Queries) ListIdeasByOpportunity(ctx context.Context, arg ListIdeasByOpp
 			&i.CompetitiveAngle,
 			&i.IsSelected,
 			&i.CreatedAt,
+			&i.Hook,
+			&i.Explanation,
+			&i.Status,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -151,7 +167,7 @@ func (q *Queries) ListIdeasByOpportunity(ctx context.Context, arg ListIdeasByOpp
 }
 
 const listIdeasByUser = `-- name: ListIdeasByUser :many
-SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at FROM product_ideas WHERE user_id = $1 ORDER BY created_at DESC
+SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at FROM product_ideas WHERE user_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListIdeasByUser(ctx context.Context, userID string) ([]ProductIdea, error) {
@@ -180,6 +196,10 @@ func (q *Queries) ListIdeasByUser(ctx context.Context, userID string) ([]Product
 			&i.CompetitiveAngle,
 			&i.IsSelected,
 			&i.CreatedAt,
+			&i.Hook,
+			&i.Explanation,
+			&i.Status,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -192,7 +212,7 @@ func (q *Queries) ListIdeasByUser(ctx context.Context, userID string) ([]Product
 }
 
 const selectIdea = `-- name: SelectIdea :one
-UPDATE product_ideas SET is_selected = true WHERE id = $1 AND user_id = $2 RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at
+UPDATE product_ideas SET is_selected = true WHERE id = $1 AND user_id = $2 RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
 `
 
 type SelectIdeaParams struct {
@@ -220,6 +240,51 @@ func (q *Queries) SelectIdea(ctx context.Context, arg SelectIdeaParams) (Product
 		&i.CompetitiveAngle,
 		&i.IsSelected,
 		&i.CreatedAt,
+		&i.Hook,
+		&i.Explanation,
+		&i.Status,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const setIdeaStatus = `-- name: SetIdeaStatus :one
+UPDATE product_ideas
+SET status = $3, updated_at = now()
+WHERE id = $1 AND user_id = $2
+RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
+`
+
+type SetIdeaStatusParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+	Status string `json:"status"`
+}
+
+func (q *Queries) SetIdeaStatus(ctx context.Context, arg SetIdeaStatusParams) (ProductIdea, error) {
+	row := q.db.QueryRow(ctx, setIdeaStatus, arg.ID, arg.UserID, arg.Status)
+	var i ProductIdea
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.OpportunityID,
+		&i.Title,
+		&i.Subtitle,
+		&i.Audience,
+		&i.Problem,
+		&i.Promise,
+		&i.Format,
+		&i.EstimatedPrice,
+		&i.Difficulty,
+		&i.MarketEvidence,
+		&i.WhyNow,
+		&i.CompetitiveAngle,
+		&i.IsSelected,
+		&i.CreatedAt,
+		&i.Hook,
+		&i.Explanation,
+		&i.Status,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -236,4 +301,51 @@ type UnselectIdeaParams struct {
 func (q *Queries) UnselectIdea(ctx context.Context, arg UnselectIdeaParams) error {
 	_, err := q.db.Exec(ctx, unselectIdea, arg.ID, arg.UserID)
 	return err
+}
+
+const updateIdeaContent = `-- name: UpdateIdeaContent :one
+UPDATE product_ideas
+SET title = $2, hook = $3, explanation = $4, updated_at = now()
+WHERE id = $1
+RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
+`
+
+type UpdateIdeaContentParams struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Hook        string `json:"hook"`
+	Explanation string `json:"explanation"`
+}
+
+func (q *Queries) UpdateIdeaContent(ctx context.Context, arg UpdateIdeaContentParams) (ProductIdea, error) {
+	row := q.db.QueryRow(ctx, updateIdeaContent,
+		arg.ID,
+		arg.Title,
+		arg.Hook,
+		arg.Explanation,
+	)
+	var i ProductIdea
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.OpportunityID,
+		&i.Title,
+		&i.Subtitle,
+		&i.Audience,
+		&i.Problem,
+		&i.Promise,
+		&i.Format,
+		&i.EstimatedPrice,
+		&i.Difficulty,
+		&i.MarketEvidence,
+		&i.WhyNow,
+		&i.CompetitiveAngle,
+		&i.IsSelected,
+		&i.CreatedAt,
+		&i.Hook,
+		&i.Explanation,
+		&i.Status,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

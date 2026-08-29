@@ -7,11 +7,11 @@ import { toast } from "sonner"
 import { EmptyState } from "@/components/states/empty-state"
 import { ErrorState } from "@/components/states/error-state"
 import { LoadingState } from "@/components/states/loading-state"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { useJob } from "@/features/generation/hooks"
+import { IdeaCard } from "@/features/ideas/components/idea-card"
 import { useGenerateIdeas, useIdeas } from "@/features/ideas/hooks"
+import type { Idea } from "@/features/ideas/api"
 import { useCreateProject } from "@/features/projects/hooks"
 import { isAppError } from "@/lib/errors"
 
@@ -46,9 +46,9 @@ export default function IdeasPage() {
     })
   }
 
-  const handleCreateProject = (ideaId: string, title: string, oppId?: string | null) => {
+  const handleCreateProject = (idea: Idea) => {
     createProject.mutate(
-      { idea_id: ideaId, opportunity_id: oppId ?? null, title },
+      { idea_id: idea.id, opportunity_id: idea.opportunity_id ?? null, title: idea.title },
       {
         onSuccess: (p) => navigate(`/projects/${p.id}`),
         onError: (error) => toast.error(isAppError(error) ? error.message : t("common.genericError")),
@@ -57,7 +57,6 @@ export default function IdeasPage() {
   }
 
   const generating = generate.isPending || (job && (job.status === "pending" || job.status === "processing"))
-  const creatingIdeaId = createProject.isPending ? createProject.variables?.idea_id ?? null : null
 
   return (
     <div className="space-y-6">
@@ -92,34 +91,7 @@ export default function IdeasPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {ideas.map((idea) => (
-            <Card key={idea.id}>
-              <CardContent className="flex h-full flex-col gap-3 p-5">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display text-base font-semibold text-primary">{idea.title}</h3>
-                  {idea.difficulty ? <Badge variant="outline">{idea.difficulty}</Badge> : null}
-                </div>
-                {idea.subtitle ? <p className="text-sm text-muted-foreground">{idea.subtitle}</p> : null}
-                {idea.audience ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("ideas:audience")}: {idea.audience}
-                  </p>
-                ) : null}
-                {idea.format || idea.estimated_price ? (
-                  <p className="text-xs text-muted-foreground">
-                    {[idea.format, idea.estimated_price].filter(Boolean).join(" · ")}
-                  </p>
-                ) : null}
-                <Button
-                  size="sm"
-                  className="mt-auto w-full sm:w-auto"
-                  onClick={() => handleCreateProject(idea.id, idea.title, idea.opportunity_id ?? null)}
-                  disabled={createProject.isPending}
-                  loading={creatingIdeaId === idea.id}
-                >
-                  {t("ideas:createProject")}
-                </Button>
-              </CardContent>
-            </Card>
+            <IdeaCard key={idea.id} idea={idea} onCreate={handleCreateProject} />
           ))}
         </div>
       )}

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"afrilaunch/backend/internal/application/ai"
@@ -27,9 +28,11 @@ type Worker struct {
 	jobs          port.JobRepository
 	credits       port.CreditRepository
 	ideas         port.IdeaRepository
+	ideaMessages  port.IdeaMessageRepository
 	projects      port.ProjectRepository
 	assets        port.AssetRepository
 	opportunities port.OpportunityRepository
+	research      port.ResearchRepository
 	storage       port.Storage
 	ai            *ai.Service
 	docs          *document.Service
@@ -40,9 +43,11 @@ func NewWorker(
 	jobs port.JobRepository,
 	credits port.CreditRepository,
 	ideas port.IdeaRepository,
+	ideaMessages port.IdeaMessageRepository,
 	projects port.ProjectRepository,
 	assets port.AssetRepository,
 	opportunities port.OpportunityRepository,
+	research port.ResearchRepository,
 	storage port.Storage,
 	ai *ai.Service,
 	docs *document.Service,
@@ -52,9 +57,11 @@ func NewWorker(
 		jobs:          jobs,
 		credits:       credits,
 		ideas:         ideas,
+		ideaMessages:  ideaMessages,
 		projects:      projects,
 		assets:        assets,
 		opportunities: opportunities,
+		research:      research,
 		storage:       storage,
 		ai:            ai,
 		docs:          docs,
@@ -65,28 +72,38 @@ func NewWorker(
 	return w
 }
 
+// DispatchParams décrit un job de génération à lancer.
+type DispatchParams struct {
+	UserID        string
+	ProjectID     *string
+	OpportunityID *string
+	ResearchID    *string
+	IdeaID        *string
+	Kind          string
+}
+
 // Dispatch crée un job, réserve les crédits et le met en file.
-func (w *Worker) Dispatch(ctx context.Context, userID string, projectID, opportunityID *string, kind string) (domain.GenerationJob, error) {
-	op := operationFor(kind)
+func (w *Worker) Dispatch(ctx context.Context, p DispatchParams) (domain.GenerationJob, error) {
+	op := operationFor(p.Kind)
 	if op == "" {
-		return domain.GenerationJob{}, fmt.Errorf("unknown job kind %q", kind)
+		return domain.GenerationJob{}, fmt.Errorf("unknown job kind %q", p.Kind)
 	}
 	cost, err := w.credits.GetGenerationCost(ctx, op)
 	if err != nil {
 		return domain.GenerationJob{}, err
 	}
 
-	job, err := w.jobs.Create(ctx, userID, projectID, opportunityID, kind, cost.Credits)
+	job, err := w.jobs.Create(ctx, p.UserID, p.ProjectID, p.OpportunityID, p.ResearchID, p.IdeaID, p.Kind, cost.Credits)
 	if err != nil {
 		return domain.GenerationJob{}, err
 	}
 
-	if _, err := w.credits.Reserve(ctx, userID, cost.Credits, op, "job:"+job.ID, 24*time.Hour); err != nil {
+	if _, err := w.credits.Reserve(ctx, p.UserID, cost.Credits, op, "job:"+job.ID, 24*time.Hour); err != nil {
 		_, _ = w.jobs.Fail(ctx, job.ID, "crédits insuffisants")
 		return domain.GenerationJob{}, err
 	}
 
-	w.tasks <- task{userID: userID, jobID: job.ID}
+	w.tasks <- task{userID: p.UserID, jobID: job.ID}
 	return job, nil
 }
 
@@ -113,6 +130,9 @@ func (w *Worker) process(t task) {
 		if job.ProjectID != nil {
 			_, _ = w.projects.UpdateStatus(ctx, job.UserID, *job.ProjectID, domain.ProjectFailed)
 		}
+		if job.ResearchID != nil {
+			_, _ = w.research.UpdateStatus(ctx, *job.ResearchID, domain.ResearchFailed)
+		}
 		return
 	}
 
@@ -126,6 +146,9 @@ func (w *Worker) process(t task) {
 		case domain.JobCover, domain.JobPosters, domain.JobSalesPage:
 			_, _ = w.projects.UpdateStatus(ctx, job.UserID, *job.ProjectID, domain.ProjectCompleted)
 		}
+	}
+	if job.ResearchID != nil {
+		_, _ = w.research.UpdateStatus(ctx, *job.ResearchID, domain.ResearchCompleted)
 	}
 }
 
@@ -141,6 +164,10 @@ func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte,
 		return w.runPosters(ctx, job)
 	case domain.JobSalesPage:
 		return w.runSalesPage(ctx, job)
+	case domain.JobResearch:
+		return w.runResearch(ctx, job)
+	case domain.JobIdeaRevise:
+		return w.runIdeaRevise(ctx, job)
 	default:
 		return nil, fmt.Errorf("unknown job kind %q", job.Kind)
 	}
@@ -171,6 +198,8 @@ func (w *Worker) runIdeas(ctx context.Context, job domain.GenerationJob) ([]byte
 			UserID:           job.UserID,
 			OpportunityID:    job.OpportunityID,
 			Title:            in.Title,
+			Hook:             in.Hook,
+			Explanation:      in.Explanation,
 			Subtitle:         in.Subtitle,
 			Audience:         in.Audience,
 			Problem:          in.Problem,
@@ -181,6 +210,7 @@ func (w *Worker) runIdeas(ctx context.Context, job domain.GenerationJob) ([]byte
 			MarketEvidence:   in.MarketEvidence,
 			WhyNow:           in.WhyNow,
 			CompetitiveAngle: in.CompetitiveAngle,
+			Status:           domain.IdeaDraft,
 		})
 		if err != nil {
 			return nil, err
@@ -294,6 +324,144 @@ func (w *Worker) runSalesPage(ctx context.Context, job domain.GenerationJob) ([]
 	return json.Marshal(map[string]any{"asset_id": asset.ID})
 }
 
+// runResearch explore une niche en ligne et crée une opportunité par marché.
+func (w *Worker) runResearch(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	if job.ResearchID == nil {
+		return nil, errors.New("recherche manquante")
+	}
+	req, err := w.research.Get(ctx, job.UserID, *job.ResearchID)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := w.research.UpdateStatus(ctx, req.ID, domain.ResearchProcessing); err != nil {
+		return nil, err
+	}
+
+	result, err := w.ai.Research(ctx, researchSystem, researchQuery(req.Query, req.Sector, req.Markets, req.Language))
+	if err != nil {
+		return nil, err
+	}
+
+	var out researchInput
+	if err := json.Unmarshal([]byte(stripFences(result.Content)), &out); err != nil {
+		return nil, fmt.Errorf("decode research: %w", err)
+	}
+	if len(out.Opportunities) == 0 {
+		return nil, errors.New("aucune opportunité trouvée")
+	}
+
+	ids := make([]string, 0, len(out.Opportunities))
+	for _, in := range out.Opportunities {
+		opp, err := w.opportunities.Create(ctx, domain.Opportunity{
+			UserID:     &job.UserID,
+			ResearchID: job.ResearchID,
+			Title:      in.Title,
+			Summary:    in.Summary,
+			Country:    in.Country,
+			Sector:     req.Sector,
+			Language:   req.Language,
+			Difficulty: normalizeDifficulty(in.Difficulty),
+			Signal:     normalizeSignal(in.Signal),
+			Score:      clamp(in.Score, 0, 100),
+			Scores:     in.Scores,
+			Evidence:   in.Evidence,
+		})
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, opp.ID)
+	}
+	return json.Marshal(map[string]any{"opportunity_ids": ids})
+}
+
+// runIdeaRevise révise titre/accroche/explication d'une idée à partir du feedback.
+func (w *Worker) runIdeaRevise(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	if job.IdeaID == nil {
+		return nil, errors.New("idée manquante")
+	}
+	idea, err := w.ideas.Get(ctx, job.UserID, *job.IdeaID)
+	if err != nil {
+		return nil, err
+	}
+	history, err := w.ideaMessages.ListByIdea(ctx, idea.ID)
+	if err != nil {
+		return nil, err
+	}
+	feedback := ""
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].Role == domain.IdeaMessageUser {
+			feedback = history[i].Content
+			break
+		}
+	}
+	if feedback == "" {
+		return nil, errors.New("feedback manquant")
+	}
+
+	var out struct {
+		Title       string `json:"title"`
+		Hook        string `json:"hook"`
+		Explanation string `json:"explanation"`
+	}
+	if err := w.ai.CompleteJSON(ctx, ai.TaskIdeation, ideaReviseSystem, ideaRevisePrompt(idea, history, feedback), &out); err != nil {
+		return nil, err
+	}
+
+	updated, err := w.ideas.UpdateContent(ctx, domain.ProductIdea{
+		ID: idea.ID, Title: out.Title, Hook: out.Hook, Explanation: out.Explanation,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := w.ideaMessages.Create(ctx, domain.IdeaMessage{
+		IdeaID:  idea.ID,
+		UserID:  job.UserID,
+		Role:    domain.IdeaMessageAssistant,
+		Content: fmt.Sprintf("Titre: %s\nAccroche: %s\nExplication: %s", updated.Title, updated.Hook, updated.Explanation),
+	}); err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(map[string]any{"idea_id": updated.ID})
+}
+
+func stripFences(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```")
+	s = strings.TrimSuffix(s, "```")
+	return strings.TrimSpace(s)
+}
+
+func normalizeDifficulty(s string) string {
+	switch s {
+	case domain.DifficultyLow, domain.DifficultyMedium, domain.DifficultyHigh:
+		return s
+	default:
+		return domain.DifficultyMedium
+	}
+}
+
+func normalizeSignal(s string) string {
+	switch s {
+	case domain.SignalVerified, domain.SignalEstimated, domain.SignalInferred, domain.SignalHypothesis:
+		return s
+	default:
+		return domain.SignalHypothesis
+	}
+}
+
+func clamp(n, lo, hi int) int {
+	if n < lo {
+		return lo
+	}
+	if n > hi {
+		return hi
+	}
+	return n
+}
+
 // genContext regroupe les infos du projet/idée/opportunité pour les prompts.
 type genContext struct {
 	topic    string
@@ -370,6 +538,10 @@ func operationFor(kind string) string {
 		return domain.OperationPosterGen
 	case domain.JobSalesPage:
 		return domain.OperationSalesPage
+	case domain.JobResearch:
+		return domain.OperationNicheResearch
+	case domain.JobIdeaRevise:
+		return domain.OperationIdeaGeneration
 	default:
 		return ""
 	}

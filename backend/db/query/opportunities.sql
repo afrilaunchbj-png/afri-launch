@@ -1,6 +1,7 @@
 -- name: ListOpportunities :many
 SELECT * FROM opportunities
-WHERE (sqlc.arg('country')::text = '' OR country = sqlc.arg('country')::text)
+WHERE (user_id IS NULL OR user_id = sqlc.arg('user_id'))
+  AND (sqlc.arg('country')::text = '' OR country = sqlc.arg('country')::text)
   AND (sqlc.arg('sector')::text = '' OR sector = sqlc.arg('sector')::text)
   AND (sqlc.arg('difficulty')::text = '' OR difficulty = sqlc.arg('difficulty')::text)
   AND (sqlc.arg('query')::text = '' OR title ILIKE '%' || sqlc.arg('query')::text || '%')
@@ -9,13 +10,19 @@ LIMIT sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: CountOpportunities :one
 SELECT count(*) FROM opportunities
-WHERE (sqlc.arg('country')::text = '' OR country = sqlc.arg('country')::text)
+WHERE (user_id IS NULL OR user_id = sqlc.arg('user_id'))
+  AND (sqlc.arg('country')::text = '' OR country = sqlc.arg('country')::text)
   AND (sqlc.arg('sector')::text = '' OR sector = sqlc.arg('sector')::text)
   AND (sqlc.arg('difficulty')::text = '' OR difficulty = sqlc.arg('difficulty')::text)
   AND (sqlc.arg('query')::text = '' OR title ILIKE '%' || sqlc.arg('query')::text || '%');
 
 -- name: GetOpportunity :one
 SELECT * FROM opportunities WHERE id = $1;
+
+-- name: CreateOpportunity :one
+INSERT INTO opportunities (user_id, research_id, title, summary, country, sector, language, difficulty, signal, score, scores, evidence)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+RETURNING *;
 
 -- name: ListSavedOpportunityIDs :many
 SELECT opportunity_id FROM saved_opportunities WHERE user_id = $1;

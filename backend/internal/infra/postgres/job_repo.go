@@ -15,11 +15,13 @@ type jobRepo struct {
 // NewJobRepository construit le repository de jobs.
 func NewJobRepository(s *Store) *jobRepo { return &jobRepo{s: s} }
 
-func (r *jobRepo) Create(ctx context.Context, userID string, projectID, opportunityID *string, kind string, cost int64) (domain.GenerationJob, error) {
+func (r *jobRepo) Create(ctx context.Context, userID string, projectID, opportunityID, researchID, ideaID *string, kind string, cost int64) (domain.GenerationJob, error) {
 	row, err := r.s.q.CreateJob(ctx, db.CreateJobParams{
 		UserID:        userID,
 		ProjectID:     strPtrToUUID(projectID),
 		OpportunityID: strPtrToUUID(opportunityID),
+		ResearchID:    strPtrToUUID(researchID),
+		IdeaID:        strPtrToUUID(ideaID),
 		Kind:          kind,
 		Cost:          int32(cost),
 	})
@@ -82,6 +84,8 @@ func toJob(j db.GenerationJob) domain.GenerationJob {
 		UserID:        j.UserID,
 		ProjectID:     uuidPtr(j.ProjectID),
 		OpportunityID: uuidPtr(j.OpportunityID),
+		ResearchID:    uuidPtr(j.ResearchID),
+		IdeaID:        uuidPtr(j.IdeaID),
 		Kind:          j.Kind,
 		Status:        j.Status,
 		Cost:          int64(j.Cost),

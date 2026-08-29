@@ -43,6 +43,7 @@ type CreditRepository interface {
 
 // OpportunityFilter filtre la recherche d'opportunités.
 type OpportunityFilter struct {
+	UserID     string // scope : catalogue global + opportunités de l'utilisateur
 	Country    string
 	Sector     string
 	Difficulty string
@@ -53,6 +54,7 @@ type OpportunityFilter struct {
 type OpportunityRepository interface {
 	List(ctx context.Context, f OpportunityFilter, limit, offset int) ([]domain.Opportunity, int64, error)
 	Get(ctx context.Context, id string) (domain.Opportunity, error)
+	Create(ctx context.Context, o domain.Opportunity) (domain.Opportunity, error)
 	ListSavedIDs(ctx context.Context, userID string) ([]string, error)
 	Save(ctx context.Context, userID, opportunityID string) error
 	Unsave(ctx context.Context, userID, opportunityID string) error

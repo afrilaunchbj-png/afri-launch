@@ -20,6 +20,14 @@ type IdeaRepository interface {
 	ListByOpportunity(ctx context.Context, userID, opportunityID string) ([]domain.ProductIdea, error)
 	Select(ctx context.Context, userID, id string) (domain.ProductIdea, error)
 	Unselect(ctx context.Context, userID, id string) error
+	UpdateContent(ctx context.Context, idea domain.ProductIdea) (domain.ProductIdea, error)
+	SetStatus(ctx context.Context, userID, id, status string) (domain.ProductIdea, error)
+}
+
+// IdeaMessageRepository accède à l'historique de conversation d'une idée.
+type IdeaMessageRepository interface {
+	Create(ctx context.Context, m domain.IdeaMessage) (domain.IdeaMessage, error)
+	ListByIdea(ctx context.Context, ideaID string) ([]domain.IdeaMessage, error)
 }
 
 // ProjectRepository accède aux projets.
@@ -40,7 +48,7 @@ type AssetRepository interface {
 
 // JobRepository accède aux jobs de génération.
 type JobRepository interface {
-	Create(ctx context.Context, userID string, projectID, opportunityID *string, kind string, cost int64) (domain.GenerationJob, error)
+	Create(ctx context.Context, userID string, projectID, opportunityID, researchID, ideaID *string, kind string, cost int64) (domain.GenerationJob, error)
 	Get(ctx context.Context, userID, id string) (domain.GenerationJob, error)
 	UpdateStatus(ctx context.Context, id, status string) (domain.GenerationJob, error)
 	Complete(ctx context.Context, id string, result []byte, cost int64) (domain.GenerationJob, error)
