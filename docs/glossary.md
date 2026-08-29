@@ -38,3 +38,16 @@
 | **TanStack Query** | Gestion d'état serveur (cache, invalidation, mutations). |
 | **Tenant** | Entité isolant les données d'un utilisateur/organisation. |
 | **RLS** | Row-Level Security PostgreSQL (filet de sécurité d'isolation). |
+
+## IA & génération
+
+| Terme | Définition |
+|---|---|
+| **LLMProvider** | Interface Go d'accès aux modèles de langage (OpenAI) — jamais hardcodée. |
+| **ImageProvider / VideoProvider** | Interfaces d'accès aux modèles image (OpenAI `gpt-image-2`) et vidéo (HeyGen). |
+| **ModelRouter** | Aiguillage tâche → (provider, modèle) : `gpt-5.6-terra` (recherche/contenu long), `gpt-5.6-luna` (idéation). |
+| **Impeccable** | Skill open-source (github.com/pbakaus/impeccable) de vocabulaire design anti « AI slop », injecté dans le prompt de génération HTML. |
+| **chromedp** | Pilote Go d'un Chrome headless, utilisé pour rendre le HTML et exporter PDF/PNG. |
+| **Template HTML** | Gabarit de rendu des documents (thème « Emerald & Amber Ledger ») dans lequel on injecte le contenu structuré. |
+| **Image-par-slide** | Assemblage PPTX où chaque slide est une image PNG pleine page (rendu HTML 16:9). |
+| **Render Worker** | Worker asynq qui rend le HTML (chromedp) et exporte PDF/PPTX. |

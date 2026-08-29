@@ -68,13 +68,7 @@ backend/
 
 | Méthode | Chemin | Auth | Description |
 |---|---|---|---|
-| POST | `/api/v1/auth/register` | — | Inscription + bonus de bienvenue (rate limité) |
-| POST | `/api/v1/auth/login` | — | Connexion email/mot de passe (rate limité) |
-| POST | `/api/v1/auth/refresh` | cookie refresh | Rotation des tokens |
-| POST | `/api/v1/auth/logout` | — | Révocation de session |
-| GET | `/api/v1/auth/me` | JWT | Profil courant |
-| GET | `/api/v1/auth/google` | — | Redirection OAuth (PKCE) |
-| GET | `/api/v1/auth/google/callback` | — | Échange code → session |
+| GET | `/api/v1/auth/me` | JWT (Neon Auth) | Profil courant (upsert + bonus de bienvenue au 1er login) |
 | GET | `/api/v1/markets` | — | Référentiel des marchés |
 | GET | `/api/v1/credits` | JWT | Solde + agrégats + coûts |
 | GET | `/api/v1/credits/transactions` | JWT | Journal comptable paginé/filtré |
@@ -105,11 +99,18 @@ Chaque `GenerationJob` porte : `id, status, progress, attempts, started_at, comp
 
 Propriétés requises : **idempotent, retryable, observable, annulable, reprenable**. Une erreur sur une étape ne détruit pas les résultats déjà produits (partial completion).
 
-Workers : Research, LLM, Image, Video, PDF, QC. Objectif < 30 min (jamais garanti — implémenter deadline/timeout/retry/fallback).
+Workers (cible) : Research, LLM (contenu), Image, Video (HeyGen), Render (HTML→PDF/PPT via chromedp), QC. Objectif < 30 min (jamais garanti — deadline/timeout/retry/fallback).
 
 ## 6. Architecture IA
 
-Abstraction **LLMProvider** (et ImageGenerationProvider, etc.) derrière des interfaces Go. Le modèle n'est jamais hardcodé. Workflow **orchestré** (pas des agents autonomes partout) :
+Voir `docs/ai.md` pour le détail. Synthèse :
+
+- **Deux providers** : **OpenAI** (famille GPT) pour recherche, images et documents ; **HeyGen** pour la vidéo (avatar). Abstractions derrière des **interfaces Go** (`LLMProvider`, `ImageProvider`, `VideoProvider`) — le modèle/provider n'est jamais hardcodé.
+- **Routage de modèle** (`ModelRouter`) selon la tâche : `gpt-5.6-terra` (recherche & contenu long), `gpt-5.6-luna` (idéation), `gpt-image-2` (images).
+- **Documents = HTML** : le LLM génère du **contenu structuré (JSON)** qui est rendu dans des **templates HTML** (guidés par le design system « Emerald & Amber Ledger » + le vocabulaire du skill [Impeccable](https://impeccable.style/)), puis rendu par **chromedp** et exporté en **PDF** (ebook) ou **PPTX image-par-slide** (deck).
+- **Coût/observabilité** : chaque génération consigne `provider, model, tokens, latency, cost, status` (master.md §25), raccordé au ledger (`reserve → consume|release`).
+
+Workflow orchestré (pas des agents autonomes partout) :
 
 ```
 ResearchWorkflow → OpportunityScoringWorkflow → ProductIdeaWorkflow → OutlineWorkflow

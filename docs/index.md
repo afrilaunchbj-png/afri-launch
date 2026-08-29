@@ -25,16 +25,17 @@ AfriLaunch permet à un entrepreneur/consultant/expert africain de transformer u
 
 ## Architecture
 
-- **Backend** : Clean Architecture orientée ports/adapters (`internal/domain` → `application` → `infra` → `server`). API REST versionnée `/api/v1`, erreurs RFC 9457 (Problem Details), auth JWT (cookies httpOnly).
+- **Backend** : Clean Architecture orientée ports/adapters (`internal/domain` → `application` → `infra` → `server`). API REST versionnée `/api/v1`, erreurs RFC 9457 (Problem Details), auth via **Neon Auth** (JWT EdDSA/JWKS).
 - **Frontend** : SPA React (Vite + React Router 7), design system shadcn/ui mappé sur le thème « Emerald & Amber Ledger », dark mode, i18n FR/EN.
 - **Asynchrone** : les générations longues passent par Redis + asynq (workers), jamais dans une requête HTTP.
+- **IA** : OpenAI (GPT) + HeyGen ; documents générés en HTML puis rendus en PDF/PPTX via chromedp — voir `docs/ai.md`.
 
-Détails : voir `docs/architecture.md`.
+Détails : voir `docs/architecture.md` et `docs/ai.md`.
 
 ## Key Libraries
 
-- **Go** : `go-chi/chi` (routeur), `jackc/pgx/v5` (driver Postgres), `sqlc` (quêtes typées), `pressly/goose` (migrations), `hibiken/asynq` (queue), `golang-jwt/jwt`, `golang.org/x/crypto/argon2`.
-- **React** : `react-router` (v7), `@tanstack/react-query`, `react-hook-form`, `zod`, `i18next`/`react-i18next`, `lucide-react`, `tailwindcss`, `class-variance-authority`, `clsx`/`tailwind-merge`, Radix primitives + shadcn/ui.
+- **Go** : `go-chi/chi` (routeur), `jackc/pgx/v5` (driver Postgres), `sqlc` (quêtes typées), `pressly/goose` (migrations), `hibiken/asynq` (queue), `golang-jwt/jwt/v5` (vérif JWT Neon Auth), `chromedp` (rendu HTML→PDF, à venir).
+- **React** : `react-router` (v7), `@tanstack/react-query`, `react-hook-form`, `zod`, `i18next`/`react-i18next`, `lucide-react`, `tailwindcss`, `class-variance-authority`, `clsx`/`tailwind-merge`, Radix primitives + shadcn/ui, `@neondatabase/neon-js`/`auth-ui`.
 
 ## Essential Conventions
 

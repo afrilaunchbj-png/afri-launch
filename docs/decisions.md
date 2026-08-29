@@ -84,3 +84,19 @@
 - **Options** : (A) Neon Auth managé (Better Auth) ; (B) garder l'auth maison (email/mot de passe) + Google OAuth PKCE.
 - **Décision** : **(A)** — identité/sessions gérées par Neon (schéma `neon_auth`), Google en provider OAuth ; le backend **vérifie les JWT** (EdDSA/Ed25519, 15 min) via le JWKS `<NEON_AUTH_URL>/.well-known/jwks.json` (issuer/audience = origine) ; `users` devient une table profil cléée par `sub`, avec bonus de bienvenue au 1er login. Frontend : `@neondatabase/neon-js` + `@neondatabase/auth-ui`.
 - **Conséquences** : suppression d'argon2, des refresh tokens, du `JWTManager` HS256 et du Google OAuth PKCE maison ; les JWT partent en `Authorization: Bearer` vers l'API Go (pas de cookies de session cross-origin) ; dépendances beta (`neon-js`, `auth-ui`).
+
+## ADR-012 — IA : deux providers (OpenAI GPT + HeyGen) + routage de modèle
+
+- **Date** : 2026-08-29
+- **Contexte** : le backend n'avait qu'une variable `AI_PROVIDER_API_KEY` ; les besoins sont hétérogènes (texte/images/documents vs vidéo avatar).
+- **Options** : (A) un provider unique ; (B) OpenAI pour recherche/images/documents + HeyGen pour la vidéo.
+- **Décision** : **(B)** — **OpenAI** (famille GPT) pour recherche, images et documents ; **HeyGen** pour la vidéo (avatar). Routage de modèle par tâche (`ModelRouter`) : `gpt-5.6-terra` (recherche & contenu long), `gpt-5.6-luna` (idéation), `gpt-image-2` (images). Config multi-clés (`OPENAI_API_KEY`, `HEYGEN_API_KEY`) + modèles par tâche.
+- **Conséquences** : ports `LLMProvider`/`ImageProvider`/`VideoProvider` ; `infra/ai/openai.go` + `infra/ai/heygen.go` ; la vidéo MVP = avatar seul (script + montage en V2).
+
+## ADR-013 — Documents : HTML rendu en PDF/PPTX via chromedp (image-par-slide)
+
+- **Date** : 2026-08-29
+- **Contexte** : les LLM produisent du HTML/CSS fiable mais pas des binaires PPTX/PDF. Le rendu Playwright est l'alternative Node, alors que le backend est en Go.
+- **Options** : (A) Playwright (worker Node) ; (B) **chromedp** (headless Chrome, 100 % Go) ; (C) `playwright-go` (binding communautaire).
+- **Décision** : **(B)** — le LLM génère du **contenu structuré (JSON)** injecté dans des **templates HTML** (thème « Emerald & Amber Ledger »), rendus par **chromedp** : `page.PrintToPDF` pour l'ebook, **slides 16:9 → PNG → PPTX image-par-slide** pour le deck (pas d'export PPTX natif).
+- **Conséquences** : pas de runtime Node dans la couche workers ; PPTX = images pleine page (non éditable, acceptable pour du marketing) ; le vocabulaire du skill **Impeccable** (github.com/pbakaus/impeccable) est injecté dans le system prompt pour éviter le « AI slop ».

@@ -85,6 +85,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 10. **Design system** « Emerald & Amber Ledger ».
 11. **Auth = Neon Auth** (voir ADR-011) : identité/sessions dans `neon_auth` (Better Auth), Google en provider OAuth ; backend vérifie les JWT (EdDSA) via JWKS ; `users` = table profil cléée par `sub` ; bonus de bienvenue au 1er login.
 12. **Object Storage Neon S3** : S3-compatible, SDK AWS standard — config prête, adaptateur à câbler avec la feature « assets ».
+13. **IA = OpenAI (GPT) + HeyGen** (ADR-012) : recherche/images/documents via OpenAI, vidéo avatar via HeyGen ; `ModelRouter` (`gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-image-2`).
+14. **Documents = HTML → PDF/PPTX via chromedp** (ADR-013) : contenu structuré (JSON) → templates HTML (thème « Emerald & Amber Ledger » + vocabulaire [Impeccable](https://impeccable.style/)) → `chromedp` → PDF (ebook) ou PPTX image-par-slide (deck).
 
 ## Design & UI Conventions
 
@@ -109,22 +111,24 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Remaining Work
 
-1. **Génération d'idées** (`ProductIdea`/`IdeaVersion`).
-2. **Création produit** (ebook) + **assets marketing** + **page de vente**.
-3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
-4. **Workers asynq** + couche `LLMProvider`.
-5. **Object Storage** : câbler l'adaptateur S3 (Neon) avec la génération d'assets.
-6. **Tests** : unitaires + intégration + E2E.
+1. **Abstractions IA (Go)** : ports `LLMProvider`/`ImageProvider`/`VideoProvider` + `ModelRouter` + `infra/ai/openai.go` + `infra/ai/heygen.go` + config multi-clés.
+2. **Pipeline documents** : contenu JSON → templates HTML (thème + Impeccable) → chromedp → PDF/PPTX image-par-slide.
+3. **Génération d'idées** (`ProductIdea`/`IdeaVersion`) puis **création produit** (ebook) + **assets** + **page de vente**.
+4. **Object Storage** : adaptateur S3 (Neon) + URLs présignées.
+5. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+6. **Workers asynq** (Research, LLM, Image, Video, Render, QC).
+7. **Tests** : unitaires + intégration + E2E.
 
 ## Known Issues
 
 - **⚠️ `backend/.env` + `backend/.env.production` contiennent des secrets (Neon Postgres, Upstash Redis).** Gitignorés (`.env.*`), mais **à rotater** si exposés. En dev, forcer `APP_ENV=development` + `DATABASE_URL` locale.
 - **Neon Auth non testé de bout en bout** : nécessite `NEON_AUTH_BASE_URL` (backend) et `VITE_NEON_AUTH_URL` (frontend) réelles + activation auth/Google dans la console Neon. Le vérifieur JWT est testé unitairement (EdDSA/JWKS factices).
-- `channel_binding=require` dans l'URL Neon : à **vérifier** avec pgx (sinon retirer).
+- `channel_binding=require` dans l'URL Neon : **validé** (pgx 5.7.4 le supporte, `/readyz` OK sur Neon).
 - SDK Neon Auth **en beta** (`neon-js 0.7.0-beta`, `auth-ui 0.3.0-beta`) — API volatile.
 - Bundle frontend ~1.43 MB (SDK auth lourd) — code-splitting à faire.
 - Rate limiting in-memory (à migrer Redis).
 - `pnpm-workspace.yaml` créé (`onlyBuiltDependencies: [core-js]`) — sinon pnpm 11 échoue sur les scripts de build ignorés.
+- **Aucune couche IA/workers encore implémentée** : `LLMProvider`, `ModelRouter`, chromedp, HeyGen et le pipeline HTML→PDF/PPTX sont documentés (`docs/ai.md`) mais pas codés.
 
 ## Tests & Validation
 
@@ -139,6 +143,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Important Files
 
+- `docs/ai.md` — architecture IA (providers, ModelRouter, pipeline HTML→PDF/PPTX, Impeccable).
 - `backend/internal/infra/auth/neon.go` — vérifieur JWT Neon (EdDSA/JWKS).
 - `backend/internal/application/port/ports.go` — interfaces (dont `TokenVerifier`, `AuthUser`).
 - `backend/internal/server/auth.go` + `authctx/` — middleware + identité.
@@ -150,9 +155,10 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 ## Next Steps
 
 1. Configurer Neon Auth côté console (enable auth, provider Google, trusted domains) + renseigner `NEON_AUTH_BASE_URL` / `VITE_NEON_AUTH_URL`, puis tester le parcours complet.
-2. Implémenter la génération d'idées, puis la création produit + assets.
-3. Câbler l'adaptateur Object Storage (Neon S3) + paiements Mobile Money.
-4. Mettre en place asynq (workers).
+2. Implémenter les **abstractions IA** (ports + `infra/ai/openai.go` + `heygen.go` + `ModelRouter` + config).
+3. Implémenter le **pipeline documents** (templates HTML + chromedp + export PDF/PPTX), en injectant le skill Impeccable dans le prompt.
+4. Génération d'idées → création produit (ebook) → assets → page de vente.
+5. Object Storage (Neon S3) + paiements Mobile Money + workers asynq.
 
 ## Notes for the Next Agent
 
