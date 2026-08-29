@@ -168,7 +168,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - **IaC** : `.railway/railway.ts` (Infrastructure as Code) définit deux services (`backend`, `frontend`) avec leurs `rootDirectory`, healthchecks et variables non-secrètes.
 - `backend` : image `backend/Dockerfile` (build + migrations goose au boot + chromium pour chromedp). Healthcheck `/healthz` (`healthcheckTimeout: 300`). Secrets à définir dans le dashboard : `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`, `ALLOWED_ORIGINS` (= URL publique du frontend), `OPENAI_API_KEY`, `HEYGEN_API_KEY`.
 - `frontend` : image `frontend/Dockerfile` (nginx + fallback SPA). Healthcheck `/`. Variables injectées au build (ARG) : `VITE_API_URL` (= URL publique du backend), `VITE_NEON_AUTH_URL`.
-- Workflow : `railway login` + `railway link` puis `railway config plan` / `railway config apply` (package npm `railway` requis pour le DSL `railway/iac`).
+- Workflow : `npm install` (racine, installe le SDK `railway` pour le DSL `railway/iac`) puis `railway login` + `railway link` + `railway config plan` / `railway config apply`. Validé : `railway config plan --json` OK (crée `backend` + `frontend`, supprime l'ancien service `afri-launch`).
 
 ## Next Steps
 

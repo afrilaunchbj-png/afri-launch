@@ -1,0 +1,8 @@
+{
+  "name": "afri-launch",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "railway": "^3.11.0"
+  }
+}
