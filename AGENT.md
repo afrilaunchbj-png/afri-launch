@@ -151,6 +151,14 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `frontend/src/lib/auth.ts` — client Neon Auth + `getAccessToken`.
 - `frontend/src/app/root-providers.tsx` — `NeonAuthUIProvider` branché sur React Router.
 - `frontend/src/lib/api/client.ts` — attache le JWT (Bearer) aux requêtes.
+- `backend/Dockerfile` + `backend/docker-entrypoint.sh` — image API (build + migrations goose au boot).
+- `frontend/Dockerfile` + `frontend/nginx.conf.template` — image SPA (nginx + fallback SPA).
+
+## Déploiement (Railway)
+
+- Deux services : **backend** (image `backend/Dockerfile`) et **frontend** (image `frontend/Dockerfile`).
+- Backend : env `DATABASE_URL`, `NEON_AUTH_BASE_URL` (+ `NEON_AUTH_JWKS_URL`), `ALLOWED_ORIGINS` ; écoute sur `$PORT`. Healthcheck à pointer sur `/healthz` (le `/` renvoie 404 RFC 9457). Les migrations goose s'appliquent au boot de l'image.
+- Frontend : `VITE_API_URL` (URL publique du backend) et `VITE_NEON_AUTH_URL` passées en **build args** ; nginx écoute sur `$PORT` (template `nginx.conf.template`).
 
 ## Next Steps
 
