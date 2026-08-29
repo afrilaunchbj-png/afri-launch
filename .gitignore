@@ -22,6 +22,9 @@ backend/bin/
 backend/api
 *.exe
 
+# Storage local des assets générés (MVP ; S3 à venir)
+backend/.storage/
+
 # Logs
 *.log
 

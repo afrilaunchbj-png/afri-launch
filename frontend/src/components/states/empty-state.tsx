@@ -9,6 +9,7 @@ interface EmptyStateProps {
   description?: string
   actionLabel?: string
   onAction?: () => void
+  actionLoading?: boolean
   className?: string
 }
 
@@ -18,6 +19,7 @@ export function EmptyState({
   description,
   actionLabel,
   onAction,
+  actionLoading = false,
   className,
 }: EmptyStateProps) {
   return (
@@ -32,7 +34,7 @@ export function EmptyState({
         {description ? <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p> : null}
       </div>
       {actionLabel && onAction ? (
-        <Button variant="outline" onClick={onAction} className="mt-2">
+        <Button variant="outline" onClick={onAction} loading={actionLoading} className="mt-2">
           {actionLabel}
         </Button>
       ) : null}

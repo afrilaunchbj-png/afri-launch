@@ -49,6 +49,10 @@ export function generateCover(id: string) {
   return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/cover`).then((r) => r.data)
 }
 
+export function generatePosters(id: string) {
+  return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/posters`).then((r) => r.data)
+}
+
 export function generateSalesPage(id: string) {
   return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/sales-page`).then((r) => r.data)
 }

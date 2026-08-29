@@ -61,7 +61,9 @@ type Asset struct {
 // Kinds d'asset.
 const (
 	AssetEbookPDF  = "ebook_pdf"
+	AssetEbookDeck = "ebook_deck"
 	AssetCover     = "cover"
+	AssetPoster    = "poster"
 	AssetSalesPage = "sales_page"
 )
 
@@ -83,10 +85,11 @@ type GenerationJob struct {
 
 // Kinds et statuts de job.
 const (
-	JobIdeas      = "ideas"
-	JobEbook      = "ebook"
-	JobCover      = "cover"
-	JobSalesPage  = "sales_page"
+	JobIdeas     = "ideas"
+	JobEbook     = "ebook"
+	JobCover     = "cover"
+	JobPosters   = "posters"
+	JobSalesPage = "sales_page"
 )
 
 const (

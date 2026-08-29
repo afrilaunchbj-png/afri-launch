@@ -21,7 +21,14 @@
     "genericError": "Something went wrong. Please try again.",
     "loading": "Loading…",
     "refreshing": "Refreshing…",
-    "generating": "Generating…"
+    "generating": "Generating…",
+    "generationFailed": "Generation failed: {{error}}",
+    "jobStatus": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "completed": "Completed",
+      "failed": "Failed"
+    }
   },
   "home": {
     "title": "Welcome to AfriLaunch",

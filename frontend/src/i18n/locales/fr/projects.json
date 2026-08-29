@@ -7,6 +7,7 @@
   "creditsUsed": "{{count}} crédits consommés",
   "ebook": "Ebook (PDF)",
   "cover": "Couverture",
+  "posters": "Affiches publicitaires",
   "salesPage": "Page de vente",
   "generate": "Générer",
   "generated": "Généré",
@@ -23,7 +24,9 @@
   },
   "assetKind": {
     "ebook_pdf": "Ebook (PDF)",
+    "ebook_deck": "Ebook paysage (PPT)",
     "cover": "Couverture",
+    "poster": "Affiche publicitaire",
     "sales_page": "Page de vente"
   }
 }

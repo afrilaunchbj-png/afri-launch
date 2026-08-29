@@ -17,6 +17,7 @@ const (
 	OperationIdeaGeneration = "idea_generation"
 	OperationEbookGen       = "ebook_generation"
 	OperationImageGen       = "image_generation"
+	OperationPosterGen      = "poster_generation"
 	OperationVideoGen       = "video_generation"
 	OperationSalesPage      = "sales_page"
 )

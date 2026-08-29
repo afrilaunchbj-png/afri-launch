@@ -76,6 +76,7 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
                 size="sm"
                 onClick={() => toggle.mutate(opportunity.is_saved)}
                 disabled={toggle.isPending}
+                loading={toggle.isPending}
                 aria-label={opportunity.is_saved ? t("opportunities:unsave") : t("opportunities:save")}
               >
                 <Bookmark className={cn("h-4 w-4", opportunity.is_saved && "fill-current")} />

@@ -11,6 +11,7 @@ func TestOperationFor(t *testing.T) {
 		domain.JobIdeas:     domain.OperationIdeaGeneration,
 		domain.JobEbook:     domain.OperationEbookGen,
 		domain.JobCover:     domain.OperationImageGen,
+		domain.JobPosters:   domain.OperationPosterGen,
 		domain.JobSalesPage: domain.OperationSalesPage,
 		"unknown":           "",
 	}

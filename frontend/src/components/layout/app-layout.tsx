@@ -130,6 +130,7 @@ function SidebarNav() {
             className="ml-auto text-muted-foreground"
             onClick={handleLogout}
             disabled={signOut.isPending}
+            loading={signOut.isPending}
             aria-label={t("auth:logout")}
           >
             <LogOut className="h-4 w-4" />

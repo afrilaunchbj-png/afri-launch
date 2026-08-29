@@ -4,8 +4,10 @@ package ai
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -54,11 +56,10 @@ type openAIChatResponse struct {
 }
 
 type openAIImageRequest struct {
-	Model          string `json:"model"`
-	Prompt         string `json:"prompt"`
-	Size           string `json:"size,omitempty"`
-	N              int    `json:"n,omitempty"`
-	ResponseFormat string `json:"response_format,omitempty"`
+	Model  string `json:"model"`
+	Prompt string `json:"prompt"`
+	Size   string `json:"size,omitempty"`
+	N      int    `json:"n,omitempty"`
 }
 
 type openAIImageResponse struct {
@@ -122,14 +123,14 @@ func (o *OpenAI) Complete(ctx context.Context, req port.LLMRequest) (port.LLMRes
 	}, nil
 }
 
-// Generate appelle /images/generations (retour b64_json).
+// Generate appelle /images/generations. Les modèles gpt-image renvoient du
+// b64_json par défaut et ne supportent pas le paramètre `response_format`.
 func (o *OpenAI) Generate(ctx context.Context, req port.ImageRequest) (port.Image, error) {
 	body := openAIImageRequest{
-		Model:          req.Model,
-		Prompt:         req.Prompt,
-		Size:           req.Size,
-		N:              1,
-		ResponseFormat: "b64_json",
+		Model:  req.Model,
+		Prompt: req.Prompt,
+		Size:   req.Size,
+		N:      1,
 	}
 
 	var out openAIImageResponse
@@ -143,7 +144,41 @@ func (o *OpenAI) Generate(ctx context.Context, req port.ImageRequest) (port.Imag
 		return port.Image{}, fmt.Errorf("openai: empty image data")
 	}
 
-	return port.Image{B64JSON: out.Data[0].B64JSON, URL: out.Data[0].URL}, nil
+	img := port.Image{URL: out.Data[0].URL}
+	if out.Data[0].B64JSON != "" {
+		img.B64JSON = out.Data[0].B64JSON
+		return img, nil
+	}
+	if out.Data[0].URL != "" {
+		b64, err := o.downloadAsB64(ctx, out.Data[0].URL)
+		if err != nil {
+			return port.Image{}, err
+		}
+		img.B64JSON = b64
+		return img, nil
+	}
+	return port.Image{}, fmt.Errorf("openai: empty image data")
+}
+
+// downloadAsB64 télécharge une image distante et la renvoie en base64.
+func (o *OpenAI) downloadAsB64(ctx context.Context, url string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := o.http.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf("openai: image download status %d", resp.StatusCode)
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }
 
 func (o *OpenAI) post(ctx context.Context, path string, body, out any) error {

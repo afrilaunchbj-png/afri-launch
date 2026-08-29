@@ -10,6 +10,7 @@ import {
   fetchProjects,
   generateCover,
   generateEbook,
+  generatePosters,
   generateSalesPage,
 } from "./api"
 
@@ -44,9 +45,9 @@ export function useCreateProject() {
   })
 }
 
-export function useGenerate(kind: "ebook" | "cover" | "sales-page") {
+export function useGenerate(kind: "ebook" | "cover" | "posters" | "sales-page") {
   const queryClient = useQueryClient()
-  const fn = { ebook: generateEbook, cover: generateCover, "sales-page": generateSalesPage }[kind]
+  const fn = { ebook: generateEbook, cover: generateCover, posters: generatePosters, "sales-page": generateSalesPage }[kind]
   return useMutation({
     mutationFn: (id: string) => fn(id),
     onSettled: (_data, _err, id) => {

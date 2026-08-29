@@ -37,6 +37,15 @@ func (s *Service) GenerateDeck(ctx context.Context, req DeckRequest) ([]byte, er
 	return s.render.SlidesToPPTX(ctx, html)
 }
 
+// GenerateEbookDeck génère la version paysage d'un ebook (HTML slides → PPTX).
+func (s *Service) GenerateEbookDeck(ctx context.Context, req EbookRequest) ([]byte, error) {
+	html, err := s.generateHTML(ctx, BuildEbookDeckPrompt(req))
+	if err != nil {
+		return nil, err
+	}
+	return s.render.SlidesToPPTX(ctx, html)
+}
+
 // GenerateSalesPage génère une page de vente (HTML auto-porteur).
 func (s *Service) GenerateSalesPage(ctx context.Context, req SalesPageRequest) ([]byte, error) {
 	return s.generateHTML(ctx, BuildSalesPagePrompt(req))

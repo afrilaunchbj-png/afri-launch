@@ -21,7 +21,14 @@
     "genericError": "Une erreur est survenue. Veuillez réessayer.",
     "loading": "Chargement…",
     "refreshing": "Actualisation…",
-    "generating": "Génération en cours…"
+    "generating": "Génération en cours…",
+    "generationFailed": "La génération a échoué : {{error}}",
+    "jobStatus": {
+      "pending": "En attente",
+      "processing": "En cours",
+      "completed": "Terminé",
+      "failed": "Échoué"
+    }
   },
   "home": {
     "title": "Bienvenue sur AfriLaunch",

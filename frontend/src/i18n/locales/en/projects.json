@@ -7,6 +7,7 @@
   "creditsUsed": "{{count}} credits used",
   "ebook": "Ebook (PDF)",
   "cover": "Cover",
+  "posters": "Ad posters",
   "salesPage": "Sales page",
   "generate": "Generate",
   "generated": "Generated",
@@ -23,7 +24,9 @@
   },
   "assetKind": {
     "ebook_pdf": "Ebook (PDF)",
+    "ebook_deck": "Landscape ebook (PPT)",
     "cover": "Cover",
+    "poster": "Ad poster",
     "sales_page": "Sales page"
   }
 }

@@ -16,8 +16,8 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("projects.title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("projects.subtitle")}</p>
+        <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("projects:title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("projects:subtitle")}</p>
       </header>
 
       {isLoading ? (
@@ -25,7 +25,7 @@ export default function ProjectsPage() {
       ) : isError ? (
         <ErrorState title={t("common.genericError")} onRetry={() => refetch()} />
       ) : !projects || projects.length === 0 ? (
-        <EmptyState icon={FolderOpen} title={t("projects.empty")} description={t("projects.emptyDesc")} />
+        <EmptyState icon={FolderOpen} title={t("projects:empty")} description={t("projects:emptyDesc")} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {projects.map((p) => (
@@ -35,11 +35,11 @@ export default function ProjectsPage() {
                   <div className="flex items-center justify-between gap-2">
                     <h3 className="font-display text-base font-semibold text-primary">{p.title}</h3>
                     <Badge variant={p.status === "failed" ? "destructive" : p.status === "completed" ? "success" : "outline"}>
-                      {t(`projects.status.${p.status}`)}
+                      {t(`projects:status.${p.status}`)}
                     </Badge>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
-                    {t("projects.creditsUsed", { count: p.credits_consumed })}
+                    {t("projects:creditsUsed", { count: p.credits_consumed })}
                   </p>
                 </CardContent>
               </Card>

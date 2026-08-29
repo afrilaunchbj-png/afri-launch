@@ -60,6 +60,14 @@ func (s *Service) GenerateCover(ctx context.Context, userID, projectID string) (
 	return s.jobs.Dispatch(ctx, userID, &projectID, nil, domain.JobCover)
 }
 
+// GeneratePosters lance la génération des affiches publicitaires (x3).
+func (s *Service) GeneratePosters(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
+	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	return s.jobs.Dispatch(ctx, userID, &projectID, nil, domain.JobPosters)
+}
+
 // GenerateSalesPage lance la génération de la page de vente.
 func (s *Service) GenerateSalesPage(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
 	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {

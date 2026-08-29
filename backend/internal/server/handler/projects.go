@@ -89,6 +89,11 @@ func (h *ProjectHandler) GenerateCover(w http.ResponseWriter, r *http.Request) {
 	h.dispatch(w, r, h.svc.GenerateCover)
 }
 
+// GeneratePosters gère POST /projects/{id}/posters.
+func (h *ProjectHandler) GeneratePosters(w http.ResponseWriter, r *http.Request) {
+	h.dispatch(w, r, h.svc.GeneratePosters)
+}
+
 // GenerateSalesPage gère POST /projects/{id}/sales-page.
 func (h *ProjectHandler) GenerateSalesPage(w http.ResponseWriter, r *http.Request) {
 	h.dispatch(w, r, h.svc.GenerateSalesPage)

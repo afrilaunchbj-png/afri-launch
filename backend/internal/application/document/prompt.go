@@ -39,7 +39,8 @@ const baseSystem = `You are an expert digital-product designer and writer. ` +
 	`Generate a single, self-contained HTML document (no markdown fences, no ` +
 	`explanations, no code blocks). Inline all CSS in a <style> tag. Do not load ` +
 	`any external resource (no external fonts, images, or scripts). ` +
-	`Output ONLY the HTML.` + impeccableGuidelines
+	`Output ONLY the HTML. ` +
+	`Write all content in the language requested by the user (never in English unless requested).` + impeccableGuidelines
 
 // BuildEbookPrompt construit la consigne de génération d'un ebook (HTML → PDF).
 func BuildEbookPrompt(req EbookRequest) Prompt {
@@ -71,6 +72,26 @@ func BuildDeckPrompt(req DeckRequest) Prompt {
 	user := fmt.Sprintf(
 		"Build a pitch deck in %s (target market: %s, audience: %s) about: %s.",
 		req.Language, req.Country, req.Audience, req.Topic,
+	)
+	return Prompt{System: system, User: user}
+}
+
+// BuildEbookDeckPrompt construit la consigne de génération de la version
+// paysage de l'ebook (HTML slides → PPTX), destinée à être exportée en PPT.
+func BuildEbookDeckPrompt(req EbookRequest) Prompt {
+	system := baseSystem + `
+## Output format: landscape ebook deck (16:9, for PPT export)
+- Each slide is a <section class="slide"> element, fixed at 1280x720 CSS px
+  (width:1280px; height:720px; overflow:hidden; position:relative).
+- Slides are direct children of <body>, no other top-level elements.
+- Turn the ebook into 8 to 14 slides: cover, introduction, the key chapters
+  (one idea per slide), practical steps, a checklist, and a conclusion with
+  a clear call to action.
+- One idea per slide, short bullets, strong titles, generous whitespace.`
+
+	user := fmt.Sprintf(
+		"Build a landscape slide-deck version of an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s.",
+		req.Language, req.Country, req.Audience, req.Topic, req.Product,
 	)
 	return Prompt{System: system, User: user}
 }

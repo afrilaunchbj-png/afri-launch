@@ -123,7 +123,7 @@ func (w *Worker) process(t task) {
 		switch job.Kind {
 		case domain.JobEbook:
 			_, _ = w.projects.UpdateStatus(ctx, job.UserID, *job.ProjectID, domain.ProjectContentReady)
-		case domain.JobCover, domain.JobSalesPage:
+		case domain.JobCover, domain.JobPosters, domain.JobSalesPage:
 			_, _ = w.projects.UpdateStatus(ctx, job.UserID, *job.ProjectID, domain.ProjectCompleted)
 		}
 	}
@@ -137,6 +137,8 @@ func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte,
 		return w.runEbook(ctx, job)
 	case domain.JobCover:
 		return w.runCover(ctx, job)
+	case domain.JobPosters:
+		return w.runPosters(ctx, job)
 	case domain.JobSalesPage:
 		return w.runSalesPage(ctx, job)
 	default:
@@ -193,21 +195,34 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 	if err != nil {
 		return nil, err
 	}
-	pdf, err := w.docs.GenerateEbook(ctx, document.EbookRequest{
+	ebookReq := document.EbookRequest{
 		Topic:    c.topic,
 		Audience: c.audience,
 		Language: c.language,
 		Country:  c.country,
 		Product:  c.format,
-	})
+	}
+
+	// Version portrait (PDF).
+	pdf, err := w.docs.GenerateEbook(ctx, ebookReq)
 	if err != nil {
 		return nil, err
 	}
-	asset, err := w.storeAsset(ctx, job, domain.AssetEbookPDF, c.topic+".pdf", "application/pdf", pdf)
+	if _, err := w.storeAsset(ctx, job, domain.AssetEbookPDF, c.topic+".pdf", "application/pdf", pdf); err != nil {
+		return nil, err
+	}
+
+	// Version paysage (PPTX, destinée à l'export PPT).
+	deck, err := w.docs.GenerateEbookDeck(ctx, ebookReq)
 	if err != nil {
 		return nil, err
 	}
-	return json.Marshal(map[string]any{"asset_id": asset.ID})
+	deckAsset, err := w.storeAsset(ctx, job, domain.AssetEbookDeck, c.topic+".pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation", deck)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(map[string]any{"asset_ids": []string{deckAsset.ID}})
 }
 
 func (w *Worker) runCover(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
@@ -228,6 +243,32 @@ func (w *Worker) runCover(ctx context.Context, job domain.GenerationJob) ([]byte
 		return nil, err
 	}
 	return json.Marshal(map[string]any{"asset_id": asset.ID})
+}
+
+// runPosters génère 3 affiches publicitaires.
+func (w *Worker) runPosters(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	c, err := w.context(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, 0, 3)
+	for variant := 1; variant <= 3; variant++ {
+		img, err := w.ai.GenerateImage(ctx, posterPrompt(c, variant))
+		if err != nil {
+			return nil, err
+		}
+		png, err := base64.StdEncoding.DecodeString(img.B64JSON)
+		if err != nil {
+			return nil, fmt.Errorf("decode image: %w", err)
+		}
+		asset, err := w.storeAsset(ctx, job, domain.AssetPoster, fmt.Sprintf("poster-%d.png", variant), "image/png", png)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, asset.ID)
+	}
+	return json.Marshal(map[string]any{"asset_ids": ids})
 }
 
 func (w *Worker) runSalesPage(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
@@ -325,6 +366,8 @@ func operationFor(kind string) string {
 		return domain.OperationEbookGen
 	case domain.JobCover:
 		return domain.OperationImageGen
+	case domain.JobPosters:
+		return domain.OperationPosterGen
 	case domain.JobSalesPage:
 		return domain.OperationSalesPage
 	default:

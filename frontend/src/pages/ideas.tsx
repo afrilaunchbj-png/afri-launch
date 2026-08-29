@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router"
 import { useTranslation } from "react-i18next"
 import { Lightbulb, Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import { EmptyState } from "@/components/states/empty-state"
 import { ErrorState } from "@/components/states/error-state"
@@ -12,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { useJob } from "@/features/generation/hooks"
 import { useGenerateIdeas, useIdeas } from "@/features/ideas/hooks"
 import { useCreateProject } from "@/features/projects/hooks"
+import { isAppError } from "@/lib/errors"
 
 export default function IdeasPage() {
   const { t } = useTranslation()
@@ -27,43 +29,52 @@ export default function IdeasPage() {
   const { data: job } = useJob(jobId)
 
   useEffect(() => {
-    if (job && (job.status === "completed" || job.status === "failed")) {
+    if (!job) return
+    if (job.status === "completed") {
       refetch()
       setJobId(null)
+    } else if (job.status === "failed") {
+      toast.error(t("common.generationFailed", { error: job.error ?? "" }))
+      setJobId(null)
     }
-  }, [job, refetch])
+  }, [job, refetch, t])
 
   const handleGenerate = () => {
     generate.mutate(undefined, {
       onSuccess: (j) => setJobId(j.id),
+      onError: (error) => toast.error(isAppError(error) ? error.message : t("common.genericError")),
     })
   }
 
   const handleCreateProject = (ideaId: string, title: string, oppId?: string | null) => {
     createProject.mutate(
       { idea_id: ideaId, opportunity_id: oppId ?? null, title },
-      { onSuccess: (p) => navigate(`/projects/${p.id}`) },
+      {
+        onSuccess: (p) => navigate(`/projects/${p.id}`),
+        onError: (error) => toast.error(isAppError(error) ? error.message : t("common.genericError")),
+      },
     )
   }
 
-  const generating = job && (job.status === "pending" || job.status === "processing")
+  const generating = generate.isPending || (job && (job.status === "pending" || job.status === "processing"))
+  const creatingIdeaId = createProject.isPending ? createProject.variables?.idea_id ?? null : null
 
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("ideas.title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("ideas.subtitle")}</p>
+          <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("ideas:title")}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t("ideas:subtitle")}</p>
         </div>
         {opportunityId ? (
-          <Button size="touch" onClick={handleGenerate} disabled={generating}>
+          <Button size="touch" onClick={handleGenerate} disabled={generating} loading={generating}>
             <Plus className="h-4 w-4" />
-            {generating ? t("common.generating") : t("ideas.generate")}
+            {generating ? t("common.generating") : t("ideas:generate")}
           </Button>
         ) : null}
       </header>
 
-      {generating ? <LoadingState label={t("ideas.generatingHint")} /> : null}
+      {generating ? <LoadingState label={t("ideas:generatingHint")} /> : null}
 
       {isLoading ? (
         <LoadingState label={t("common.loading")} />
@@ -72,10 +83,11 @@ export default function IdeasPage() {
       ) : !ideas || ideas.length === 0 ? (
         <EmptyState
           icon={Lightbulb}
-          title={t("ideas.empty")}
-          description={opportunityId ? t("ideas.emptyDesc") : t("ideas.noOpportunity")}
-          actionLabel={opportunityId ? t("ideas.generate") : undefined}
+          title={t("ideas:empty")}
+          description={opportunityId ? t("ideas:emptyDesc") : t("ideas:noOpportunity")}
+          actionLabel={opportunityId ? t("ideas:generate") : undefined}
           onAction={opportunityId ? handleGenerate : undefined}
+          actionLoading={generating}
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -89,7 +101,7 @@ export default function IdeasPage() {
                 {idea.subtitle ? <p className="text-sm text-muted-foreground">{idea.subtitle}</p> : null}
                 {idea.audience ? (
                   <p className="text-xs text-muted-foreground">
-                    {t("ideas.audience")}: {idea.audience}
+                    {t("ideas:audience")}: {idea.audience}
                   </p>
                 ) : null}
                 {idea.format || idea.estimated_price ? (
@@ -102,8 +114,9 @@ export default function IdeasPage() {
                   className="mt-auto w-full sm:w-auto"
                   onClick={() => handleCreateProject(idea.id, idea.title, idea.opportunity_id ?? null)}
                   disabled={createProject.isPending}
+                  loading={creatingIdeaId === idea.id}
                 >
-                  {t("ideas.createProject")}
+                  {t("ideas:createProject")}
                 </Button>
               </CardContent>
             </Card>
@@ -113,7 +126,7 @@ export default function IdeasPage() {
 
       <div className="text-sm text-muted-foreground">
         <Link to="/opportunities" className="text-primary hover:underline">
-          ← {t("ideas.backToOpportunities")}
+          ← {t("ideas:backToOpportunities")}
         </Link>
       </div>
     </div>
