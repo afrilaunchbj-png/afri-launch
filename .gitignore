@@ -14,6 +14,9 @@ frontend/node_modules/
 # Playwright (artefacts de tests navigateur)
 .playwright-mcp/
 
+# Dev runtime (PIDs + logs de `make dev`)
+.dev/
+
 # Go
 backend/bin/
 backend/api

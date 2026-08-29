@@ -12,7 +12,12 @@ export default function RootProviders() {
   const navigate = useNavigate()
 
   return (
-    <NeonAuthUIProvider authClient={authClient} navigate={navigate} redirectTo="/dashboard">
+    <NeonAuthUIProvider
+      authClient={authClient}
+      navigate={navigate}
+      redirectTo="/dashboard"
+      social={{ providers: ["google"] }}
+    >
       <AuthProvider>
         <Outlet />
       </AuthProvider>
