@@ -105,6 +105,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Migration auth → Neon Auth** : vérifieur JWT EdDSA/JWKS (Go) + client `@neondatabase/neon-js`/`auth-ui` (FE), suppression argon2/refresh/Google PKCE maison.
 - [x] Test unitaire du vérifieur Neon (`TestNeonVerifier`) + test intégration ledger.
 - [x] **Abstractions IA (Go)** : ports `LLMProvider`/`ImageProvider`/`VideoProvider` + `ModelRouter` (`gpt-5.6-terra`/`gpt-5.6-luna`/`gpt-image-2`) + `infra/ai/openai.go` + `infra/ai/heygen.go` + config multi-clés + tests (httptest).
+- [x] **Pipeline documents (Go)** : `port.Renderer` + `infra/render` (chromedp : HTML → PDF / slides → PNG) + `infra/pptx` (assemblage PPTX image-par-slide) + `application/document` (service `GenerateEbook`/`GenerateDeck` + prompts avec le vocabulaire Impeccable) + tests (chromedp sur Chrome réel, pptx, prompts).
 
 ## Work In Progress
 
@@ -112,12 +113,11 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Remaining Work
 
-1. **Pipeline documents** : contenu JSON → templates HTML (thème + Impeccable) → chromedp → PDF/PPTX image-par-slide.
-2. **Génération d'idées** (`ProductIdea`/`IdeaVersion`) puis **création produit** (ebook) + **assets** + **page de vente**.
-3. **Object Storage** : adaptateur S3 (Neon) + URLs présignées.
-4. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
-5. **Workers asynq** (Research, LLM, Image, Video, Render, QC) — consomment `ai.Service` (déjà câblé dans `main.go`).
-6. **Tests** : unitaires + intégration + E2E.
+1. **Génération d'idées** (`ProductIdea`/`IdeaVersion`) puis **création produit** (ebook) + **assets** + **page de vente** — consomment `document.Service` + `ai.Service`.
+2. **Object Storage** : adaptateur S3 (Neon) + URLs présignées.
+3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+4. **Workers asynq** (Research, LLM, Image, Video, Render, QC) — consomment `ai.Service` / `document.Service` (déjà câblés dans `main.go`).
+5. **Tests** : unitaires + intégration + E2E.
 
 ## Known Issues
 
@@ -128,11 +128,12 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - Bundle frontend ~1.43 MB (SDK auth lourd) — code-splitting à faire.
 - Rate limiting in-memory (à migrer Redis).
 - `pnpm-workspace.yaml` créé (`onlyBuiltDependencies: [core-js]`) — sinon pnpm 11 échoue sur les scripts de build ignorés.
-- **Abstractions IA codées** (`LLMProvider`, `ModelRouter`, OpenAI, HeyGen) mais **pas encore consommées par des workers** ; chromedp et le pipeline HTML→PDF/PPTX restent à implémenter (`docs/ai.md`).
+- **Abstractions IA codées** (`LLMProvider`, `ModelRouter`, OpenAI, HeyGen) et **pipeline documents codé** (chromedp + prompts Impeccable + PDF/PPTX) mais **pas encore consommés par des workers/endpoints** ; la génération réelle requiert `OPENAI_API_KEY` et `HEYGEN_API_KEY`.
+- Le rendu (chromedp) nécessite **Chrome/Chromium** : présent en dev (`/usr/bin/google-chrome`), installé via `chromium` dans le Dockerfile backend (`CHROME_PATH=/usr/bin/chromium`).
 
 ## Tests & Validation
 
-- **Backend** : `go build/vet/test` OK. Tests : `TestNeonVerifier` (EdDSA/JWKS), `TestCreditLedgerLifecycle` (ledger), `TestModelRouter` + OpenAI/HeyGen (httptest).
+- **Backend** : `go build/vet/test` OK. Tests : `TestNeonVerifier` (EdDSA/JWKS), `TestCreditLedgerLifecycle` (ledger), `TestModelRouter` + OpenAI/HeyGen (httptest), prompts Impeccable, PPTX (zip), chromedp (Chrome réel : PDF + slides→PNG + PPTX).
 - **Frontend** : `pnpm typecheck` + `pnpm build` OK. Navigateur (Playwright) : home/login rendus (AuthView), dark mode, i18n — vérifié avant la migration auth ; le flux complet Neon Auth reste à tester avec de vraies credentials.
 
 ## Database & Migrations
@@ -146,8 +147,12 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `docs/ai.md` — architecture IA (providers, ModelRouter, pipeline HTML→PDF/PPTX, Impeccable).
 - `backend/internal/application/port/ai.go` — interfaces IA (`LLMProvider`, `ImageProvider`, `VideoProvider`).
 - `backend/internal/application/ai/` — `ModelRouter` + `Service` (routage modèle par tâche).
+- `backend/internal/application/port/render.go` — interface `Renderer` (HTML → PDF/PPTX).
+- `backend/internal/application/document/` — service de génération ebook/deck + prompts (Impeccable injecté).
 - `backend/internal/infra/ai/openai.go` — client OpenAI (chat + images).
 - `backend/internal/infra/ai/heygen.go` — client HeyGen (vidéo avatar, `/v3/videos`).
+- `backend/internal/infra/render/chromedp.go` — rendu chromedp (PDF + slides→PNG).
+- `backend/internal/infra/pptx/pptx.go` — assemblage PPTX image-par-slide.
 - `backend/internal/infra/auth/neon.go` — vérifieur JWT Neon (EdDSA/JWKS).
 - `backend/internal/application/port/ports.go` — interfaces (dont `TokenVerifier`, `AuthUser`).
 - `backend/internal/server/auth.go` + `authctx/` — middleware + identité.
@@ -160,16 +165,16 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Déploiement (Railway)
 
-- Deux services : **backend** (image `backend/Dockerfile`) et **frontend** (image `frontend/Dockerfile`).
-- Backend : env `DATABASE_URL`, `NEON_AUTH_BASE_URL` (+ `NEON_AUTH_JWKS_URL`), `ALLOWED_ORIGINS`, `OPENAI_API_KEY`, `HEYGEN_API_KEY` ; écoute sur `$PORT`. Healthcheck à pointer sur `/healthz` (le `/` renvoie 404 RFC 9457). Les migrations goose s'appliquent au boot de l'image.
-- Frontend : `VITE_API_URL` (URL publique du backend) et `VITE_NEON_AUTH_URL` passées en **build args** ; nginx écoute sur `$PORT` (template `nginx.conf.template`).
+- **IaC** : `.railway/railway.ts` (Infrastructure as Code) définit deux services (`backend`, `frontend`) avec leurs `rootDirectory`, healthchecks et variables non-secrètes.
+- `backend` : image `backend/Dockerfile` (build + migrations goose au boot + chromium pour chromedp). Healthcheck `/healthz` (`healthcheckTimeout: 300`). Secrets à définir dans le dashboard : `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`, `ALLOWED_ORIGINS` (= URL publique du frontend), `OPENAI_API_KEY`, `HEYGEN_API_KEY`.
+- `frontend` : image `frontend/Dockerfile` (nginx + fallback SPA). Healthcheck `/`. Variables injectées au build (ARG) : `VITE_API_URL` (= URL publique du backend), `VITE_NEON_AUTH_URL`.
+- Workflow : `railway login` + `railway link` puis `railway config plan` / `railway config apply` (package npm `railway` requis pour le DSL `railway/iac`).
 
 ## Next Steps
 
 1. Configurer Neon Auth côté console (enable auth, provider Google, trusted domains) + renseigner `NEON_AUTH_BASE_URL` / `VITE_NEON_AUTH_URL`, puis tester le parcours complet.
-2. Implémenter le **pipeline documents** (templates HTML + chromedp + export PDF/PPTX), en injectant le skill Impeccable dans le prompt.
-3. Génération d'idées → création produit (ebook) → assets → page de vente.
-4. Object Storage (Neon S3) + paiements Mobile Money + workers asynq (consommer `ai.Service`).
+2. **Génération d'idées** → **création produit** (ebook) → **assets** → **page de vente** — consomment `document.Service` + `ai.Service`.
+3. Object Storage (Neon S3) + paiements Mobile Money + workers asynq (consommer `ai.Service` / `document.Service`).
 
 ## Notes for the Next Agent
 
