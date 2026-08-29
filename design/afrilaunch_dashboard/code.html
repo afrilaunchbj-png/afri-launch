@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AfriLaunch - Dashboard</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Lexend (Display/Headline) & Inter (Body/Label) -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Lexend:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#bfc9c3",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-container": "#ea9e93",
+                    "tertiary-fixed": "#ffdad5",
+                    "success-emerald": "#059669",
+                    "tertiary": "#4f1f19",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-lowest": "#ffffff",
+                    "text-rich-black": "#111827",
+                    "primary": "#003527",
+                    "on-secondary-container": "#684000",
+                    "on-primary-container": "#80bea6",
+                    "surface-dim": "#d9dadb",
+                    "on-primary-fixed": "#002117",
+                    "tertiary-fixed-dim": "#ffb4a9",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-surface": "#191c1d",
+                    "on-tertiary-fixed": "#380d08",
+                    "surface-tint": "#2b6954",
+                    "surface-container-low": "#f3f4f5",
+                    "tertiary-container": "#6b342d",
+                    "background": "#f8f9fa",
+                    "secondary-fixed": "#ffddb8",
+                    "inverse-primary": "#95d3ba",
+                    "surface": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "secondary": "#855300",
+                    "surface-variant": "#e1e3e4",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f8f9fa",
+                    "surface-container-high": "#e7e8e9",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "on-primary-fixed-variant": "#0b513d",
+                    "on-background": "#191c1d",
+                    "innovation-amber": "#D97706",
+                    "surface-white": "#FFFFFF",
+                    "primary-fixed": "#b0f0d6",
+                    "on-error": "#ffffff",
+                    "primary-container": "#064e3b",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed-variant": "#6e372f",
+                    "secondary-container": "#fea619",
+                    "outline": "#707974",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#404944",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#95d3ba"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-margin-mobile": "16px",
+                    "base": "8px",
+                    "container-margin-desktop": "40px",
+                    "touch-target-min": "48px"
+            },
+            "fontFamily": {
+                    "display-lg": [
+                            "Lexend"
+                    ],
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "label-md": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Lexend"
+                    ],
+                    "headline-lg-mobile": [
+                            "Lexend"
+                    ],
+                    "label-sm": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Lexend"
+                    ]
+            },
+            "fontSize": {
+                    "display-lg": [
+                            "48px",
+                            {
+                                    "lineHeight": "56px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "body-lg": [
+                            "18px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "body-md": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "letterSpacing": "0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "32px",
+                            {
+                                    "lineHeight": "40px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "28px",
+                            {
+                                    "lineHeight": "36px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "label-sm": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "headline-md": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 1,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col md:flex-row">
+<!-- TopNavBar (Mobile Only) -->
+<header class="bg-surface shadow-sm docked full-width top-0 sticky flex justify-between items-center px-container-margin-mobile py-4 w-full z-50 md:hidden border-b border-outline-variant">
+<div class="font-display-lg text-headline-md text-primary">AfriLaunch</div>
+<div class="flex items-center gap-4">
+<button aria-label="account_balance_wallet" class="text-primary h-touch-target-min w-touch-target-min flex items-center justify-center hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+<button aria-label="notifications" class="text-primary h-touch-target-min w-touch-target-min flex items-center justify-center hover:bg-surface-container-low rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg h-touch-target-min active:scale-95 duration-150">
+                Buy Credits
+            </button>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="A detailed 50-100 word prompt..." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBkoJtOGOea1L90hP_R4mG-FPtHrCPI7vj-QCP-qDas2sWzXeCBocS2kyRGH4RNkczN60FDbV2Cshqj8hXhAK9pzXxbBDtP8O5votbrPe-WLzVUKbvo__SEkjPe5BmwAfmqudMQAxmG7hiJWnBGxYJen_kf7i_Eqed1Rb5dcGSGfn2nDSLSXfJR8haLtNwAwzpbVHHAmuaqkxMktyR2wiPU75k-VB2bX2x06Gm9Q6ED460l5oj1TEQ"/>
+</div>
+</header>
+<!-- SideNavBar (Desktop Only) -->
+<nav class="bg-surface-container-low shadow-md h-screen w-64 hidden md:flex flex-col left-0 top-0 fixed py-6 z-40 border-r border-outline-variant">
+<div class="px-6 mb-8 flex flex-col gap-4">
+<div class="font-display-lg text-headline-md text-primary">AfriLaunch</div>
+<div class="flex items-center gap-3 mt-4">
+<img alt="Entrepreneur Profile" class="w-12 h-12 rounded-full object-cover border-2 border-primary-container" data-alt="A detailed 50-100 word prompt..." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2vpRjMS3swuGWoJ1otW4VQwy-b1v94k_hvzST1P8YkxHq70sMLDcdyIZ1hHV8EDCrHiOQ7vJSxKe-1HTgBBND113IrMpVk-LHV3n4KIqAZ2aZPyUmCbDAXUoznfgVgC4zSFQCnZDp-ujzAUABMc_mIdxxZ3MjTHtheGxRNHMCwdzrxDzYHmcdOB1XFTeVIs8h8h1WAi30iOvEzCIw6apAPYgofA9eq3Ke5d3QDx0YUrMrE3VNY4-T"/>
+<div>
+<div class="font-label-md text-label-md text-on-surface">Sarah's Studio</div>
+<div class="font-label-sm text-label-sm text-innovation-amber mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">monetization_on</span>
+                        120 Credits Remaining
+                    </div>
+</div>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md rounded-lg h-touch-target-min w-full mt-4 flex items-center justify-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
+<span class="material-symbols-outlined">add</span>
+                New Project
+            </button>
+</div>
+<div class="flex-1 flex flex-col gap-2 overflow-y-auto mt-4 px-2">
+<!-- Explicit intent mismatch, so active is none, or closest is Home/Dashboard which is not in the JSON tab list. Defaulting to first item visually inactive, but keeping JSON exact for structure -->
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-md text-label-md">Research</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">lightbulb</span>
+<span class="font-label-md text-label-md">Ideation</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+<span class="font-label-md text-label-md">Creation</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-label-md text-label-md">Marketing</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-label-md text-label-md">Sales</span>
+</a>
+</div>
+<div class="mt-auto px-2 border-t border-outline-variant pt-4 flex flex-col gap-2">
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-high transition-all rounded-lg active:opacity-80" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 md:ml-64 w-full p-container-margin-mobile md:p-container-margin-desktop mb-24 md:mb-0">
+<!-- Welcome Header -->
+<section class="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Bonjour Sarah</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Prête à transformer vos idées en réalité aujourd'hui ?</p>
+</div>
+<!-- Desktop Credit Summary Widget (Floating glassmorphism style) -->
+<div class="hidden md:flex items-center gap-4 bg-surface-white p-4 rounded-xl shadow-[0_6px_12px_-2px_rgba(0,0,0,0.1)] border border-surface-container-high backdrop-blur-md bg-opacity-80">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined text-[24px]">monetization_on</span>
+</div>
+<div>
+<div class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Solde Actuel</div>
+<div class="font-headline-md text-headline-md text-innovation-amber">120 Crédits</div>
+</div>
+<button class="ml-4 bg-primary text-on-primary font-label-md text-label-md px-6 py-2 rounded-lg h-touch-target-min hover:bg-primary-container transition-colors shadow-sm">
+                    Recharger
+                </button>
+</div>
+</section>
+<!-- Active Generation Progress (Asymmetric Placement) -->
+<section class="mb-12 bg-surface-white rounded-2xl p-6 shadow-[0_6px_12px_-2px_rgba(0,0,0,0.1)] border border-surface-container relative overflow-hidden group">
+<div class="absolute right-0 top-0 w-32 h-32 bg-secondary-container opacity-10 rounded-bl-full translate-x-8 -translate-y-8"></div>
+<div class="flex items-center justify-between mb-4 relative z-10">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container animate-pulse">
+<span class="material-symbols-outlined">auto_awesome</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-primary">Génération en cours</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Ebook : Stratégies de Vente B2B</p>
+</div>
+</div>
+<span class="font-headline-md text-headline-md text-innovation-amber">65%</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-3 mb-2 relative z-10 overflow-hidden">
+<div class="bg-innovation-amber h-3 rounded-full transition-all duration-1000 ease-out" style="width: 65%"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant text-right relative z-10">Temps estimé : 2 minutes</p>
+</section>
+<!-- Bento Grid Layout for Dashboard Core -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter mb-12">
+<!-- Quick Actions (Spans 8 cols on desktop) -->
+<section class="md:col-span-8">
+<h2 class="font-headline-md text-headline-md text-primary mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-innovation-amber">bolt</span>
+                    Actions Rapides
+                </h2>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+<!-- Action Card 1 -->
+<button class="bg-surface-white p-6 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-surface-container hover:shadow-[0_8px_16px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-4 text-left group min-h-[160px]">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low group-hover:bg-primary-container flex items-center justify-center text-primary group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">search_insights</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Rechercher une opportunité</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 line-clamp-2">Analysez le marché pour trouver votre niche.</p>
+</div>
+</button>
+<!-- Action Card 2 -->
+<button class="bg-surface-white p-6 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-surface-container hover:shadow-[0_8px_16px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-4 text-left group min-h-[160px]">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low group-hover:bg-primary-container flex items-center justify-center text-primary group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Créer un produit</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 line-clamp-2">Générez des concepts et descriptions.</p>
+</div>
+</button>
+<!-- Action Card 3 -->
+<button class="bg-surface-white p-6 rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-surface-container hover:shadow-[0_8px_16px_rgba(0,0,0,0.1)] hover:-translate-y-1 transition-all duration-300 flex flex-col items-start gap-4 text-left group min-h-[160px]">
+<div class="w-12 h-12 rounded-lg bg-surface-container-low group-hover:bg-primary-container flex items-center justify-center text-primary group-hover:text-on-primary-container transition-colors">
+<span class="material-symbols-outlined">campaign</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface">Générer du marketing</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1 line-clamp-2">Créez des campagnes percutantes.</p>
+</div>
+</button>
+</div>
+</section>
+<!-- Recent Projects (Spans 4 cols on desktop) -->
+<section class="md:col-span-4 flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<h2 class="font-headline-md text-headline-md text-primary">Projets Récents</h2>
+<button class="text-primary font-label-sm text-label-sm hover:underline">Voir tout</button>
+</div>
+<div class="bg-surface-white rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-surface-container flex-1 overflow-hidden">
+<!-- Divided List -->
+<div class="divide-y divide-surface-container">
+<div class="p-4 hover:bg-surface-container-lowest transition-colors flex items-center justify-between min-h-[64px] cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-innovation-amber"></div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Ebook Stratégies B2B</h4>
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary-fixed text-on-secondary-fixed mt-1">En Cours</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="p-4 hover:bg-surface-container-lowest transition-colors flex items-center justify-between min-h-[64px] cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-success-emerald"></div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Campagne Lancement Q3</h4>
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-primary-fixed text-on-primary-fixed mt-1">Terminé</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<div class="p-4 hover:bg-surface-container-lowest transition-colors flex items-center justify-between min-h-[64px] cursor-pointer group">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface">Pitch Deck Investisseurs</h4>
+<span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold bg-surface-container-highest text-on-surface-variant mt-1">Brouillon</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="bg-surface-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] fixed bottom-0 w-full z-50 md:hidden rounded-t-xl border-t border-outline-variant left-0 flex justify-around items-center px-2 py-3">
+<!-- Assuming Dashboard intent is closest to "Research" for initial state or none. Highlighting none explicitly to match exact semantic mapping rule (no generic highlighting if not a direct match), but for structural completeness showing inactive states -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200 min-h-touch-target-min" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-sm text-label-sm mt-1">Research</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200 min-h-touch-target-min" href="#">
+<span class="material-symbols-outlined">lightbulb</span>
+<span class="font-label-sm text-label-sm mt-1">Ideation</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200 min-h-touch-target-min" href="#">
+<span class="material-symbols-outlined">add_circle</span>
+<span class="font-label-sm text-label-sm mt-1">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200 min-h-touch-target-min" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-label-sm text-label-sm mt-1">Market</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200 min-h-touch-target-min" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-sm text-label-sm mt-1">Sales</span>
+</a>
+</nav>
+</body></html>

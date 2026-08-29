@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Builds
+frontend/dist/
+frontend/node_modules/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Playwright (artefacts de tests navigateur)
+.playwright-mcp/
+
+# Go
+backend/bin/
+backend/api
+*.exe
+
+# Logs
+*.log
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

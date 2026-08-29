@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Product Creation &amp; Async Generation</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Lexend:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#bfc9c3",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-container": "#ea9e93",
+                    "tertiary-fixed": "#ffdad5",
+                    "success-emerald": "#059669",
+                    "tertiary": "#4f1f19",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-lowest": "#ffffff",
+                    "text-rich-black": "#111827",
+                    "primary": "#003527",
+                    "on-secondary-container": "#684000",
+                    "on-primary-container": "#80bea6",
+                    "surface-dim": "#d9dadb",
+                    "on-primary-fixed": "#002117",
+                    "tertiary-fixed-dim": "#ffb4a9",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-surface": "#191c1d",
+                    "on-tertiary-fixed": "#380d08",
+                    "surface-tint": "#2b6954",
+                    "surface-container-low": "#f3f4f5",
+                    "tertiary-container": "#6b342d",
+                    "background": "#f8f9fa",
+                    "secondary-fixed": "#ffddb8",
+                    "inverse-primary": "#95d3ba",
+                    "surface": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "secondary": "#855300",
+                    "surface-variant": "#e1e3e4",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f8f9fa",
+                    "surface-container-high": "#e7e8e9",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "on-primary-fixed-variant": "#0b513d",
+                    "on-background": "#191c1d",
+                    "innovation-amber": "#D97706",
+                    "surface-white": "#FFFFFF",
+                    "primary-fixed": "#b0f0d6",
+                    "on-error": "#ffffff",
+                    "primary-container": "#064e3b",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed-variant": "#6e372f",
+                    "secondary-container": "#fea619",
+                    "outline": "#707974",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#404944",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#95d3ba"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-margin-mobile": "16px",
+                    "base": "8px",
+                    "container-margin-desktop": "40px",
+                    "touch-target-min": "48px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Lexend"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Lexend"],
+                    "headline-lg-mobile": ["Lexend"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Lexend"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Base styles and utilities not covered by Tailwind config */
+        body {
+            background-color: #f8f9fa; /* surface */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Level 1 Elevation as per guidelines */
+        .elevation-1 {
+            box-shadow: 0px 2px 12px 0px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Pulsing animation for AI writing state */
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-ai-pulse {
+            animation: subtle-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Conic gradient for quality score ring */
+        .quality-ring {
+            background: conic-gradient(var(--tw-colors-success-emerald) 87%, var(--tw-colors-surface-container-high) 0);
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md text-on-surface bg-surface min-h-screen flex flex-col">
+<!-- TopNavBar (JSON Implemented) -->
+<nav class="docked full-width top-0 sticky shadow-sm bg-surface flex justify-between items-center px-container-margin-mobile md:px-container-margin-desktop py-4 w-full z-50">
+<div class="font-display-lg text-headline-md text-primary">AfriLaunch</div>
+<div class="flex items-center gap-4">
+<button class="hidden sm:flex bg-surface-container-lowest border border-primary text-primary px-4 py-2 rounded-lg font-label-md min-h-[48px] items-center justify-center hover:bg-surface-container-low transition-colors">
+                Buy Credits
+            </button>
+<div class="flex gap-2 text-primary">
+<button class="hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer flex items-center justify-center min-h-[48px] min-w-[48px]">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+<button class="hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer flex items-center justify-center min-h-[48px] min-w-[48px]">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<img class="w-10 h-10 rounded-full object-cover border-2 border-primary-container hidden sm:block" data-alt="Close-up portrait of a confident African entrepreneur with a warm smile, wearing modern business casual attire against a clean, bright light-mode background, symbolizing trust and local expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4L53X5qbhKoQugH-_HpGIN1CHBcfD66DJlkT85kFbIuUXMuxGOf8Usc-OtgNDGYXUarl_YrHt6EVfk1CTrGdFlwn2yElSiZrC-v0jkIm1ve1Ul4XHTPSE5_IHt9cD4X5zWdctK1Yh6mvVnU9_cFrtBTKGilajJz3p50g5su53chZv5RXnybthuPMghHiRYqT3WFY7gZqX4XV8HyyMjO2N43r_QkPOclxOzrxOZeL4T1ncoGloAwiV"/>
+</div>
+</nav>
+<!-- SideNavBar (JSON Implemented, Desktop Only) -->
+<aside class="h-screen w-64 hidden md:flex flex-col left-0 top-[76px] fixed bg-surface-container-low shadow-md z-40">
+<div class="flex flex-col h-full py-6 pb-24">
+<!-- Header -->
+<div class="px-6 mb-8 flex flex-col items-center">
+<img class="w-16 h-16 rounded-full mb-2 object-cover" data-alt="Professional headshot of an African businesswoman named Sarah, looking focused and driven in a well-lit, contemporary workspace, reflecting a localized corporate modernism aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtHaFvf5gldHVPmpDIxbaAZs6155_lchTwmkgX-ZuHF6suAhwECGs5eOI2d03FvJcdOIprudFnbsKFaCX1NHeJMadEAzyZY2eW4BG99stfg-fcyd1G_TjIDGJOngcbfONWquW1kVjTqU6S-5kIGLi7GOH7vx1hAmOkk8nbCN0WVXDnTM-if_p01_9fQ5Z1NbhPlTqt08j3sysFGktCZsD569vOUzoJr65iz-nPKWHw8Tx2t1cgAWnF"/>
+<div class="font-label-md text-label-md text-on-surface">Sarah's Studio</div>
+<div class="font-body-md text-label-sm text-on-surface-variant mt-1">120 Credits Remaining</div>
+<button class="mt-4 w-full bg-primary text-on-primary py-2 rounded-lg font-label-md min-h-[48px] hover:opacity-90 transition-opacity">New Project</button>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 flex flex-col gap-2">
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-highest transition-all rounded-lg font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined">insights</span> Research
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-highest transition-all rounded-lg font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined">lightbulb</span> Ideation
+                </a>
+<!-- Active State -->
+<a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg p-3 mx-2 font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined filled">edit_document</span> Creation
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-highest transition-all rounded-lg font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined">campaign</span> Marketing
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-highest transition-all rounded-lg font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined">storefront</span> Sales
+                </a>
+</nav>
+<nav class="flex flex-col gap-2 mt-auto">
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-highest transition-all rounded-lg font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined">settings</span> Settings
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant p-3 mx-2 hover:bg-surface-container-highest transition-all rounded-lg font-label-md text-label-md min-h-[48px]" href="#">
+<span class="material-symbols-outlined">help</span> Support
+                </a>
+</nav>
+</div>
+</aside>
+<!-- Main Workspace Area -->
+<main class="flex-1 md:ml-64 relative pb-24 md:pb-12">
+<div class="max-w-7xl mx-auto px-container-margin-mobile md:px-container-margin-desktop py-8">
+<!-- Top Controls Row -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<!-- Step Indicator -->
+<div class="w-full md:w-auto">
+<h1 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-6">Product Generator</h1>
+<div class="flex items-center justify-between md:justify-start gap-2 md:gap-4 overflow-x-auto pb-2 scrollbar-hide">
+<!-- Step 1: Done -->
+<div class="flex items-center gap-2 group cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-md text-label-sm">
+<span class="material-symbols-outlined text-[16px]">check</span>
+</div>
+<span class="font-label-md text-label-sm text-primary hidden sm:block">Outline</span>
+</div>
+<div class="w-8 md:w-12 h-[2px] bg-primary"></div>
+<!-- Step 2: Active -->
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-md text-label-sm ring-4 ring-primary/20">
+                                2
+                            </div>
+<span class="font-label-md text-label-sm text-primary font-bold">Content</span>
+</div>
+<div class="w-8 md:w-12 h-[2px] bg-outline-variant"></div>
+<!-- Step 3: Pending -->
+<div class="flex items-center gap-2 opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center font-label-md text-label-sm">
+                                3
+                            </div>
+<span class="font-label-md text-label-sm text-on-surface-variant hidden sm:block">Assets</span>
+</div>
+<div class="w-8 md:w-12 h-[2px] bg-outline-variant opacity-50"></div>
+<!-- Step 4: Pending -->
+<div class="flex items-center gap-2 opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center font-label-md text-label-sm">
+                                4
+                            </div>
+<span class="font-label-md text-label-sm text-on-surface-variant hidden sm:block">Marketing</span>
+</div>
+<div class="w-8 md:w-12 h-[2px] bg-outline-variant opacity-50"></div>
+<!-- Step 5: Pending -->
+<div class="flex items-center gap-2 opacity-50">
+<div class="w-8 h-8 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center font-label-md text-label-sm">
+                                5
+                            </div>
+</div>
+</div>
+</div>
+<!-- Local Context Toggle -->
+<div class="flex items-center gap-3 bg-surface-white elevation-1 rounded-full px-4 py-2 min-h-[48px]">
+<span class="material-symbols-outlined text-primary">public</span>
+<span class="font-label-md text-label-md text-on-surface">Local Context (Kenya)</span>
+<label class="relative inline-flex items-center cursor-pointer ml-2">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success-emerald"></div>
+</label>
+</div>
+</div>
+<!-- Main Editor and Side Panel Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Main Editor Area (Canvas) -->
+<div class="lg:col-span-2 bg-surface-white rounded-xl elevation-1 flex flex-col min-h-[600px] overflow-hidden">
+<!-- Editor Toolbar (Simulated) -->
+<div class="border-b border-surface-container-highest p-4 flex items-center gap-4 text-on-surface-variant overflow-x-auto scrollbar-hide">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">format_bold</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">format_italic</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">format_h1</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+<div class="w-px h-6 bg-surface-container-highest mx-2"></div>
+<span class="font-label-sm text-label-sm text-outline px-2 py-1 bg-surface-container rounded">Auto-saving...</span>
+</div>
+<!-- Editor Content -->
+<div class="p-6 md:p-10 flex-1 overflow-y-auto">
+<h2 class="font-headline-md text-headline-md text-primary mb-6">Chapter 2: Sourcing Materials in Nairobi</h2>
+<p class="font-body-lg text-body-lg text-on-surface mb-4 leading-relaxed">
+                            When building an e-commerce brand focused on authentic craftsmanship, navigating the local markets is crucial. In Nairobi, areas like the Maasai Market or Gikomba offer incredible raw materials, but establishing reliable supply chains requires relationship building.
+                        </p>
+<p class="font-body-lg text-body-lg text-on-surface mb-6 leading-relaxed">
+                            The first step is identifying primary vendors who consistently source high-quality fabrics and beadwork. It's not just about the transaction; it's about understanding their sourcing methods to ensure ethical practices align with your brand values.
+                        </p>
+<!-- AI Writing State (Pulsing Skeleton/Text) -->
+<div class="animate-ai-pulse border-l-4 border-innovation-amber pl-4 py-2 mt-8">
+<h3 class="font-label-md text-label-md text-innovation-amber mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span> AI is drafting...
+                            </h3>
+<div class="space-y-3">
+<div class="h-4 bg-surface-container rounded w-3/4"></div>
+<div class="h-4 bg-surface-container rounded w-full"></div>
+<div class="h-4 bg-surface-container rounded w-5/6"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Side Panel (Insights & Score) -->
+<div class="flex flex-col gap-6">
+<!-- Quality Score Card -->
+<div class="bg-surface-white rounded-xl elevation-1 p-6 flex flex-col items-center text-center">
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-6 w-full text-left">Content Quality</h3>
+<!-- Custom CSS Ring -->
+<div class="relative w-32 h-32 quality-ring flex items-center justify-center mb-4">
+<div class="absolute inset-2 bg-surface-white rounded-full flex flex-col items-center justify-center">
+<span class="font-display-lg text-headline-lg text-primary">87</span>
+</div>
+</div>
+<p class="font-label-md text-label-md text-success-emerald mb-1">Excellent Localization</p>
+<p class="font-body-md text-label-sm text-on-surface-variant">Your content is highly relevant to the East African market context.</p>
+</div>
+<!-- AI Suggestions Card -->
+<div class="bg-surface-white rounded-xl elevation-1 overflow-hidden flex-1 flex flex-col">
+<div class="p-6 border-b border-surface-container-highest flex items-center justify-between bg-surface-bright">
+<h3 class="font-label-md text-label-md text-on-surface">AI Suggestions</h3>
+<span class="material-symbols-outlined text-innovation-amber">lightbulb</span>
+</div>
+<!-- Divided List -->
+<div class="flex flex-col divide-y divide-surface-container-highest">
+<div class="p-4 hover:bg-surface-container-lowest transition-colors cursor-pointer flex gap-4 min-h-[64px] items-start">
+<span class="material-symbols-outlined text-primary mt-1">add_circle</span>
+<div>
+<p class="font-label-md text-label-sm text-on-surface mb-1">Include Logistics Example</p>
+<p class="font-body-md text-label-sm text-on-surface-variant line-clamp-2">Mention integrating with local courier services like Sendy or Fargo Courier for realism.</p>
+</div>
+</div>
+<div class="p-4 hover:bg-surface-container-lowest transition-colors cursor-pointer flex gap-4 min-h-[64px] items-start">
+<span class="material-symbols-outlined text-primary mt-1">spellcheck</span>
+<div>
+<p class="font-label-md text-label-sm text-on-surface mb-1">Tone Adjustment</p>
+<p class="font-body-md text-label-sm text-on-surface-variant line-clamp-2">Make the closing paragraph slightly more persuasive for investor reading.</p>
+</div>
+</div>
+<div class="p-4 hover:bg-surface-container-lowest transition-colors cursor-pointer flex gap-4 min-h-[64px] items-start">
+<span class="material-symbols-outlined text-outline-variant mt-1">check_circle</span>
+<div>
+<p class="font-label-md text-label-sm text-outline line-through mb-1">Define "M-Pesa API"</p>
+<p class="font-body-md text-label-sm text-outline line-clamp-1">Applied automatically.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Action Bar (Contextual to the canvas flow) -->
+<div class="fixed bottom-20 md:bottom-8 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-4 bg-surface-white p-2 rounded-full elevation-1 border border-surface-container-highest">
+<div class="bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1 ml-2">
+<span class="material-symbols-outlined text-[16px]">toll</span> -20 Credits
+        </div>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md text-label-md flex items-center gap-2 hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md min-h-[48px]">
+            Generate Next Chapter
+            <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+<!-- Status Toast (Top Right Overlay) -->
+<div class="fixed top-24 right-4 md:right-8 z-50 bg-surface-container-highest text-on-surface rounded-lg shadow-lg overflow-hidden border border-outline-variant w-80 max-w-[calc(100vw-2rem)]">
+<div class="p-4 flex items-start gap-3">
+<span class="material-symbols-outlined text-innovation-amber animate-spin">sync</span>
+<div class="flex-1">
+<p class="font-label-md text-label-md mb-1">AI is writing...</p>
+<p class="font-body-md text-label-sm text-on-surface-variant">Please wait (ETA: 4 mins)</p>
+</div>
+</div>
+<!-- Progress Bar Indicator -->
+<div class="h-1 w-full bg-surface-container-high">
+<div class="h-full bg-innovation-amber w-1/3 rounded-r-full transition-all duration-1000 ease-in-out"></div>
+</div>
+</div>
+<!-- BottomNavBar (JSON Implemented, Mobile Only) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-2 py-3 bg-surface-white border-t border-outline-variant shadow-lg z-50 md:hidden rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 min-h-[48px]" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Research</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 min-h-[48px]" href="#">
+<span class="material-symbols-outlined">lightbulb</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Ideation</span>
+</a>
+<!-- Active State -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-2xl px-4 py-1 active:scale-90 transition-transform duration-200 min-h-[48px]" href="#">
+<span class="material-symbols-outlined filled">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 min-h-[48px]" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Market</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 min-h-[48px]" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Sales</span>
+</a>
+</nav>
+</body></html>

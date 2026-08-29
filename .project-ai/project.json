@@ -1,0 +1,20 @@
+{
+  "name": "AfriLaunch",
+  "description": "SaaS de création de produits digitaux pour les marchés africains (recherche d'opportunités, génération d'ebook, assets marketing, crédits, paiements Mobile Money).",
+  "stack": {
+    "frontend": { "framework": "React 19", "ui": "shadcn/ui + Radix UI", "build": "Vite", "router": "React Router 7" },
+    "backend": { "framework": "Go 1.23", "http": "chi" },
+    "database": { "type": "PostgreSQL", "orm": "sqlc + pgx/v5" },
+    "cache": "Redis",
+    "queue": "asynq (Redis)",
+    "quality": { "linter": "gofmt/go vet (Go) + ESLint (FE)", "formatter": "gofmt + Prettier" },
+    "tests": { "unit": "go testing/testify + Vitest", "e2e": "Playwright" },
+    "build": { "packageManager": "pnpm (FE) / go (BE)", "monorepo": "backend/ + frontend/" }
+  },
+  "architecture": {
+    "pattern": "Clean Architecture (ports/adapters) côté Go ; feature-based côté React",
+    "monorepo": false
+  },
+  "conventions": ["i18n FR/EN", "dark mode class", "form pattern react-hook-form+zod", "list pattern TanStack Table", "RFC 9457 errors", "lucide-react icons"],
+  "generatedBy": "@asaje/skills"
+}

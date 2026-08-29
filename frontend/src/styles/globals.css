@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Design tokens — « Emerald & Amber Ledger »
+   (design/emerald_amber_ledger/DESIGN.md)
+   ============================================================ */
+@layer base {
+  :root {
+    --background: 210 17% 98%;           /* #f8f9fa */
+    --foreground: 195 7% 11%;            /* #191c1d */
+
+    --card: 0 0% 100%;                   /* #ffffff */
+    --card-foreground: 195 7% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 195 7% 11%;
+
+    --primary: 164 100% 10%;             /* #003527 — deep emerald */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 37 100% 26%;            /* #855300 — warm amber */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 6% 93%;                 /* surface-container #edeeef */
+    --muted-foreground: 147 7% 27%;      /* on-surface-variant #404944 */
+
+    --accent: 37 99% 55%;                /* secondary-container #fea619 */
+    --accent-foreground: 37 100% 20%;    /* on-secondary-container #684000 */
+
+    --destructive: 0 75% 42%;            /* error #ba1a1a */
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 161 94% 30%;              /* success-emerald #059669 */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 32 95% 44%;               /* innovation-amber #D97706 */
+    --warning-foreground: 0 0% 100%;
+
+    --border: 144 8% 77%;                /* outline-variant #bfc9c3 */
+    --input: 144 8% 77%;
+    --ring: 164 100% 10%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 165 25% 8%;
+    --foreground: 210 17% 95%;
+
+    --card: 165 15% 12%;
+    --card-foreground: 210 17% 95%;
+
+    --popover: 165 15% 12%;
+    --popover-foreground: 210 17% 95%;
+
+    --primary: 156 41% 71%;              /* inverse-primary #95d3ba */
+    --primary-foreground: 162 100% 6%;
+
+    --secondary: 37 99% 55%;             /* #fea619 */
+    --secondary-foreground: 37 100% 20%;
+
+    --muted: 165 12% 18%;
+    --muted-foreground: 144 8% 70%;
+
+    --accent: 37 99% 55%;
+    --accent-foreground: 37 100% 20%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 161 94% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 32 95% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 165 8% 25%;
+    --input: 165 8% 25%;
+    --ring: 156 41% 71%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .bg-dot-pattern {
+    background-image: radial-gradient(hsl(var(--muted-foreground) / 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}

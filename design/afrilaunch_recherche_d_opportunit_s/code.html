@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Market Research - AfriLaunch</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "outline-variant": "#bfc9c3",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary": "#ffffff",
+                    "on-tertiary-container": "#ea9e93",
+                    "tertiary-fixed": "#ffdad5",
+                    "success-emerald": "#059669",
+                    "tertiary": "#4f1f19",
+                    "inverse-on-surface": "#f0f1f2",
+                    "surface-container-lowest": "#ffffff",
+                    "text-rich-black": "#111827",
+                    "primary": "#003527",
+                    "on-secondary-container": "#684000",
+                    "on-primary-container": "#80bea6",
+                    "surface-dim": "#d9dadb",
+                    "on-primary-fixed": "#002117",
+                    "tertiary-fixed-dim": "#ffb4a9",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#2a1700",
+                    "on-surface": "#191c1d",
+                    "on-tertiary-fixed": "#380d08",
+                    "surface-tint": "#2b6954",
+                    "surface-container-low": "#f3f4f5",
+                    "tertiary-container": "#6b342d",
+                    "background": "#f8f9fa",
+                    "secondary-fixed": "#ffddb8",
+                    "inverse-primary": "#95d3ba",
+                    "surface": "#f8f9fa",
+                    "surface-container": "#edeeef",
+                    "secondary": "#855300",
+                    "surface-variant": "#e1e3e4",
+                    "on-tertiary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-bright": "#f8f9fa",
+                    "surface-container-high": "#e7e8e9",
+                    "secondary-fixed-dim": "#ffb95f",
+                    "on-secondary-fixed-variant": "#653e00",
+                    "on-primary-fixed-variant": "#0b513d",
+                    "on-background": "#191c1d",
+                    "innovation-amber": "#D97706",
+                    "surface-white": "#FFFFFF",
+                    "primary-fixed": "#b0f0d6",
+                    "on-error": "#ffffff",
+                    "primary-container": "#064e3b",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed-variant": "#6e372f",
+                    "secondary-container": "#fea619",
+                    "outline": "#707974",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#404944",
+                    "error-container": "#ffdad6",
+                    "primary-fixed-dim": "#95d3ba"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "container-margin-mobile": "16px",
+                    "base": "8px",
+                    "container-margin-desktop": "40px",
+                    "touch-target-min": "48px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Lexend"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Lexend"],
+                    "headline-lg-mobile": ["Lexend"],
+                    "label-sm": ["Inter"],
+                    "headline-md": ["Lexend"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lexend:wght@600;700&display=swap');
+        
+        /* Utility for ambient shadows based on guidelines */
+        .shadow-level-1 {
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .shadow-level-2 {
+            box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col md:flex-row overflow-x-hidden">
+<!-- Desktop SideNavBar (from JSON) -->
+<nav class="h-screen w-64 hidden md:flex flex-col left-0 top-0 fixed bg-surface-container-low shadow-md z-40">
+<div class="flex flex-col h-full py-6">
+<!-- Brand Anchor -->
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary">rocket_launch</span>
+</div>
+<div>
+<h1 class="font-display-lg text-headline-md text-primary">Sarah's Studio</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">120 Credits Remaining</p>
+</div>
+</div>
+<!-- CTA -->
+<div class="px-4 mb-6">
+<button class="w-full min-h-[48px] bg-primary text-on-primary font-label-md text-label-md rounded-lg flex items-center justify-center gap-2 hover:bg-surface-tint transition-colors">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                    New Project
+                </button>
+</div>
+<!-- Main Links -->
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-3 bg-primary-container text-on-primary-container rounded-lg p-3 mx-2 font-label-md text-label-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+                    Research
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg p-3 mx-2 font-label-md text-label-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">lightbulb</span>
+                    Ideation
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg p-3 mx-2 font-label-md text-label-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">edit_document</span>
+                    Creation
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg p-3 mx-2 font-label-md text-label-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">campaign</span>
+                    Marketing
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg p-3 mx-2 font-label-md text-label-md active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">storefront</span>
+                    Sales
+                </a>
+</div>
+<!-- Footer Links -->
+<div class="mt-auto space-y-1 pt-4 border-t border-outline-variant/30">
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg p-3 mx-2 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-lg p-3 mx-2 font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">help</span>
+                    Support
+                </a>
+</div>
+</div>
+</nav>
+<!-- Mobile TopNavBar (from JSON logic, simplified for canvas priority) -->
+<header class="flex md:hidden justify-between items-center px-container-margin-mobile py-4 w-full z-30 docked full-width top-0 sticky shadow-sm bg-surface">
+<div class="font-display-lg text-headline-md-mobile text-primary">AfriLaunch</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-[28px]">notifications</span>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="A close up portrait of an African female entrepreneur smiling confidently, wearing a modern business casual blazer. The background is a brightly lit, minimalist contemporary office space. The lighting is soft and flattering, creating a high-trust professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAIFxB1j-t5jNwbQYilrUmDb7wxi4C0diYRxsRWbFRgCA1vduEf7LAAbMt6hwtiOLWKo28lqXU9ZMG1GtgHbppLktM8WiXB_DUW4LPKeWoG_WZmpDbBwOGixaryr4oj7JLMrnUMQ2LnMYcTCg9XA2oW2j51f5tOxBnWqVT7otSvEE-Dj-9moU-1l8McON49YvfxvRrEUPuDy1tz2QGegjwLJ-1dO6ZnBhSlJ44uWtrOErmllvbxJO2j"/>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 w-full md:ml-64 pb-[80px] md:pb-8 pt-4 md:pt-8 px-container-margin-mobile md:px-container-margin-desktop">
+<!-- Header & Search -->
+<div class="mb-8 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+<div>
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Opportunity Radar</h2>
+<p class="text-on-surface-variant font-body-md text-body-md max-w-2xl">Discover high-potential niches tailored to your constraints. Metrics are calculated using real-time regional data signals.</p>
+</div>
+<div class="w-full lg:w-96 relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full min-h-[48px] pl-12 pr-4 rounded-lg bg-surface-white border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all shadow-level-1 font-body-md text-body-md text-on-surface" placeholder="Search specific niches..." type="text"/>
+</div>
+</div>
+<!-- Layout Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Filter Sidebar (Left Column) -->
+<aside class="lg:col-span-3 space-y-6">
+<div class="bg-surface-white rounded-xl shadow-level-1 p-5">
+<div class="flex items-center gap-2 mb-4 border-b border-surface-container-highest pb-3">
+<span class="material-symbols-outlined text-primary">tune</span>
+<h3 class="font-label-md text-label-md text-on-surface">Refine Search</h3>
+</div>
+<!-- Filter Group: Country -->
+<div class="mb-5">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-3 uppercase tracking-wider">Target Market</label>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Sénégal</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+<input checked="" class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Côte d'Ivoire</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group min-h-[32px]">
+<input class="w-5 h-5 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface group-hover:text-primary transition-colors">Nigeria (Lagos)</span>
+</label>
+</div>
+</div>
+<!-- Filter Group: Sector -->
+<div class="mb-5">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-3 uppercase tracking-wider">Sector</label>
+<select class="w-full min-h-[48px] rounded-lg bg-surface border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md">
+<option>Retail Tech</option>
+<option>AgriTech</option>
+<option>FinTech (Payments)</option>
+<option>Logistics</option>
+</select>
+</div>
+<!-- Filter Group: Difficulty -->
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-3 uppercase tracking-wider">Entry Difficulty</label>
+<div class="flex flex-wrap gap-2">
+<button class="px-4 py-2 min-h-[40px] rounded-full bg-primary-container text-on-primary-container font-label-sm text-label-sm border border-primary/20">Low</button>
+<button class="px-4 py-2 min-h-[40px] rounded-full bg-surface text-on-surface-variant font-label-sm text-label-sm border border-outline-variant hover:bg-surface-container-high transition-colors">Medium</button>
+<button class="px-4 py-2 min-h-[40px] rounded-full bg-surface text-on-surface-variant font-label-sm text-label-sm border border-outline-variant hover:bg-surface-container-high transition-colors">High</button>
+</div>
+</div>
+</div>
+</aside>
+<!-- Results List (Right Column) -->
+<div class="lg:col-span-9 space-y-6">
+<!-- Opportunity Card 1 (Bento Style) -->
+<div class="bg-surface-white rounded-xl shadow-level-1 overflow-hidden transition-transform hover:-translate-y-1 duration-300">
+<div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+<!-- Left Info Zone -->
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-3 mb-3">
+<span class="px-3 py-1 bg-success-emerald/10 text-success-emerald font-label-sm text-label-sm rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                                        VERIFIED SIGNAL
+                                    </span>
+<span class="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                        Lagos, Nigeria
+                                    </span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-3 leading-tight">Gestion de stock pour boutiques de retail indépendantes</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-4 line-clamp-2">High fragmentation in local retail markets creates massive inefficiencies. Current solutions are too complex or expensive for single-store operators.</p>
+</div>
+<div class="flex items-center gap-2 text-label-sm font-label-sm text-outline">
+<span class="material-symbols-outlined text-[16px]">article</span>
+                                Sources: GSMA Mobile Economy, Local Chamber of Commerce
+                            </div>
+</div>
+<!-- Right Metrics Zone -->
+<div class="md:w-72 bg-surface rounded-xl p-5 border border-surface-container-highest flex flex-col justify-center">
+<div class="flex items-end justify-between mb-6">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Opportunity Score</p>
+<div class="font-display-lg text-[40px] leading-none text-success-emerald font-bold">82<span class="text-[20px] text-outline font-normal">/100</span></div>
+</div>
+<div class="w-12 h-12 rounded-full bg-success-emerald/20 flex items-center justify-center text-success-emerald">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+</div>
+<!-- Mini Progress Bars -->
+<div class="space-y-3">
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">Demand Volume</span>
+<span class="text-success-emerald font-bold">High</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-success-emerald w-[85%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">Pain Level</span>
+<span class="text-innovation-amber font-bold">Severe</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-innovation-amber w-[90%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">Competition</span>
+<span class="text-primary font-bold">Low</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[30%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card Actions -->
+<div class="bg-surface-container-lowest border-t border-surface-container-highest px-6 py-4 flex flex-col sm:flex-row gap-3 justify-end items-center">
+<button class="w-full sm:w-auto min-h-[48px] px-6 rounded-lg text-primary font-label-md text-label-md border border-outline-variant hover:bg-surface transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">bookmark</span>
+                            Save Opportunity
+                        </button>
+<button class="w-full sm:w-auto min-h-[48px] px-6 rounded-lg bg-success-emerald text-on-error font-label-md text-label-md hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">auto_awesome</span>
+                            Generate Product Ideas
+                        </button>
+</div>
+</div>
+<!-- Opportunity Card 2 (Slightly different state) -->
+<div class="bg-surface-white rounded-xl shadow-level-1 overflow-hidden transition-transform hover:-translate-y-1 duration-300">
+<div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+<div class="flex-1 flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-3 mb-3">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant font-label-sm text-label-sm rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">analytics</span>
+                                        ESTIMATED SIGNAL
+                                    </span>
+<span class="text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+                                        Dakar, Sénégal
+                                    </span>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-3 leading-tight">AgriTech: Cold chain logistics tracking for smallhold farmers</h3>
+<p class="text-on-surface-variant font-body-md text-body-md mb-4 line-clamp-2">Significant crop loss occurs post-harvest due to lack of visibility in transport temperature. A simple SMS/USSD based logging system could provide baseline tracking.</p>
+</div>
+<div class="flex items-center gap-2 text-label-sm font-label-sm text-outline">
+<span class="material-symbols-outlined text-[16px]">article</span>
+                                Sources: FAO Regional Report 2023
+                            </div>
+</div>
+<div class="md:w-72 bg-surface rounded-xl p-5 border border-surface-container-highest flex flex-col justify-center">
+<div class="flex items-end justify-between mb-6">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-1">Opportunity Score</p>
+<div class="font-display-lg text-[40px] leading-none text-innovation-amber font-bold">68<span class="text-[20px] text-outline font-normal">/100</span></div>
+</div>
+<div class="w-12 h-12 rounded-full bg-innovation-amber/20 flex items-center justify-center text-innovation-amber">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">moving</span>
+</div>
+</div>
+<div class="space-y-3">
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">Demand Volume</span>
+<span class="text-innovation-amber font-bold">Medium</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-innovation-amber w-[60%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">Pain Level</span>
+<span class="text-success-emerald font-bold">High</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-success-emerald w-[80%] rounded-full"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-label-sm text-label-sm mb-1">
+<span class="text-on-surface">Competition</span>
+<span class="text-innovation-amber font-bold">Medium</span>
+</div>
+<div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-innovation-amber w-[45%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-lowest border-t border-surface-container-highest px-6 py-4 flex flex-col sm:flex-row gap-3 justify-end items-center">
+<button class="w-full sm:w-auto min-h-[48px] px-6 rounded-lg text-primary font-label-md text-label-md border border-outline-variant hover:bg-surface transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">bookmark_border</span>
+                            Save Opportunity
+                        </button>
+<button class="w-full sm:w-auto min-h-[48px] px-6 rounded-lg bg-success-emerald text-on-error font-label-md text-label-md hover:opacity-90 transition-opacity shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">auto_awesome</span>
+                            Generate Product Ideas
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Mobile BottomNavBar (from JSON logic) -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-2 py-3 bg-surface-white border-t border-outline-variant z-50 md:hidden rounded-t-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-2xl px-4 py-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Research</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">lightbulb</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Ideation</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined text-[28px] text-primary">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile mt-1 sr-only">Create</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Market</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high rounded-2xl active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Sales</span>
+</a>
+</nav>
+</body></html>

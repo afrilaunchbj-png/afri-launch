@@ -1,0 +1,51 @@
+{
+  "appName": "AfriLaunch",
+  "tagline": "Transformez une opportunité de marché en produit digital vendable.",
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Tableau de bord",
+    "opportunities": "Recherche",
+    "credits": "Crédits",
+    "ideation": "Idéation",
+    "creation": "Création",
+    "marketing": "Marketing",
+    "settings": "Paramètres",
+    "support": "Support",
+    "comingSoon": "Bientôt disponible",
+    "soon": "Bientôt"
+  },
+  "common": {
+    "retry": "Réessayer",
+    "prevPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "genericError": "Une erreur est survenue. Veuillez réessayer.",
+    "loading": "Chargement…",
+    "refreshing": "Actualisation…"
+  },
+  "home": {
+    "title": "Bienvenue sur AfriLaunch",
+    "cta": "Commencer",
+    "research": {
+      "title": "Recherche",
+      "description": "Identifiez des opportunités de marché vérifiées."
+    },
+    "creation": {
+      "title": "Création",
+      "description": "Générez un ebook ou un guide digital en minutes."
+    },
+    "marketing": {
+      "title": "Marketing",
+      "description": "Produisez votre page de vente et vos assets."
+    }
+  },
+  "theme": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "La page que vous cherchez n'existe pas.",
+    "back": "Retour à l'accueil"
+  }
+}

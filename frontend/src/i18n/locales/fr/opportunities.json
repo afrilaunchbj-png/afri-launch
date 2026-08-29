@@ -1,0 +1,33 @@
+{
+  "title": "Radar d'opportunités",
+  "subtitle": "Découvrez des niches à fort potentiel adaptées à vos contraintes.",
+  "searchPlaceholder": "Rechercher une niche…",
+  "refine": "Affiner la recherche",
+  "filters": "Filtres",
+  "reset": "Réinitialiser",
+  "all": "Tout",
+  "country": "Marché cible",
+  "sector": "Secteur",
+  "difficultyLabel": "Difficulté d'entrée",
+  "score": "Opportunity Score",
+  "demand": "Volume de demande",
+  "pain": "Niveau de douleur",
+  "competition": "Concurrence",
+  "save": "Enregistrer",
+  "saved": "Enregistrée",
+  "unsave": "Retirer",
+  "empty": "Aucune opportunité",
+  "emptyDesc": "Aucune opportunité ne correspond à vos filtres.",
+  "resultCount": "{{count}} résultat(s)",
+  "difficulty": {
+    "low": "Facile",
+    "medium": "Moyen",
+    "high": "Difficile"
+  },
+  "signal": {
+    "verified": "Signal vérifié",
+    "estimated": "Signal estimé",
+    "inferred": "Signal inféré",
+    "hypothesis": "Hypothèse"
+  }
+}

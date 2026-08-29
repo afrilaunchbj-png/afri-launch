@@ -1,0 +1,51 @@
+{
+  "appName": "AfriLaunch",
+  "tagline": "Turn a market opportunity into a sellable digital product.",
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "opportunities": "Research",
+    "credits": "Credits",
+    "ideation": "Ideation",
+    "creation": "Creation",
+    "marketing": "Marketing",
+    "settings": "Settings",
+    "support": "Support",
+    "comingSoon": "Coming soon",
+    "soon": "Soon"
+  },
+  "common": {
+    "retry": "Retry",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "genericError": "Something went wrong. Please try again.",
+    "loading": "Loading…",
+    "refreshing": "Refreshing…"
+  },
+  "home": {
+    "title": "Welcome to AfriLaunch",
+    "cta": "Get started",
+    "research": {
+      "title": "Research",
+      "description": "Identify verified market opportunities."
+    },
+    "creation": {
+      "title": "Creation",
+      "description": "Generate an ebook or digital guide in minutes."
+    },
+    "marketing": {
+      "title": "Marketing",
+      "description": "Produce your sales page and marketing assets."
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist.",
+    "back": "Back to home"
+  }
+}

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout - AfriLaunch</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Lexend:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#003527",
+                      "secondary-fixed-dim": "#ffb95f",
+                      "on-tertiary": "#ffffff",
+                      "outline-variant": "#bfc9c3",
+                      "outline": "#707974",
+                      "primary-fixed": "#b0f0d6",
+                      "on-primary": "#ffffff",
+                      "surface-white": "#FFFFFF",
+                      "surface-bright": "#f8f9fa",
+                      "on-tertiary-fixed-variant": "#6e372f",
+                      "tertiary-container": "#6b342d",
+                      "innovation-amber": "#D97706",
+                      "primary-container": "#064e3b",
+                      "on-secondary-container": "#684000",
+                      "on-tertiary-fixed": "#380d08",
+                      "error": "#ba1a1a",
+                      "on-background": "#191c1d",
+                      "success-emerald": "#059669",
+                      "on-secondary-fixed": "#2a1700",
+                      "surface-container-high": "#e7e8e9",
+                      "surface": "#f8f9fa",
+                      "on-primary-fixed-variant": "#0b513d",
+                      "on-primary-container": "#80bea6",
+                      "background": "#f8f9fa",
+                      "tertiary-fixed-dim": "#ffb4a9",
+                      "surface-tint": "#2b6954",
+                      "on-primary-fixed": "#002117",
+                      "surface-dim": "#d9dadb",
+                      "error-container": "#ffdad6",
+                      "surface-variant": "#e1e3e4",
+                      "inverse-primary": "#95d3ba",
+                      "text-rich-black": "#111827",
+                      "on-error-container": "#93000a",
+                      "on-surface": "#191c1d",
+                      "inverse-surface": "#2e3132",
+                      "on-error": "#ffffff",
+                      "on-secondary-fixed-variant": "#653e00",
+                      "surface-container-highest": "#e1e3e4",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#ea9e93",
+                      "tertiary-fixed": "#ffdad5",
+                      "surface-container-low": "#f3f4f5",
+                      "surface-container": "#edeeef",
+                      "on-surface-variant": "#404944",
+                      "on-secondary": "#ffffff",
+                      "secondary-container": "#fea619",
+                      "secondary-fixed": "#ffddb8",
+                      "tertiary": "#4f1f19",
+                      "primary-fixed-dim": "#95d3ba",
+                      "inverse-on-surface": "#f0f1f2",
+                      "secondary": "#855300"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "container-margin-desktop": "40px",
+                      "container-margin-mobile": "16px",
+                      "touch-target-min": "48px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Lexend"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Lexend"
+                      ],
+                      "display-lg": [
+                              "Lexend"
+                      ],
+                      "headline-md": [
+                              "Lexend"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "36px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #f8f9fa; /* bg-background */
+            color: #191c1d; /* text-on-background */
+        }
+        
+        /* Subtle organic background pattern for local warmth */
+        .bg-pattern {
+            background-image: radial-gradient(#bfc9c3 1px, transparent 1px);
+            background-size: 24px 24px;
+            opacity: 0.3;
+        }
+
+        /* Glassmorphism utility */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen relative font-body-md text-body-md flex flex-col">
+<!-- Global Background Elements -->
+<div class="fixed inset-0 bg-pattern pointer-events-none z-[-1]"></div>
+<!-- TopAppBar (Transactional - simplified) -->
+<header class="bg-surface shadow-sm sticky top-0 z-50 px-container-margin-mobile md:px-container-margin-desktop py-4 w-full flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+<span class="font-display-lg text-headline-md text-primary">AfriLaunch</span>
+</div>
+<button class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md hover:text-primary transition-colors" onclick="window.history.back()">
+<span class="material-symbols-outlined">close</span>
+            Cancel
+        </button>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow container mx-auto px-container-margin-mobile md:px-container-margin-desktop py-8 md:py-12 flex flex-col items-center">
+<!-- Breadcrumb / Step Indicator -->
+<nav aria-label="Progress" class="w-full max-w-3xl mb-8">
+<ol class="flex items-center justify-center" role="list">
+<li class="relative pr-8 sm:pr-20">
+<div aria-hidden="true" class="absolute inset-0 flex items-center">
+<div class="h-0.5 w-full bg-primary"></div>
+</div>
+<a class="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary hover:bg-primary-container" href="#">
+<span class="material-symbols-outlined text-on-primary text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+<span class="sr-only">Package</span>
+</a>
+</li>
+<li class="relative pr-8 sm:pr-20">
+<div aria-hidden="true" class="absolute inset-0 flex items-center">
+<div class="h-0.5 w-full bg-surface-variant"></div>
+</div>
+<a aria-current="step" class="relative flex h-8 w-8 items-center justify-center rounded-full bg-primary border-2 border-primary" href="#">
+<span class="text-on-primary font-label-sm text-label-sm">2</span>
+<span class="sr-only">Payment</span>
+</a>
+</li>
+<li class="relative">
+<a class="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface-variant bg-surface-white" href="#">
+<span class="text-on-surface-variant font-label-sm text-label-sm">3</span>
+<span class="sr-only">Confirmation</span>
+</a>
+</li>
+</ol>
+<div class="flex justify-center gap-12 sm:gap-24 mt-2">
+<span class="text-primary font-label-sm text-label-sm">Package</span>
+<span class="text-primary font-label-sm text-label-sm font-bold">Payment</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">Confirmation</span>
+</div>
+</nav>
+<div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Payment Form Column (Left on Desktop) -->
+<div class="md:col-span-7 flex flex-col gap-6">
+<div class="glass-card rounded-xl p-6 shadow-sm">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">Checkout</h1>
+<p class="text-on-surface-variant mb-6">Complete your purchase using Mobile Money.</p>
+<!-- Mobile Money Providers (Bento-style selection) -->
+<fieldset class="mb-8">
+<legend class="font-label-md text-label-md text-on-surface mb-3">Select Payment Method</legend>
+<div class="grid grid-cols-3 gap-3">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="provider" type="radio" value="wave"/>
+<div class="rounded-lg border border-outline-variant bg-surface-white p-4 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:ring-1 peer-checked:ring-primary transition-all h-[90px]">
+<!-- Placeholder for Wave Logo -->
+<div class="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-white font-bold text-xs">W</div>
+<span class="font-label-sm text-label-sm text-center">Wave</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="provider" type="radio" value="orange"/>
+<div class="rounded-lg border border-outline-variant bg-surface-white p-4 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:ring-1 peer-checked:ring-primary transition-all h-[90px]">
+<!-- Placeholder for Orange Logo -->
+<div class="w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-bold text-xs">O</div>
+<span class="font-label-sm text-label-sm text-center">Orange</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="provider" type="radio" value="mtn"/>
+<div class="rounded-lg border border-outline-variant bg-surface-white p-4 flex flex-col items-center justify-center gap-2 hover:bg-surface-container-low peer-checked:border-primary peer-checked:bg-primary-fixed peer-checked:ring-1 peer-checked:ring-primary transition-all h-[90px]">
+<!-- Placeholder for MTN Logo -->
+<div class="w-8 h-8 bg-yellow-400 rounded flex items-center justify-center text-black font-bold text-xs">M</div>
+<span class="font-label-sm text-label-sm text-center">MTN</span>
+</div>
+</label>
+</div>
+</fieldset>
+<!-- User Input Form -->
+<form action="#" class="flex flex-col gap-4" method="POST">
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1" for="phone">Mobile Money Number</label>
+<div class="relative mt-1 rounded-md shadow-sm">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+<span class="material-symbols-outlined text-outline">phone_iphone</span>
+</div>
+<input class="block w-full min-h-[48px] rounded-md border-outline-variant pl-10 focus:border-primary focus:ring-primary sm:text-sm bg-surface-white text-on-surface" id="phone" name="phone" placeholder="e.g. 0123456789" type="tel"/>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface mb-1" for="name">Full Name (as registered on Mobile Money)</label>
+<div class="relative mt-1 rounded-md shadow-sm">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+<span class="material-symbols-outlined text-outline">person</span>
+</div>
+<input class="block w-full min-h-[48px] rounded-md border-outline-variant pl-10 focus:border-primary focus:ring-primary sm:text-sm bg-surface-white text-on-surface" id="name" name="name" placeholder="John Doe" type="text"/>
+</div>
+</div>
+<button class="mt-4 min-h-[48px] w-full flex items-center justify-center gap-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm active:scale-[0.98]" type="submit">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">lock</span>
+                            Pay 5,000 FCFA
+                        </button>
+</form>
+<div class="mt-6 flex flex-col gap-3">
+<div class="flex items-center justify-center gap-2 text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-success-emerald text-sm">verified_user</span>
+                            Secure transaction powered by Flutterwave
+                        </div>
+</div>
+</div>
+</div>
+<!-- Order Summary Column (Right on Desktop) -->
+<div class="md:col-span-5 flex flex-col gap-4">
+<div class="bg-surface-white rounded-xl p-6 shadow-sm border border-surface-variant h-fit sticky top-24">
+<h2 class="font-headline-md text-headline-md text-primary mb-4 border-b border-surface-variant pb-2">Order Summary</h2>
+<div class="flex justify-between items-start mb-4">
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface">Starter Pack</span>
+<span class="text-on-surface-variant text-sm">100 Credits</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface">5,000 FCFA</span>
+</div>
+<div class="flex justify-between items-center py-3 border-t border-surface-variant mt-4">
+<span class="font-label-md text-label-md text-on-surface">Total</span>
+<span class="font-headline-md text-headline-md text-primary">5,000 FCFA</span>
+</div>
+<!-- Trust Signals Bento -->
+<div class="mt-6 grid grid-cols-1 gap-3 bg-surface-container-low p-4 rounded-lg">
+<div class="flex items-start gap-3">
+<div class="bg-innovation-amber/20 p-1.5 rounded-full mt-0.5">
+<span class="material-symbols-outlined text-innovation-amber text-sm" style="font-variation-settings: 'FILL' 1;">flash_on</span>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface">Instant credit activation</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Credits added immediately after payment.</p>
+</div>
+</div>
+<div class="flex items-start gap-3">
+<div class="bg-success-emerald/20 p-1.5 rounded-full mt-0.5">
+<span class="material-symbols-outlined text-success-emerald text-sm" style="font-variation-settings: 'FILL' 1;">money_off</span>
+</div>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface">No hidden fees</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">What you see is exactly what you pay.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

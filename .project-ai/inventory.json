@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2026-08-29T00:00:00Z",
+  "categories": {
+    "components": [],
+    "hooks": [],
+    "helpers": [],
+    "services": [],
+    "providers": [],
+    "middlewares": [],
+    "dtos": [],
+    "validators": [],
+    "repositories": [],
+    "adapters": [],
+    "types": [],
+    "constants": [],
+    "icons": [],
+    "layouts": [],
+    "templates": []
+  }
+}

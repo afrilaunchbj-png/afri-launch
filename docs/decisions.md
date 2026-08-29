@@ -1,0 +1,78 @@
+# Architecture Decisions (ADR) — AfriLaunch
+
+> Décisions clés avec contexte, options, décision et conséquences.
+
+## ADR-001 — Stack backend : Go + PostgreSQL + Redis (pas Next.js/Prisma)
+
+- **Date** : 2026-08-29
+- **Contexte** : `prompts/master.md` recommande Next.js/TypeScript/Prisma ; `prompts/init.md` impose Go/PostgreSQL/Redis backend et interdit Next.js. `init.md` est prioritaire (règle §15).
+- **Options** : (A) Go + PostgreSQL + Redis + React SPA ; (B) Next.js + Prisma (master.md) ; (C) Node.js séparé.
+- **Décision** : **(A)** — respect de la contrainte prioritaire.
+- **Conséquences** : exemples TS de master.md (interfaces providers) transposés en interfaces Go ; BullMQ remplacé par asynq ; Prisma remplacé par sqlc + goose.
+
+## ADR-002 — Accès aux données : sqlc + pgx/v5 + goose
+
+- **Date** : 2026-08-29
+- **Contexte** : besoin de requêtes typées, explicites et optimisables (index, transactions) pour un ledger de crédits et des workflows financiers.
+- **Options** : (A) sqlc + pgx/v5 + goose ; (B) GORM ; (C) pgx seul (SQL manuel).
+- **Décision** : **(A)** (validé par l'utilisateur) — SQL contrôlé, code généré type-safe, migrations versionnées.
+- **Conséquences** : SQL source de vérité dans `db/query/` et `db/migrations/` ; génération via `sqlc generate` ; courbe d'apprentissage légère.
+
+## ADR-003 — Monorepo : `backend/` + `frontend/` séparés
+
+- **Date** : 2026-08-29
+- **Contexte** : deux stacks hétérogènes (Go / Node).
+- **Options** : (A) monorepo workspaces JS + module Go ; (B) deux dossiers séparés.
+- **Décision** : **(B)** (validé par l'utilisateur) — simplicité, pas de couplage outillage.
+- **Conséquences** : pas de packages partagés au sens npm ; les contrats API partagés passent par OpenAPI (source de vérité unique) et des DTOs dupliqués côté FE typés manuellement si nécessaire.
+
+## ADR-004 — File d'attente : asynq (Redis)
+
+- **Date** : 2026-08-29
+- **Contexte** : générations longues (LLM, images, PDF, vidéo) à exécuter hors requête HTTP.
+- **Options** : (A) asynq (Go, Redis) ; (B) RabbitMQ/Kafka ; (C) HTTP polling simple.
+- **Décision** : **(A)** — idiomatique Go, réutilise Redis déjà dans la stack, retry/deadline natifs.
+- **Conséquences** : workers = binaires Go déployés séparément ; jobs idempotents.
+
+## ADR-005 — Authentification : JWT (cookies httpOnly) + Argon2id + Google OAuth
+
+- **Date** : 2026-08-29
+- **Contexte** : sécurité (OWASP) + besoin d'OAuth pour l'onboarding.
+- **Options** : (A) JWT access/refresh en cookies httpOnly ; (B) sessions serveur ; (C) tokens en localStorage.
+- **Décision** : **(A)** — court-lived access + refresh avec rotation, cookies httpOnly/Secure/SameSite, hachage Argon2id, Google OIDC + PKCE.
+- **Conséquences** : middleware auth + refresh endpoint ; pas de stockage token côté JS.
+
+## ADR-006 — Erreurs API : RFC 9457 Problem Details
+
+- **Date** : 2026-08-29
+- **Contexte** : cohérence et non-exposition des détails internes.
+- **Décision** : format unique `{type, title, status, detail, instance, errors[]}` sur toutes les erreurs.
+- **Conséquences** : type `APIError` Go + conversion centralisée ; mapping FE en `AppError`.
+
+## ADR-007 — Crédits : ledger double-entrée idempotent
+
+- **Date** : 2026-08-29
+- **Contexte** : modèle pay-as-you-go ; éviter double consommation.
+- **Décision** : `CreditAccount` + `CreditTransaction` + `CreditReservation` + `GenerationCost`, cycle `reserve → execute → consume|release`, idempotence par `Idempotency-Key` + réservation.
+- **Conséquences** : coûts configurables par opération ; refunds en cas d'échec.
+
+## ADR-008 — Paiements : abstraction PaymentProvider (Mobile Money d'abord)
+
+- **Date** : 2026-08-29
+- **Contexte** : marchés africains = Mobile Money (Wave, Orange, MTN) ; ne pas se coupler à Stripe.
+- **Décision** : interface Go `PaymentProvider` (create/verify/refund), implémentations par provider, webhooks protégés + idempotents.
+- **Conséquences** : ajout d'un provider = nouvelle implémentation, sans toucher au cœur.
+
+## ADR-009 — Multi-tenancy : row-level (isolation par user_id)
+
+- **Date** : 2026-08-29
+- **Contexte** : un utilisateur ne doit jamais accéder aux données d'un autre.
+- **Décision** : row-level (`user_id` sur les tables métier, filtre systématique), RLS PostgreSQL en filet de sécurité.
+- **Conséquences** : couche data-access avec filtre tenant ; `Organization` modélisée pour le futur B2B2C.
+
+## ADR-010 — Design system : « Emerald & Amber Ledger » → tokens shadcn
+
+- **Date** : 2026-08-29
+- **Contexte** : maquettes Stitch imposent une palette (émeraude/ambre) et typo Lexend/Inter.
+- **Décision** : mapper les tokens (`primary #003527`, `secondary #855300`, …) en variables CSS shadcn (`--primary`, `--secondary`, …) + Tailwind `class` pour le dark mode.
+- **Conséquences** : `frontend/src/styles/globals.css` définit les tokens ; composants shadcn héritent du thème.

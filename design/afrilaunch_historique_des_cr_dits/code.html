@@ -1,0 +1,317 @@
+<!DOCTYPE html><html class="light" lang="fr"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Historique des Crédits - AfriLaunch</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Lexend:wght@600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#fea619",
+                        "primary-container": "#064e3b",
+                        "surface-container-low": "#f3f4f5",
+                        "on-secondary": "#ffffff",
+                        "on-primary-container": "#80bea6",
+                        "on-background": "#191c1d",
+                        "on-secondary-fixed": "#2a1700",
+                        "tertiary-container": "#6b342d",
+                        "on-primary-fixed": "#002117",
+                        "outline": "#707974",
+                        "primary": "#003527",
+                        "error": "#ba1a1a",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#653e00",
+                        "surface-tint": "#2b6954",
+                        "surface-container-highest": "#e1e3e4",
+                        "tertiary": "#4f1f19",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#95d3ba",
+                        "surface-container": "#edeeef",
+                        "on-primary-fixed-variant": "#0b513d",
+                        "surface-white": "#FFFFFF",
+                        "on-tertiary-fixed": "#380d08",
+                        "tertiary-fixed": "#ffdad5",
+                        "innovation-amber": "#D97706",
+                        "outline-variant": "#bfc9c3",
+                        "on-secondary-container": "#684000",
+                        "inverse-surface": "#2e3132",
+                        "success-emerald": "#059669",
+                        "primary-fixed": "#b0f0d6",
+                        "on-primary": "#ffffff",
+                        "on-surface-variant": "#404944",
+                        "primary-fixed-dim": "#95d3ba",
+                        "surface": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "tertiary-fixed-dim": "#ffb4a9",
+                        "text-rich-black": "#111827",
+                        "surface-dim": "#d9dadb",
+                        "inverse-on-surface": "#f0f1f2",
+                        "secondary": "#855300",
+                        "background": "#f8f9fa",
+                        "on-error": "#ffffff",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-high": "#e7e8e9",
+                        "on-tertiary": "#ffffff",
+                        "surface-bright": "#f8f9fa",
+                        "on-tertiary-container": "#ea9e93",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#6e372f",
+                        "secondary-fixed": "#ffddb8",
+                        "secondary-fixed-dim": "#ffb95f"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "touch-target-min": "48px",
+                        "gutter": "16px",
+                        "container-margin-mobile": "16px",
+                        "container-margin-desktop": "40px",
+                        "base": "8px"
+                    },
+                    fontFamily: {
+                        "headline-lg-mobile": ["Lexend"],
+                        "headline-md": ["Lexend"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Lexend"],
+                        "headline-lg": ["Lexend"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    fontSize: {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #f8f9fa; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
+        .card-shadow { box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md flex h-screen overflow-hidden">
+<!-- SideNavBar (Desktop) -->
+<aside class="fixed left-0 top-0 h-full flex flex-col py-gutter w-64 z-40 bg-primary dark:bg-primary-container shadow-md hidden md:flex">
+<div class="px-6 mb-8 flex items-center gap-4"><div class="flex items-center gap-4 px-6 mb-8"><div class="w-10 h-10 rounded-lg bg-surface-white flex items-center justify-center shrink-0"><span class="material-symbols-outlined text-primary font-bold text-2xl">rocket_launch</span></div><div><h1 class="font-headline-md text-headline-md text-on-primary dark:text-on-primary-container">AfriLaunch</h1><p class="font-label-sm text-label-sm text-on-primary opacity-80">Expert Platform</p></div></div></div>
+<nav class="flex-1 px-4 space-y-2"><a class="flex items-center gap-base text-on-primary dark:text-on-primary-container opacity-80 p-3 mx-2 rounded-lg hover:bg-on-primary-fixed-variant dark:hover:bg-tertiary-container transition-all" href="#"><span class="material-symbols-outlined">search_insights</span><span class="font-label-md text-label-md">Research</span></a><a class="flex items-center gap-base text-on-primary dark:text-on-primary-container opacity-80 p-3 mx-2 rounded-lg hover:bg-on-primary-fixed-variant dark:hover:bg-tertiary-container transition-all" href="#"><span class="material-symbols-outlined">lightbulb</span><span class="font-label-md text-label-md">Ideation</span></a><a class="flex items-center gap-base text-on-primary dark:text-on-primary-container opacity-80 p-3 mx-2 rounded-lg hover:bg-on-primary-fixed-variant dark:hover:bg-tertiary-container transition-all" href="#"><span class="material-symbols-outlined">handyman</span><span class="font-label-md text-label-md">Creation</span></a><a class="flex items-center gap-base text-on-primary dark:text-on-primary-container opacity-80 p-3 mx-2 rounded-lg hover:bg-on-primary-fixed-variant dark:hover:bg-tertiary-container transition-all" href="#"><span class="material-symbols-outlined">campaign</span><span class="font-label-md text-label-md">Marketing</span></a><a class="flex items-center gap-base text-on-primary dark:text-on-primary-container opacity-80 p-3 mx-2 rounded-lg hover:bg-on-primary-fixed-variant dark:hover:bg-tertiary-container transition-all" href="#"><span class="material-symbols-outlined">payments</span><span class="font-label-md text-label-md">Sales</span></a><div class="pt-4 mt-4 border-t border-on-primary/20"><a class="flex items-center gap-base bg-secondary-container text-on-secondary-container rounded-lg p-3 mx-2 font-label-md text-label-md font-bold shadow-sm" href="#"><span class="material-symbols-outlined">database</span><span class="">Crédits (120)</span></a></div></nav>
+<div class="px-6 mt-auto"><button class="w-full h-touch-target-min rounded-lg bg-surface-white text-primary font-label-md text-label-md font-bold hover:bg-surface-container-low transition-colors shadow-sm flex items-center justify-center gap-2 active:translate-x-1 transition-transform"><span class="material-symbols-outlined">workspace_premium</span>Upgrade to Pro</button></div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col md:ml-64 h-full overflow-y-auto">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full h-touch-target-min px-container-margin-desktop bg-surface dark:bg-on-background sticky top-0 z-50 shadow-sm md:hidden">
+<div class="flex items-center gap-4">
+<button class="text-on-surface md:hidden p-2 rounded-full hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">AfriLaunch</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border-2 border-primary/20">
+<img alt="Entrepreneur Profile" class="w-full h-full object-cover" data-alt="Professional headshot of a young African entrepreneur smiling confidently, wearing smart casual attire, well-lit studio lighting with a clean neutral background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7UC05vWrwIP72f31eAxeDN2PVkUHfoig4hOsKEL_pKEj4bE3yX3CPCsigclwNxueeAu6UJ-9j4Jt9RFv79O5YRhCin9orVQ1CVJG2MIquPFi82OziCC5M9MCZUw2MULI_8tobCFiIhVT141RmoHqiq2iNWQ6EXQxpkMhJ62UyrRFbpQC_JDtY7GhZago9EHUKGRV_Ozpb_GC-XsKqDbUdQoVaYnMwb7cwHxyi4v4soUFPwiYVmZex">
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-container-margin-mobile md:p-container-margin-desktop max-w-7xl mx-auto w-full">
+<div class="mb-8">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Historique des Crédits</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gérez et suivez l'utilisation de vos ressources AfriLaunch.</p>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+<!-- Balance Card -->
+<div class="bg-surface-white rounded-xl p-6 card-shadow border border-surface-container-high lg:col-span-1 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full -mr-16 -mt-16"></div>
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-fixed-dim fill" data-icon="toll" data-weight="fill">toll</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Solde Actuel</h3>
+</div>
+<div class="flex items-baseline gap-2">
+<span class="font-display-lg text-display-lg text-primary">120</span>
+<span class="font-body-lg text-body-lg text-on-surface-variant">Crédits</span>
+</div>
+<div class="mt-6">
+<button class="w-full h-touch-target-min bg-primary text-surface-white rounded-lg font-label-md text-label-md hover:bg-on-primary-fixed-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+                            Recharger
+                        </button>
+</div>
+</div>
+<!-- Stats Cards -->
+<div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="bg-surface-white rounded-xl p-6 card-shadow border border-surface-container-high flex flex-col justify-between">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-success-emerald" data-icon="trending_up">trending_up</span>
+<h4 class="font-label-md text-label-md text-on-surface-variant">Crédits Ajoutés (Ce mois)</h4>
+</div>
+<div class="text-2xl font-bold text-success-emerald">+450</div>
+<p class="font-label-sm text-label-sm text-outline mt-2">Dernier rechargement: 12 Mars 2024</p>
+</div>
+<div class="bg-surface-white rounded-xl p-6 card-shadow border border-surface-container-high flex flex-col justify-between">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-error" data-icon="trending_down">trending_down</span>
+<h4 class="font-label-md text-label-md text-on-surface-variant">Crédits Consommés (Ce mois)</h4>
+</div>
+<div class="text-2xl font-bold text-error">-330</div>
+<p class="font-label-sm text-label-sm text-outline mt-2">Principal usage: Recherche Opportunités</p>
+</div>
+</div>
+</div>
+<!-- Filters & Actions -->
+<div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6 bg-surface-white p-4 rounded-lg border border-surface-container-high shadow-sm">
+<div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+<button class="h-10 px-4 rounded-full bg-secondary-container text-on-secondary-container font-label-md text-label-md font-bold transition-colors">Tout</button>
+<button class="h-10 px-4 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container font-label-md text-label-md transition-colors">Ajouts</button>
+<button class="h-10 px-4 rounded-full border border-outline-variant text-on-surface-variant hover:bg-surface-container font-label-md text-label-md transition-colors">Consommations</button>
+</div>
+<div class="flex items-center gap-2 w-full sm:w-auto">
+<div class="relative w-full sm:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="calendar_month">calendar_month</span>
+<input class="w-full h-10 pl-10 pr-4 rounded-lg border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary text-label-md font-label-md bg-transparent" placeholder="Janvier 2024 - Mars 2024" readonly="" type="text">
+</div>
+<button class="h-10 w-10 flex items-center justify-center rounded-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors shrink-0">
+<span class="material-symbols-outlined" data-icon="download">download</span>
+</button>
+</div>
+</div>
+<!-- Transaction List -->
+<div class="bg-surface-white rounded-xl border border-surface-container-high shadow-sm overflow-hidden">
+<div class="hidden sm:grid grid-cols-12 gap-4 p-4 border-b border-surface-container-high bg-surface-container-lowest font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+<div class="col-span-3">Date &amp; Heure</div>
+<div class="col-span-5">Activité</div>
+<div class="col-span-2 text-center">Statut</div>
+<div class="col-span-2 text-right">Montant</div>
+</div>
+<!-- Item 1: Usage -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 border-b border-surface-container-high hover:bg-surface-container-lowest transition-colors items-center min-h-[64px]">
+<div class="col-span-12 sm:col-span-3 flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">15 Mars 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">14:32</span>
+</div>
+<div class="col-span-12 sm:col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline" data-icon="search_insights">search_insights</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Recherche Opportunités: Retail Tech</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Analyse de marché IA</p>
+</div>
+</div>
+<div class="col-span-6 sm:col-span-2 flex justify-start sm:justify-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant">
+                            Succès
+                        </span>
+</div>
+<div class="col-span-6 sm:col-span-2 text-right">
+<span class="font-headline-md text-headline-md text-error">-15</span>
+</div>
+</div>
+<!-- Item 2: Recharge -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 border-b border-surface-container-high hover:bg-surface-container-lowest transition-colors items-center min-h-[64px]">
+<div class="col-span-12 sm:col-span-3 flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">12 Mars 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">09:15</span>
+</div>
+<div class="col-span-12 sm:col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Recharge via Wave Mobile Money</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Réf: WV-99382-X</p>
+</div>
+</div>
+<div class="col-span-6 sm:col-span-2 flex justify-start sm:justify-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-fixed/30 text-primary font-bold">
+                            Succès
+                        </span>
+</div>
+<div class="col-span-6 sm:col-span-2 text-right">
+<span class="font-headline-md text-headline-md text-success-emerald">+200</span>
+</div>
+</div>
+<!-- Item 3: Usage Ebook -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 border-b border-surface-container-high hover:bg-surface-container-lowest transition-colors items-center min-h-[64px]">
+<div class="col-span-12 sm:col-span-3 flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">10 Mars 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">16:45</span>
+</div>
+<div class="col-span-12 sm:col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-outline" data-icon="menu_book">menu_book</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Génération Ebook: Stratégies B2B</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Outil Création de Contenu</p>
+</div>
+</div>
+<div class="col-span-6 sm:col-span-2 flex justify-start sm:justify-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-surface-container-high text-on-surface-variant">
+                            Succès
+                        </span>
+</div>
+<div class="col-span-6 sm:col-span-2 text-right">
+<span class="font-headline-md text-headline-md text-error">-50</span>
+</div>
+</div>
+<!-- Item 4: Pending -->
+<div class="grid grid-cols-1 sm:grid-cols-12 gap-4 p-4 border-b border-surface-container-high hover:bg-surface-container-lowest transition-colors items-center min-h-[64px] bg-surface-bright">
+<div class="col-span-12 sm:col-span-3 flex flex-col">
+<span class="font-body-md text-body-md text-on-surface font-medium">08 Mars 2024</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">11:20</span>
+</div>
+<div class="col-span-12 sm:col-span-5 flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary" data-icon="credit_card">credit_card</span>
+</div>
+<div>
+<p class="font-body-md text-body-md text-on-surface font-medium">Recharge Carte Bancaire (Échouée)</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Fonds insuffisants</p>
+</div>
+</div>
+<div class="col-span-6 sm:col-span-2 flex justify-start sm:justify-center">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-error-container text-on-error-container">
+                            Échoué
+                        </span>
+</div>
+<div class="col-span-6 sm:col-span-2 text-right opacity-50">
+<span class="font-headline-md text-headline-md text-success-emerald">+100</span>
+</div>
+</div>
+<div class="p-4 text-center">
+<button class="text-primary font-label-md text-label-md font-bold hover:underline">Voir Plus d'Historique</button>
+</div>
+</div>
+</div>
+</main>
+
+
+</body></html>

@@ -1,0 +1,38 @@
+{
+  "label": "crédits",
+  "title": "Historique des Crédits",
+  "subtitle": "Gérez et suivez l'utilisation de vos ressources AfriLaunch.",
+  "balance": "Solde actuel",
+  "available": "Disponibles",
+  "addedMonth": "Ajoutés ce mois",
+  "usedMonth": "Consommés ce mois",
+  "recharge": "Recharger",
+  "viewHistory": "Voir l'historique",
+  "date": "Date & Heure",
+  "activity": "Activité",
+  "statusLabel": "Statut",
+  "amount": "Montant",
+  "empty": "Aucune transaction",
+  "emptyDesc": "Vos opérations de crédits apparaîtront ici.",
+  "filter": {
+    "all": "Tout",
+    "credit": "Ajouts",
+    "debit": "Consommations"
+  },
+  "status": {
+    "completed": "Succès",
+    "pending": "En cours",
+    "failed": "Échoué"
+  },
+  "operations": {
+    "welcome_bonus": "Bonus de bienvenue",
+    "purchase": "Achat de crédits",
+    "refund": "Remboursement",
+    "niche_research": "Recherche de niche",
+    "idea_generation": "Génération d'idées",
+    "ebook_generation": "Génération d'ebook",
+    "image_generation": "Génération d'image",
+    "video_generation": "Génération de vidéo",
+    "sales_page": "Page de vente"
+  }
+}

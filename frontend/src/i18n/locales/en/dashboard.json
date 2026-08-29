@@ -1,0 +1,9 @@
+{
+  "welcome": "Hello {{name}}",
+  "subtitle": "Ready to turn your ideas into reality today?",
+  "quickActions": "Quick actions",
+  "searchOpportunity": "Find an opportunity",
+  "searchOpportunityDesc": "Analyze the market to find your niche.",
+  "start": "Get started",
+  "creditsDesc": "Review your balance and credit history."
+}

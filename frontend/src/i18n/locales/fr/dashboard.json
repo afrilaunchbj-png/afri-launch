@@ -1,0 +1,9 @@
+{
+  "welcome": "Bonjour {{name}}",
+  "subtitle": "Prêt à transformer vos idées en réalité aujourd'hui ?",
+  "quickActions": "Actions rapides",
+  "searchOpportunity": "Rechercher une opportunité",
+  "searchOpportunityDesc": "Analysez le marché pour trouver votre niche.",
+  "start": "Commencer",
+  "creditsDesc": "Consultez votre solde et votre historique de crédits."
+}

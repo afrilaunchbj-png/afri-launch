@@ -1,0 +1,193 @@
+# Architecture — AfriLaunch
+
+## 1. Vue d'ensemble
+
+AfriLaunch est un SaaS composé de deux applications déployables indépendamment, dans un monorepo à deux dossiers (`backend/` + `frontend/`), plus des **workers** de génération asynchrone (même base Go que le backend).
+
+```mermaid
+graph TD
+    Client[React SPA - Mobile First] -->|HTTPS/JSON| API[Go API - chi /api/v1]
+    API --> DB[(PostgreSQL)]
+    API --> Redis[(Redis - cache + asynq)]
+    API -->|enqueue| Q[asynq Queue]
+    Q --> W1[Research Worker]
+    Q --> W2[LLM Worker]
+    Q --> W3[Image Worker]
+    Q --> W4[PDF Worker]
+    Q --> W5[QC Worker]
+    W1 & W2 & W3 & W4 & W5 --> LLM[AI Abstraction Layer]
+    W2 & W3 & W4 --> S3[Object Storage S3]
+    API --> Pay[PaymentProvider - Mobile Money / Card]
+```
+
+## 2. Principes directeurs
+
+1. **Product viability > architecture quality > feature richness** (priorité explicite du produit).
+2. Toute génération longue est **asynchrone** (queue + workers) — jamais dans une requête HTTP.
+3. Toute génération est **observable** (provider, model, tokens, latency, coût, statut).
+4. Les crédits sont **financièrement contrôlables** (ledger idempotent).
+5. Le système doit pouvoir **changer de fournisseur IA** et **de fournisseur de paiement** (interfaces/ports).
+6. Les données utilisateur sont **isolées** (`user_id` / `organization_id`).
+
+## 3. Backend (Go)
+
+Structure Clean Architecture orientée ports/adapters. La règle de dépendance pointe vers l'intérieur : `domain` ne dépend de rien, `application` dépend de `domain`, `infra` implémente les ports.
+
+```
+backend/
+├── cmd/api/main.go           # composition root (wiring DI)
+├── internal/
+│   ├── config/               # chargement + validation des env vars
+│   ├── server/               # routeur chi, middlewares, handlers HTTP
+│   ├── domain/               # entités, value objects, erreurs métier (zéro dépendance)
+│   ├── application/          # ports (interfaces) + use cases (1 cas = 1 scénario)
+│   └── infra/                # adapters: postgres (sqlc), redis (asynq), auth, ai, payments
+└── db/
+    ├── migrations/           # goose (.sql, timestampés)
+    └── query/                # sqlc (.sql) -> code Go typé
+```
+
+### Couches
+
+| Couche | Rôle | Dépend de |
+|---|---|---|
+| `domain` | entités (User, Opportunity, CreditAccount…), invariants, erreurs métier | rien |
+| `application` | use cases (`RegisterUser`, `ReserveCredits`…), ports (`CreditRepository`, `PaymentProvider`, `LLMProvider`) | `domain` |
+| `infra` | implémentations concrètes (Postgres, Redis, asynq, providers) | `application`, `domain` |
+| `server` | HTTP : routeur, middlewares, handlers, DTOs, validation | `application` |
+
+### HTTP & API
+
+- Routeur **chi**, versionné `/api/v1/*`.
+- **Erreurs** : format unique RFC 9457 `{type, title, status, detail, instance, errors[]}`. Aucune stacktrace exposée.
+- **Pagination** : offset (`page`/`pageSize`, défaut 20, max 100) pour les listes MVP ; cursor-based prévu pour les très grosses listes.
+- **Idempotence** : le ledger expose des opérations idempotentes par `reference` (clé unique) ; header `Idempotency-Key` prévu pour les paiements.
+- Middlewares : recovery, logging structuré (slog + correlation ID), auth (JWT cookie/Bearer), rate limiting (in-memory au MVP), CORS.
+
+**Endpoints implémentés (MVP)** :
+
+| Méthode | Chemin | Auth | Description |
+|---|---|---|---|
+| POST | `/api/v1/auth/register` | — | Inscription + bonus de bienvenue (rate limité) |
+| POST | `/api/v1/auth/login` | — | Connexion email/mot de passe (rate limité) |
+| POST | `/api/v1/auth/refresh` | cookie refresh | Rotation des tokens |
+| POST | `/api/v1/auth/logout` | — | Révocation de session |
+| GET | `/api/v1/auth/me` | JWT | Profil courant |
+| GET | `/api/v1/auth/google` | — | Redirection OAuth (PKCE) |
+| GET | `/api/v1/auth/google/callback` | — | Échange code → session |
+| GET | `/api/v1/markets` | — | Référentiel des marchés |
+| GET | `/api/v1/credits` | JWT | Solde + agrégats + coûts |
+| GET | `/api/v1/credits/transactions` | JWT | Journal comptable paginé/filtré |
+| POST | `/api/v1/credits/reserve` | JWT | Réserve de crédits (idempotent) |
+| GET | `/api/v1/opportunities` | JWT | Catalogue d'opportunités (filtres pays/secteur/difficulté/recherche) |
+| GET | `/api/v1/opportunities/filters` | JWT | Facettes disponibles |
+| POST/DELETE | `/api/v1/opportunities/{id}/save` | JWT | Sauvegarder / retirer une opportunité |
+
+Format de réponse : ressource unique `{ "data": … }` ; liste `{ "data": […], "pagination": { page, pageSize, totalItems, totalPages } }`.
+
+## 4. Authentification & autorisation
+
+- **JWT** access (15 min) + refresh (rotation, 7–30 j) en **cookies httpOnly/Secure/SameSite** (jamais localStorage).
+- Hachage mot de passe **Argon2id**.
+- **Google OAuth** via OIDC + PKCE.
+- **Autorisation** : vérification serveur à chaque endpoint ; isolation tenant (`WHERE user_id = $1`) systématique. Le frontend n'est **jamais** une frontière de sécurité.
+
+## 5. Workflows asynchrones (queue/workers)
+
+Les générations longues passent par **Redis + asynq** (équivalent Go de BullMQ) :
+
+```
+Orchestrateur (Workflow) → enqueue Job → Workers spécialisés
+```
+
+Chaque `GenerationJob` porte : `id, status, progress, attempts, started_at, completed_at, error, provider, cost, metadata`.
+
+Propriétés requises : **idempotent, retryable, observable, annulable, reprenable**. Une erreur sur une étape ne détruit pas les résultats déjà produits (partial completion).
+
+Workers : Research, LLM, Image, Video, PDF, QC. Objectif < 30 min (jamais garanti — implémenter deadline/timeout/retry/fallback).
+
+## 6. Architecture IA
+
+Abstraction **LLMProvider** (et ImageGenerationProvider, etc.) derrière des interfaces Go. Le modèle n'est jamais hardcodé. Workflow **orchestré** (pas des agents autonomes partout) :
+
+```
+ResearchWorkflow → OpportunityScoringWorkflow → ProductIdeaWorkflow → OutlineWorkflow
+→ ContentWorkflow → AssetWorkflow → MarketingWorkflow → QCWorkflow → PackagingWorkflow
+```
+
+Les agents peuvent être utilisés **à l'intérieur d'une étape** si réelle valeur ajoutée.
+
+## 7. Architecture des paiements
+
+Interface `PaymentProvider` (créer / vérifier / rembourser), jamais couplée à Stripe. Multi-provider par pays : **Mobile Money d'abord** (Wave, Orange Money, MTN via Flutterwave), puis carte, puis international. Webhooks (protection + idempotence), remboursements.
+
+## 8. Architecture des crédits (ledger)
+
+Modèle **double-entrée** :
+
+```
+CreditAccount ──< CreditTransaction ──< CreditReservation ──< GenerationCost
+```
+
+Cycle idempotent d'une génération :
+
+```
+available credits → reserve → execute → (success → consume | failure → release/refund)
+```
+
+Chaque opération a un coût configurable (ex. : Niche Research 5, Idea 2, Ebook 20, Image 3, Video 15, Sales Page 5 — valeurs configurables).
+
+## 9. Modèle de données (PostgreSQL)
+
+Entités cœur :
+
+| Entité | Description |
+|---|---|
+| `User` | compte utilisateur (auth, profil) |
+| `Organization` | organisation (tenant optionnel, prévu pour B2B2C) |
+| `Project` | projet produit (status, crédits consommés) |
+| `Market` | pays + devise + langue + secteurs |
+| `Opportunity` | opportunité scorée (score, evidence JSON, classification signal) |
+| `ProductIdea` / `IdeaVersion` | idées + historique de versions |
+| `Product` / `Chapter` / `ContentVersion` | ebook + chapitres + versions |
+| `Asset` | assets générés (couverture, visuels, posts…) |
+| `GenerationJob` / `Workflow` / `WorkflowStep` | jobs + étapes |
+| `CreditAccount` / `CreditTransaction` / `CreditReservation` / `GenerationCost` | ledger |
+| `Payment` / `Plan` | paiements + packs |
+| `Notification` | in-app + email |
+| `AuditLog` | audit |
+
+Contraintes clés : `Evidence` classifié (`VERIFIED`/`ESTIMATED`/`INFERRED`/`HYPOTHESIS`) ; versionnement sans écrasement ; soft delete via `deleted_at` + index partiels ; index sur les colonnes de filtrage/scoring ; `tenant_id` (`user_id`) sur toutes les tables métier.
+
+## 10. Frontend (React SPA)
+
+- **Vite + React Router 7 (mode SPA)** : routes déclarées en `src/app/router.tsx`.
+- **TanStack Query** : état serveur (cache, invalidation, optimistic updates).
+- **react-hook-form + zod** : formulaire unique (pattern documenté dans `conventions.md`).
+- **shadcn/ui + Radix** : zéro composant HTML natif quand un équivalent existe.
+- **i18n** : react-i18next, locales centralisées `src/i18n/locales/{fr,en}/`.
+- **Dark mode** : stratégie `class`, tokens CSS mappés sur « Emerald & Amber Ledger ».
+
+Pages (application) : `/dashboard`, `/opportunities`, `/opportunities/:id`, `/ideas`, `/ideas/:id`, `/projects`, `/projects/:id`, `/projects/:id/content`, `/projects/:id/assets`, `/projects/:id/marketing`, `/projects/:id/export`, `/credits`, `/settings`. Marketing : `/`, `/pricing`, `/how-it-works`, `/login`, `/register`.
+
+## 11. Observabilité
+
+- **Logs structurés** (slog, JSON, correlation ID, sans PII).
+- **Metrics** Prometheus + **tracing** OpenTelemetry.
+- **Coût IA** : provider, model, input/output tokens, latency, estimated cost, status — consignés à chaque génération.
+- Health checks (liveness/readiness).
+
+## 12. Déploiement (cible)
+
+- **Frontend** : CDN/edge (Vercel/Netlify/Cloudflare Pages) — SPA statique.
+- **API + Workers** : conteneurs sur infrastructure adaptée aux workloads longs (Fly.io, Railway, Render, ou K8s) — **pas** de serverless pour les workers longs.
+- **PostgreSQL / Redis** : managés (Neon/RDS/CloudSQL ; Upstash/Memorystore).
+- **Object Storage** : S3-compatible.
+
+## 13. Roadmap
+
+| Phase | Contenu |
+|---|---|
+| **MVP** | auth, crédits+ledger, recherche d'opportunités, génération d'idées, création ebook, assets marketing, page de vente, paiement Mobile Money |
+| **V2** | itération avancée, localisation multi-pays, vidéo, notifications (WhatsApp/SMS), gestion des ventes |
+| **Future** | B2B2C, marketplaces, données propriétaires, modèles locaux |
