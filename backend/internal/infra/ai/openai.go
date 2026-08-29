@@ -26,11 +26,13 @@ type OpenAI struct {
 }
 
 // NewOpenAI construit un client OpenAI.
+// Le timeout est large : les générations longues (ebook 4000-6000 mots en un
+// seul appel) peuvent dépasser plusieurs minutes avant d'envoyer les headers.
 func NewOpenAI(apiKey, baseURL string) *OpenAI {
 	if baseURL == "" {
 		baseURL = openAIDefaultBaseURL
 	}
-	return &OpenAI{apiKey: apiKey, baseURL: baseURL, http: &http.Client{Timeout: 120 * time.Second}}
+	return &OpenAI{apiKey: apiKey, baseURL: baseURL, http: &http.Client{Timeout: 10 * time.Minute}}
 }
 
 type openAIMessage struct {

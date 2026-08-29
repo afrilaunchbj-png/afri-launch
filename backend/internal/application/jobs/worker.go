@@ -111,7 +111,7 @@ func (w *Worker) run() {
 }
 
 func (w *Worker) process(t task) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	defer cancel()
 
 	job, err := w.jobs.Get(ctx, t.userID, t.jobID)
