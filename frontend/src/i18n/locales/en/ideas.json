@@ -1,0 +1,12 @@
+{
+  "title": "Product ideas",
+  "subtitle": "Generate and select product concepts for your opportunity.",
+  "generate": "Generate ideas",
+  "generatingHint": "Generating ideas…",
+  "audience": "Audience",
+  "createProject": "Create a project",
+  "empty": "No ideas",
+  "emptyDesc": "Generate product ideas for this opportunity.",
+  "noOpportunity": "Select an opportunity to generate ideas.",
+  "backToOpportunities": "Back to opportunities"
+}

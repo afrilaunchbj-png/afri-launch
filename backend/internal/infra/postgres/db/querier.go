@@ -6,38 +6,60 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	AddCredits(ctx context.Context, arg AddCreditsParams) (CreditAccount, error)
+	AddProjectCredits(ctx context.Context, arg AddProjectCreditsParams) (Project, error)
 	AddReserved(ctx context.Context, arg AddReservedParams) (CreditAccount, error)
+	CompleteJob(ctx context.Context, arg CompleteJobParams) (GenerationJob, error)
 	CountCreditTransactions(ctx context.Context, arg CountCreditTransactionsParams) (int64, error)
 	CountOpportunities(ctx context.Context, arg CountOpportunitiesParams) (int64, error)
+	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
 	CreateCreditAccount(ctx context.Context, arg CreateCreditAccountParams) (CreditAccount, error)
 	CreateCreditReservation(ctx context.Context, arg CreateCreditReservationParams) (CreditReservation, error)
 	CreateCreditTransaction(ctx context.Context, arg CreateCreditTransactionParams) (CreditTransaction, error)
+	CreateIdea(ctx context.Context, arg CreateIdeaParams) (ProductIdea, error)
+	CreateJob(ctx context.Context, arg CreateJobParams) (GenerationJob, error)
+	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
+	FailJob(ctx context.Context, arg FailJobParams) (GenerationJob, error)
+	GetAsset(ctx context.Context, arg GetAssetParams) (Asset, error)
 	GetCreditAccountByID(ctx context.Context, id string) (CreditAccount, error)
 	GetCreditAccountByUserID(ctx context.Context, userID string) (CreditAccount, error)
 	GetCreditAccountForUpdate(ctx context.Context, userID string) (CreditAccount, error)
 	GetCreditReservationByReference(ctx context.Context, reference string) (CreditReservation, error)
 	GetCreditTransactionByReference(ctx context.Context, reference *string) (CreditTransaction, error)
 	GetGenerationCost(ctx context.Context, operation string) (GenerationCost, error)
+	GetIdea(ctx context.Context, arg GetIdeaParams) (ProductIdea, error)
+	GetJob(ctx context.Context, arg GetJobParams) (GenerationJob, error)
 	GetOpportunity(ctx context.Context, id string) (Opportunity, error)
+	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
+	ListAssetsByProject(ctx context.Context, projectID string) ([]Asset, error)
 	ListCreditTransactions(ctx context.Context, arg ListCreditTransactionsParams) ([]CreditTransaction, error)
 	ListDistinctCountries(ctx context.Context) ([]string, error)
 	ListDistinctSectors(ctx context.Context) ([]string, error)
 	ListGenerationCosts(ctx context.Context) ([]GenerationCost, error)
+	ListIdeasByOpportunity(ctx context.Context, arg ListIdeasByOpportunityParams) ([]ProductIdea, error)
+	ListIdeasByUser(ctx context.Context, userID string) ([]ProductIdea, error)
+	ListJobsByProject(ctx context.Context, projectID pgtype.UUID) ([]GenerationJob, error)
 	ListMarkets(ctx context.Context) ([]Market, error)
 	ListOpportunities(ctx context.Context, arg ListOpportunitiesParams) ([]Opportunity, error)
 	ListPlans(ctx context.Context) ([]Plan, error)
+	ListProjectsByUser(ctx context.Context, userID string) ([]Project, error)
 	ListSavedOpportunityIDs(ctx context.Context, userID string) ([]string, error)
 	SaveOpportunity(ctx context.Context, arg SaveOpportunityParams) error
+	SelectIdea(ctx context.Context, arg SelectIdeaParams) (ProductIdea, error)
 	SubtractCredits(ctx context.Context, arg SubtractCreditsParams) (CreditAccount, error)
 	SubtractReserved(ctx context.Context, arg SubtractReservedParams) (CreditAccount, error)
 	SumCreditTransactionsByTypeSince(ctx context.Context, arg SumCreditTransactionsByTypeSinceParams) (int64, error)
 	UnsaveOpportunity(ctx context.Context, arg UnsaveOpportunityParams) error
+	UnselectIdea(ctx context.Context, arg UnselectIdeaParams) error
 	UpdateCreditReservationStatus(ctx context.Context, arg UpdateCreditReservationStatusParams) (CreditReservation, error)
+	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (GenerationJob, error)
+	UpdateProjectStatus(ctx context.Context, arg UpdateProjectStatusParams) (Project, error)
 	UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error)
 }
 

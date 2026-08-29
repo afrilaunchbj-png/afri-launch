@@ -76,6 +76,16 @@ backend/
 | GET | `/api/v1/opportunities` | JWT | Catalogue d'opportunités (filtres pays/secteur/difficulté/recherche) |
 | GET | `/api/v1/opportunities/filters` | JWT | Facettes disponibles |
 | POST/DELETE | `/api/v1/opportunities/{id}/save` | JWT | Sauvegarder / retirer une opportunité |
+| POST | `/api/v1/opportunities/{id}/ideas` | JWT | Génère des idées (job asynchrone, 2 crédits) |
+| GET | `/api/v1/ideas` (et `/opportunities/{id}/ideas`) | JWT | Liste les idées de produits |
+| GET/POST | `/api/v1/projects` | JWT | Liste / crée un projet |
+| GET | `/api/v1/projects/{id}` | JWT | Détail d'un projet |
+| POST | `/api/v1/projects/{id}/ebook` | JWT | Génère l'ebook PDF (job, 20 crédits) |
+| POST | `/api/v1/projects/{id}/cover` | JWT | Génère la couverture (job, 3 crédits) |
+| POST | `/api/v1/projects/{id}/sales-page` | JWT | Génère la page de vente (job, 5 crédits) |
+| GET | `/api/v1/projects/{id}/assets` | JWT | Liste les assets générés |
+| GET | `/api/v1/assets/{id}/download` | JWT | Télécharge un asset (binaire) |
+| GET | `/api/v1/jobs/{id}` | JWT | Statut d'un job de génération |
 
 Format de réponse : ressource unique `{ "data": … }` ; liste `{ "data": […], "pagination": { page, pageSize, totalItems, totalPages } }`.
 

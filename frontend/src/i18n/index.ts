@@ -5,12 +5,16 @@ import authEn from "./locales/en/auth.json"
 import commonEn from "./locales/en/common.json"
 import creditsEn from "./locales/en/credits.json"
 import dashboardEn from "./locales/en/dashboard.json"
+import ideasEn from "./locales/en/ideas.json"
 import opportunitiesEn from "./locales/en/opportunities.json"
+import projectsEn from "./locales/en/projects.json"
 import authFr from "./locales/fr/auth.json"
 import commonFr from "./locales/fr/common.json"
 import creditsFr from "./locales/fr/credits.json"
 import dashboardFr from "./locales/fr/dashboard.json"
+import ideasFr from "./locales/fr/ideas.json"
 import opportunitiesFr from "./locales/fr/opportunities.json"
+import projectsFr from "./locales/fr/projects.json"
 
 export const resources = {
   fr: {
@@ -19,6 +23,8 @@ export const resources = {
     credits: creditsFr,
     dashboard: dashboardFr,
     opportunities: opportunitiesFr,
+    ideas: ideasFr,
+    projects: projectsFr,
   },
   en: {
     common: commonEn,
@@ -26,6 +32,8 @@ export const resources = {
     credits: creditsEn,
     dashboard: dashboardEn,
     opportunities: opportunitiesEn,
+    ideas: ideasEn,
+    projects: projectsEn,
   },
 } as const
 

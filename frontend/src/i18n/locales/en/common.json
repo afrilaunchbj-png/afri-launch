@@ -5,9 +5,9 @@
     "home": "Home",
     "dashboard": "Dashboard",
     "opportunities": "Research",
+    "ideas": "Ideas",
+    "projects": "Projects",
     "credits": "Credits",
-    "ideation": "Ideation",
-    "creation": "Creation",
     "marketing": "Marketing",
     "settings": "Settings",
     "support": "Support",
@@ -20,7 +20,8 @@
     "nextPage": "Next page",
     "genericError": "Something went wrong. Please try again.",
     "loading": "Loading…",
-    "refreshing": "Refreshing…"
+    "refreshing": "Refreshing…",
+    "generating": "Generating…"
   },
   "home": {
     "title": "Welcome to AfriLaunch",

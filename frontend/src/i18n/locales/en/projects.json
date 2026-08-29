@@ -1,0 +1,29 @@
+{
+  "title": "Projects",
+  "subtitle": "Your products in the making.",
+  "empty": "No projects",
+  "emptyDesc": "Create a project from a product idea.",
+  "back": "Back to projects",
+  "creditsUsed": "{{count}} credits used",
+  "ebook": "Ebook (PDF)",
+  "cover": "Cover",
+  "salesPage": "Sales page",
+  "generate": "Generate",
+  "generated": "Generated",
+  "assets": "Generated assets",
+  "noAssets": "No assets generated yet.",
+  "download": "Download",
+  "status": {
+    "draft": "Draft",
+    "idea_selected": "Idea selected",
+    "generating": "Generating",
+    "content_ready": "Content ready",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "assetKind": {
+    "ebook_pdf": "Ebook (PDF)",
+    "cover": "Cover",
+    "sales_page": "Sales page"
+  }
+}

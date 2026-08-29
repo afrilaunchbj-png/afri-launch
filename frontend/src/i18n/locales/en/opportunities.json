@@ -16,6 +16,7 @@
   "save": "Save",
   "saved": "Saved",
   "unsave": "Remove",
+  "generateIdeas": "Generate ideas",
   "empty": "No opportunities",
   "emptyDesc": "No opportunities match your filters.",
   "resultCount": "{{count}} result(s)",

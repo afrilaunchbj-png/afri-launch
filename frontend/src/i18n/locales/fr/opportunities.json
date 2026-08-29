@@ -16,6 +16,7 @@
   "save": "Enregistrer",
   "saved": "Enregistrée",
   "unsave": "Retirer",
+  "generateIdeas": "Générer des idées",
   "empty": "Aucune opportunité",
   "emptyDesc": "Aucune opportunité ne correspond à vos filtres.",
   "resultCount": "{{count}} résultat(s)",

@@ -1,5 +1,6 @@
+import { Link } from "react-router"
 import { useTranslation } from "react-i18next"
-import { Bookmark, MapPin, TrendingUp } from "lucide-react"
+import { Bookmark, MapPin, Sparkles, TrendingUp } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -79,6 +80,12 @@ export function OpportunityCard({ opportunity }: { opportunity: Opportunity }) {
               >
                 <Bookmark className={cn("h-4 w-4", opportunity.is_saved && "fill-current")} />
                 {opportunity.is_saved ? t("opportunities:saved") : t("opportunities:save")}
+              </Button>
+              <Button size="sm" asChild>
+                <Link to={`/ideas?opportunity=${opportunity.id}`}>
+                  <Sparkles className="h-4 w-4" />
+                  {t("opportunities:generateIdeas")}
+                </Link>
               </Button>
             </div>
           </div>

@@ -37,6 +37,11 @@ func (s *Service) GenerateDeck(ctx context.Context, req DeckRequest) ([]byte, er
 	return s.render.SlidesToPPTX(ctx, html)
 }
 
+// GenerateSalesPage génère une page de vente (HTML auto-porteur).
+func (s *Service) GenerateSalesPage(ctx context.Context, req SalesPageRequest) ([]byte, error) {
+	return s.generateHTML(ctx, BuildSalesPagePrompt(req))
+}
+
 func (s *Service) generateHTML(ctx context.Context, prompt Prompt) ([]byte, error) {
 	resp, err := s.ai.Complete(ctx, ai.TaskContent, prompt.System, prompt.User)
 	if err != nil {

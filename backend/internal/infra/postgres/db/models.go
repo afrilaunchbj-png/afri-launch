@@ -10,6 +10,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Asset struct {
+	ID          string    `json:"id"`
+	UserID      string    `json:"user_id"`
+	ProjectID   string    `json:"project_id"`
+	Kind        string    `json:"kind"`
+	StorageKey  string    `json:"storage_key"`
+	Filename    string    `json:"filename"`
+	ContentType string    `json:"content_type"`
+	SizeBytes   int32     `json:"size_bytes"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type AuditLog struct {
 	ID        string      `json:"id"`
 	UserID    pgtype.UUID `json:"user_id"`
@@ -60,6 +72,21 @@ type GenerationCost struct {
 	Credits   int32     `json:"credits"`
 	IsActive  bool      `json:"is_active"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type GenerationJob struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	ProjectID     pgtype.UUID        `json:"project_id"`
+	OpportunityID pgtype.UUID        `json:"opportunity_id"`
+	Kind          string             `json:"kind"`
+	Status        string             `json:"status"`
+	Error         *string            `json:"error"`
+	Cost          int32              `json:"cost"`
+	Result        []byte             `json:"result"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
 }
 
 type Market struct {
@@ -118,6 +145,37 @@ type Plan struct {
 	SortOrder  int32     `json:"sort_order"`
 	IsActive   bool      `json:"is_active"`
 	CreatedAt  time.Time `json:"created_at"`
+}
+
+type ProductIdea struct {
+	ID               string      `json:"id"`
+	UserID           string      `json:"user_id"`
+	OpportunityID    pgtype.UUID `json:"opportunity_id"`
+	Title            string      `json:"title"`
+	Subtitle         string      `json:"subtitle"`
+	Audience         string      `json:"audience"`
+	Problem          string      `json:"problem"`
+	Promise          string      `json:"promise"`
+	Format           string      `json:"format"`
+	EstimatedPrice   string      `json:"estimated_price"`
+	Difficulty       string      `json:"difficulty"`
+	MarketEvidence   string      `json:"market_evidence"`
+	WhyNow           string      `json:"why_now"`
+	CompetitiveAngle string      `json:"competitive_angle"`
+	IsSelected       bool        `json:"is_selected"`
+	CreatedAt        time.Time   `json:"created_at"`
+}
+
+type Project struct {
+	ID              string      `json:"id"`
+	UserID          string      `json:"user_id"`
+	OpportunityID   pgtype.UUID `json:"opportunity_id"`
+	IdeaID          pgtype.UUID `json:"idea_id"`
+	Title           string      `json:"title"`
+	Status          string      `json:"status"`
+	CreditsConsumed int32       `json:"credits_consumed"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
 }
 
 type RefreshToken struct {

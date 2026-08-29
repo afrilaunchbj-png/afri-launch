@@ -1,0 +1,29 @@
+{
+  "title": "Projets",
+  "subtitle": "Vos produits en cours de création.",
+  "empty": "Aucun projet",
+  "emptyDesc": "Créez un projet à partir d'une idée de produit.",
+  "back": "Retour aux projets",
+  "creditsUsed": "{{count}} crédits consommés",
+  "ebook": "Ebook (PDF)",
+  "cover": "Couverture",
+  "salesPage": "Page de vente",
+  "generate": "Générer",
+  "generated": "Généré",
+  "assets": "Assets générés",
+  "noAssets": "Aucun asset généré pour l'instant.",
+  "download": "Télécharger",
+  "status": {
+    "draft": "Brouillon",
+    "idea_selected": "Idée sélectionnée",
+    "generating": "Génération",
+    "content_ready": "Contenu prêt",
+    "completed": "Terminé",
+    "failed": "Échoué"
+  },
+  "assetKind": {
+    "ebook_pdf": "Ebook (PDF)",
+    "cover": "Couverture",
+    "sales_page": "Page de vente"
+  }
+}

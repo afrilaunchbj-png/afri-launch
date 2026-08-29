@@ -66,6 +66,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return (await response.json()) as T
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  let response: Response
+  try {
+    const token = await getAccessToken()
+    response = await fetch(`${API_URL}${path}`, {
+      credentials: "include",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+  } catch {
+    throw new AppError("network", 0, "Impossible de contacter le serveur.")
+  }
+
+  if (!response.ok) {
+    throw await toAppError(response)
+  }
+  return response.blob()
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
@@ -75,6 +95,7 @@ export const api = {
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PATCH", body: body === undefined ? undefined : JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  download: (path: string) => requestBlob(path),
 }
 
 /** Enveloppe de réponse standard de l'API : { data, pagination? }. */

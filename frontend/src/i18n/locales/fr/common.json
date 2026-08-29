@@ -5,9 +5,9 @@
     "home": "Accueil",
     "dashboard": "Tableau de bord",
     "opportunities": "Recherche",
+    "ideas": "Idées",
+    "projects": "Projets",
     "credits": "Crédits",
-    "ideation": "Idéation",
-    "creation": "Création",
     "marketing": "Marketing",
     "settings": "Paramètres",
     "support": "Support",
@@ -20,7 +20,8 @@
     "nextPage": "Page suivante",
     "genericError": "Une erreur est survenue. Veuillez réessayer.",
     "loading": "Chargement…",
-    "refreshing": "Actualisation…"
+    "refreshing": "Actualisation…",
+    "generating": "Génération en cours…"
   },
   "home": {
     "title": "Bienvenue sur AfriLaunch",

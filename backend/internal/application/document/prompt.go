@@ -19,6 +19,16 @@ type DeckRequest struct {
 	Country  string
 }
 
+// SalesPageRequest décrit la génération d'une page de vente.
+type SalesPageRequest struct {
+	Product  string
+	Promise  string
+	Audience string
+	Language string
+	Country  string
+	Price    string
+}
+
 // Prompt est la consigne envoyée au LLM.
 type Prompt struct {
 	System string
@@ -61,6 +71,22 @@ func BuildDeckPrompt(req DeckRequest) Prompt {
 	user := fmt.Sprintf(
 		"Build a pitch deck in %s (target market: %s, audience: %s) about: %s.",
 		req.Language, req.Country, req.Audience, req.Topic,
+	)
+	return Prompt{System: system, User: user}
+}
+
+// BuildSalesPagePrompt construit la consigne de génération d'une page de vente (HTML).
+func BuildSalesPagePrompt(req SalesPageRequest) Prompt {
+	system := baseSystem + `
+## Output format: sales landing page (Persuade mode)
+- One self-contained HTML page (no markdown fences, inline CSS only).
+- Hero with a sharp, benefit-driven headline (no vague claim, no invented statistic).
+- Sections: problem, promise/solution, what's included, social proof placeholder, price, one clear CTA.
+- Mobile-first, high contrast, generous whitespace.`
+
+	user := fmt.Sprintf(
+		"Write a sales page in %s (target market: %s, audience: %s) for: %s. Promise: %s. Price: %s.",
+		req.Language, req.Country, req.Audience, req.Product, req.Promise, req.Price,
 	)
 	return Prompt{System: system, User: user}
 }

@@ -106,6 +106,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] Test unitaire du vérifieur Neon (`TestNeonVerifier`) + test intégration ledger.
 - [x] **Abstractions IA (Go)** : ports `LLMProvider`/`ImageProvider`/`VideoProvider` + `ModelRouter` (`gpt-5.6-terra`/`gpt-5.6-luna`/`gpt-image-2`) + `infra/ai/openai.go` + `infra/ai/heygen.go` + config multi-clés + tests (httptest).
 - [x] **Pipeline documents (Go)** : `port.Renderer` + `infra/render` (chromedp : HTML → PDF / slides → PNG) + `infra/pptx` (assemblage PPTX image-par-slide) + `application/document` (service `GenerateEbook`/`GenerateDeck` + prompts avec le vocabulaire Impeccable) + tests (chromedp sur Chrome réel, pptx, prompts).
+- [x] **Parcours MVP (idées → projet → assets → download)** : migration `00008` (`product_ideas`, `projects`, `assets`, `generation_jobs`), repos + ports, worker asynchrone in-process (`application/jobs`), services `ideas`/`projects`/`assets`, endpoints (idées, projets, ebook/couverture/page de vente, assets, download), crédits `reserve→consume|release` par génération, frontend (pages idées/projets/projet + téléchargement).
 
 ## Work In Progress
 
@@ -113,11 +114,10 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Remaining Work
 
-1. **Génération d'idées** (`ProductIdea`/`IdeaVersion`) puis **création produit** (ebook) + **assets** + **page de vente** — consomment `document.Service` + `ai.Service`.
-2. **Object Storage** : adaptateur S3 (Neon) + URLs présignées.
-3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
-4. **Workers asynq** (Research, LLM, Image, Video, Render, QC) — consomment `ai.Service` / `document.Service` (déjà câblés dans `main.go`).
-5. **Tests** : unitaires + intégration + E2E.
+1. **Object Storage** : remplacer `LocalStorage` par un adaptateur S3 (Neon) + URLs présignées.
+2. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+3. **Workers asynq** (Redis) : remplacer le worker in-process (`application/jobs`) par asynq pour la robustesse multi-instance.
+4. **Tests** : unitaires + intégration + E2E du parcours complet.
 
 ## Known Issues
 
@@ -130,6 +130,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `pnpm-workspace.yaml` créé (`onlyBuiltDependencies: [core-js]`) — sinon pnpm 11 échoue sur les scripts de build ignorés.
 - **Abstractions IA codées** (`LLMProvider`, `ModelRouter`, OpenAI, HeyGen) et **pipeline documents codé** (chromedp + prompts Impeccable + PDF/PPTX) mais **pas encore consommés par des workers/endpoints** ; la génération réelle requiert `OPENAI_API_KEY` et `HEYGEN_API_KEY`.
 - Le rendu (chromedp) nécessite **Chrome/Chromium** : présent en dev (`/usr/bin/google-chrome`), installé via `chromium` dans le Dockerfile backend (`CHROME_PATH=/usr/bin/chromium`).
+- **Worker in-process** (goroutines) pour les générations — pas asynq ; les jobs sont perdus au redémarrage. **Storage local** (fichiers) — pas durable sur Railway (éphémère) ; à remplacer par S3.
+- La génération (idées/ebook/assets) requiert `OPENAI_API_KEY` côté backend, sinon les jobs échouent (erreur 401 OpenAI).
 
 ## Tests & Validation
 
@@ -153,6 +155,11 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `backend/internal/infra/ai/heygen.go` — client HeyGen (vidéo avatar, `/v3/videos`).
 - `backend/internal/infra/render/chromedp.go` — rendu chromedp (PDF + slides→PNG).
 - `backend/internal/infra/pptx/pptx.go` — assemblage PPTX image-par-slide.
+- `backend/internal/application/jobs/worker.go` — worker asynchrone (idées/ebook/couverture/page de vente) + prompts.
+- `backend/internal/application/{ideas,projects,assets}/` — services du parcours MVP.
+- `backend/internal/application/port/workshop.go` — interfaces `IdeaRepository`/`ProjectRepository`/`AssetRepository`/`JobRepository`/`Storage`.
+- `backend/internal/infra/storage/local.go` — stockage local (S3 à venir).
+- `backend/db/migrations/00008_products.sql` — idées/projets/assets/jobs.
 - `backend/internal/infra/auth/neon.go` — vérifieur JWT Neon (EdDSA/JWKS).
 - `backend/internal/application/port/ports.go` — interfaces (dont `TokenVerifier`, `AuthUser`).
 - `backend/internal/server/auth.go` + `authctx/` — middleware + identité.
@@ -172,9 +179,10 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Next Steps
 
-1. Configurer Neon Auth côté console (enable auth, provider Google, trusted domains) + renseigner `NEON_AUTH_BASE_URL` / `VITE_NEON_AUTH_URL`, puis tester le parcours complet.
-2. **Génération d'idées** → **création produit** (ebook) → **assets** → **page de vente** — consomment `document.Service` + `ai.Service`.
-3. Object Storage (Neon S3) + paiements Mobile Money + workers asynq (consommer `ai.Service` / `document.Service`).
+1. Configurer Neon Auth côté console (enable auth, provider Google, trusted domains) + renseigner `OPENAI_API_KEY` / `HEYGEN_API_KEY`, puis tester le parcours complet (idées → ebook → assets → download).
+2. **Object Storage** : adapter S3 (Neon) + URLs présignées (remplacer `LocalStorage`).
+3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+4. **Workers asynq** : remplacer le worker in-process par asynq (Redis).
 
 ## Notes for the Next Agent
 

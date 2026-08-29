@@ -2,6 +2,8 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"afrilaunch/backend/internal/application/port"
 )
@@ -29,6 +31,20 @@ func (s *Service) Complete(ctx context.Context, task Task, system, prompt string
 	})
 }
 
+// CompleteJSON génère une sortie structurée (JSON) et la décode dans out.
+func (s *Service) CompleteJSON(ctx context.Context, task Task, system, prompt string, out any) error {
+	resp, err := s.llm.Complete(ctx, port.LLMRequest{
+		Model:    s.router.ModelFor(task),
+		System:   system,
+		Messages: []port.LLMMessage{{Role: "user", Content: prompt}},
+		JSONMode: true,
+	})
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(stripFences(resp.Content)), out)
+}
+
 // GenerateImage génère une image avec le modèle image configuré.
 func (s *Service) GenerateImage(ctx context.Context, prompt string) (port.Image, error) {
 	return s.images.Generate(ctx, port.ImageRequest{
@@ -45,4 +61,13 @@ func (s *Service) SubmitVideo(ctx context.Context, req port.VideoRequest) (strin
 // VideoStatus interroge l'état d'un job vidéo.
 func (s *Service) VideoStatus(ctx context.Context, id string) (port.VideoResult, error) {
 	return s.video.Status(ctx, id)
+}
+
+// stripFences retire un éventuel bloc ```json ... ``` autour de la sortie.
+func stripFences(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```")
+	s = strings.TrimSuffix(s, "```")
+	return strings.TrimSpace(s)
 }

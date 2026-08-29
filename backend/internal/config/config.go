@@ -33,6 +33,9 @@ type Config struct {
 	// Rendu HTML → PDF/PPTX (chromedp / Chrome headless).
 	ChromePath string
 
+	// Stockage des fichiers générés (local au MVP ; S3 à venir).
+	StorageDir string
+
 	// Métier
 	WelcomeCredits int
 }
@@ -61,6 +64,8 @@ func Load() Config {
 		HeyGenAPIURL:        get("HEYGEN_API_URL", "https://api.heygen.com"),
 
 		ChromePath: get("CHROME_PATH", ""),
+
+		StorageDir: get("STORAGE_DIR", "./.storage"),
 
 		WelcomeCredits: getInt("WELCOME_CREDITS", 100),
 	}

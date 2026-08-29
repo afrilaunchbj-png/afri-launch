@@ -23,6 +23,10 @@ type Deps struct {
 	Credits       *handler.CreditHandler
 	Opportunities *handler.OpportunityHandler
 	Markets       *handler.MarketHandler
+	Ideas         *handler.IdeaHandler
+	Projects      *handler.ProjectHandler
+	Assets        *handler.AssetHandler
+	Jobs          *handler.JobHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -65,6 +69,21 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/opportunities/filters", d.Opportunities.Filters)
 			r.Post("/opportunities/{id}/save", d.Opportunities.Save)
 			r.Delete("/opportunities/{id}/save", d.Opportunities.Unsave)
+			r.Post("/opportunities/{id}/ideas", d.Ideas.Generate)
+			r.Get("/opportunities/{id}/ideas", d.Ideas.List)
+
+			r.Get("/ideas", d.Ideas.List)
+
+			r.Get("/projects", d.Projects.List)
+			r.Post("/projects", d.Projects.Create)
+			r.Get("/projects/{id}", d.Projects.Get)
+			r.Post("/projects/{id}/ebook", d.Projects.GenerateEbook)
+			r.Post("/projects/{id}/cover", d.Projects.GenerateCover)
+			r.Post("/projects/{id}/sales-page", d.Projects.GenerateSalesPage)
+			r.Get("/projects/{id}/assets", d.Assets.List)
+
+			r.Get("/assets/{id}/download", d.Assets.Download)
+			r.Get("/jobs/{id}", d.Jobs.Get)
 		})
 	})
 

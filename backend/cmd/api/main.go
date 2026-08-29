@@ -12,14 +12,19 @@ import (
 
 	appai "afrilaunch/backend/internal/application/ai"
 	authapp "afrilaunch/backend/internal/application/auth"
+	assetsapp "afrilaunch/backend/internal/application/assets"
 	creditsapp "afrilaunch/backend/internal/application/credits"
 	documentapp "afrilaunch/backend/internal/application/document"
+	ideasapp "afrilaunch/backend/internal/application/ideas"
+	"afrilaunch/backend/internal/application/jobs"
 	opportunitiesapp "afrilaunch/backend/internal/application/opportunities"
+	projectsapp "afrilaunch/backend/internal/application/projects"
 	"afrilaunch/backend/internal/config"
-	aiinfra "afrilaunch/backend/internal/infra/ai"
 	authinfra "afrilaunch/backend/internal/infra/auth"
-	"afrilaunch/backend/internal/infra/postgres"
+	aiinfra "afrilaunch/backend/internal/infra/ai"
 	renderinfra "afrilaunch/backend/internal/infra/render"
+	"afrilaunch/backend/internal/infra/postgres"
+	"afrilaunch/backend/internal/infra/storage"
 	"afrilaunch/backend/internal/server"
 	"afrilaunch/backend/internal/server/handler"
 )
@@ -47,6 +52,11 @@ func main() {
 	creditRepo := postgres.NewCreditRepository(store)
 	oppRepo := postgres.NewOpportunityRepository(store)
 	marketRepo := postgres.NewMarketRepository(store)
+	ideaRepo := postgres.NewIdeaRepository(store)
+	projectRepo := postgres.NewProjectRepository(store)
+	assetRepo := postgres.NewAssetRepository(store)
+	jobRepo := postgres.NewJobRepository(store)
+	objStorage := storage.NewLocalStorage(cfg.StorageDir)
 
 	verifier, err := authinfra.NewNeonVerifier(cfg.NeonAuthBaseURL, cfg.NeonAuthJWKSURL)
 	if err != nil {
@@ -69,11 +79,23 @@ func main() {
 	renderer := renderinfra.NewChromedpRenderer(cfg.ChromePath)
 	docSvc := documentapp.NewService(aiSvc, renderer)
 
+	// Worker asynchrone de génération (idées, ebook, assets).
+	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, objStorage, aiSvc, docSvc)
+
+	// Services applicatifs.
+	ideaSvc := ideasapp.NewService(worker, ideaRepo, oppRepo)
+	projectSvc := projectsapp.NewService(worker, projectRepo)
+	assetSvc := assetsapp.NewService(assetRepo, objStorage)
+
 	// Handlers HTTP.
 	authH := handler.NewAuthHandler(authSvc, int64(cfg.WelcomeCredits))
 	creditH := handler.NewCreditHandler(creditSvc)
 	oppH := handler.NewOpportunityHandler(oppSvc)
 	marketH := handler.NewMarketHandler(marketRepo)
+	ideaH := handler.NewIdeaHandler(ideaSvc)
+	projectH := handler.NewProjectHandler(projectSvc)
+	assetH := handler.NewAssetHandler(assetSvc)
+	jobH := handler.NewJobHandler(jobRepo)
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
@@ -84,6 +106,10 @@ func main() {
 		Credits:       creditH,
 		Opportunities: oppH,
 		Markets:       marketH,
+		Ideas:         ideaH,
+		Projects:      projectH,
+		Assets:        assetH,
+		Jobs:          jobH,
 		AI:            aiSvc,
 		Documents:     docSvc,
 	})
