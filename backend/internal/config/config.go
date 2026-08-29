@@ -30,6 +30,9 @@ type Config struct {
 	HeyGenAPIKey        string
 	HeyGenAPIURL        string
 
+	// Rendu HTML → PDF/PPTX (chromedp / Chrome headless).
+	ChromePath string
+
 	// Métier
 	WelcomeCredits int
 }
@@ -56,6 +59,8 @@ func Load() Config {
 		OpenAIImageModel:    get("OPENAI_MODEL_IMAGE", "gpt-image-2"),
 		HeyGenAPIKey:        get("HEYGEN_API_KEY", ""),
 		HeyGenAPIURL:        get("HEYGEN_API_URL", "https://api.heygen.com"),
+
+		ChromePath: get("CHROME_PATH", ""),
 
 		WelcomeCredits: getInt("WELCOME_CREDITS", 100),
 	}

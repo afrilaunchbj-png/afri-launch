@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"afrilaunch/backend/internal/application/ai"
+	"afrilaunch/backend/internal/application/document"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/config"
 	"afrilaunch/backend/internal/server/handler"
@@ -24,6 +25,8 @@ type Deps struct {
 	Markets       *handler.MarketHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
+	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
+	Documents *document.Service
 }
 
 // NewRouter construit le routeur HTTP de l'API.

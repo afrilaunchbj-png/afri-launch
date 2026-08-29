@@ -11,7 +11,8 @@ RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api
 
 # ---------- Runtime ----------
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates tzdata wget
+# chromium + fonts pour le rendu HTML → PDF/PPTX (chromedp).
+RUN apk add --no-cache ca-certificates tzdata wget chromium nss freetype harfbuzz fontconfig ttf-freefont
 WORKDIR /app
 
 # Binaire goose (prebuilt, évite de dépendre de la version Go de goose)
@@ -28,5 +29,6 @@ COPY db/migrations /app/db/migrations
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod +x /app/docker-entrypoint.sh
 
+ENV CHROME_PATH=/usr/bin/chromium
 EXPOSE 8080
 ENTRYPOINT ["/app/docker-entrypoint.sh"]

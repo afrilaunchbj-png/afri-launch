@@ -55,17 +55,17 @@ type VideoProvider interface {
 
 ## 4. Pipeline document (ebook / deck) — HTML → PDF/PPT
 
-**Décision (ADR-013)** : le LLM ne génère **pas** les binaires PDF/PPTX (peu fiables). Il génère du **contenu structuré (JSON)** qui est injecté dans des **templates HTML**, puis rendu par **chromedp** (headless Chrome, 100 % Go) et exporté.
+**Décision (ADR-013)** : le LLM ne génère **pas** les binaires PDF/PPTX (peu fiables). Il génère un **HTML auto-porteur** (guidé par le design system + le vocabulaire Impeccable injectés dans le prompt), puis **chromedp** (headless Chrome, 100 % Go) le rend et l'exporte.
 
 ```
-LLM (contenu JSON)  →  template HTML  →  chromedp (render)  →  export
-                        (print CSS)                            ├─ PDF (ebook)
-                                                               └─ PNG/slide → PPTX (deck)
+LLM (HTML auto-porteur)  →  chromedp (render)  →  export
+                                                  ├─ PDF (ebook) : page.PrintToPDF + @page CSS
+                                                  └─ PPTX (deck) : screenshot PNG/slide → assemblage image-par-slide
 ```
 
-- **Ebook** : une page HTML fluide + `@media print`/`@page` → `page.PrintToPDF` (chromedp).
-- **Deck** : slides HTML **16:9** → screenshot PNG par slide → assemblage **PPTX image-par-slide** (1 image pleine page / slide).
-- **Templates** : thème « Emerald & Amber Ledger » (tokens déjà dans `frontend/src/styles/globals.css` et `design/emerald_amber_ledger/DESIGN.md`).
+- **Ebook** : une page HTML fluide + `@page { size: A4 }` → `page.PrintToPDF` (chromedp).
+- **Deck** : chaque slide = `<section class="slide">` (1280×720) → screenshot PNG → **PPTX image-par-slide** (1 image pleine page / slide, `infra/pptx`).
+- **Implémentation** : `application/document` (service + prompts) · `application/port/render.go` (`Renderer`) · `infra/render` (chromedp) · `infra/pptx` (assemblage PPTX). Chrome requis (chromium installé dans l'image Docker).
 
 ## 5. Skill « Impeccable » (qualité visuelle)
 
