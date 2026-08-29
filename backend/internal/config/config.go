@@ -22,6 +22,14 @@ type Config struct {
 	NeonAuthBaseURL string
 	NeonAuthJWKSURL string
 
+	// Providers IA (voir docs/ai.md).
+	OpenAIAPIKey        string
+	OpenAIResearchModel string
+	OpenAIIdeationModel string
+	OpenAIImageModel    string
+	HeyGenAPIKey        string
+	HeyGenAPIURL        string
+
 	// Métier
 	WelcomeCredits int
 }
@@ -41,6 +49,13 @@ func Load() Config {
 
 		NeonAuthBaseURL: baseURL,
 		NeonAuthJWKSURL: get("NEON_AUTH_JWKS_URL", jwksURL(baseURL)),
+
+		OpenAIAPIKey:        get("OPENAI_API_KEY", ""),
+		OpenAIResearchModel: get("OPENAI_MODEL_RESEARCH", "gpt-5.6-terra"),
+		OpenAIIdeationModel: get("OPENAI_MODEL_IDEATION", "gpt-5.6-luna"),
+		OpenAIImageModel:    get("OPENAI_MODEL_IMAGE", "gpt-image-2"),
+		HeyGenAPIKey:        get("HEYGEN_API_KEY", ""),
+		HeyGenAPIURL:        get("HEYGEN_API_URL", "https://api.heygen.com"),
 
 		WelcomeCredits: getInt("WELCOME_CREDITS", 100),
 	}
