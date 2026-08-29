@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "react-router"
+import "@neondatabase/auth-ui/css"
 
 import { router } from "@/app/router"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
-import { AuthProvider } from "@/features/auth"
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -25,10 +25,8 @@ export default function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="afrilaunch-theme">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <RouterProvider router={router} />
-          <Toaster />
-        </AuthProvider>
+        <RouterProvider router={router} />
+        <Toaster />
       </QueryClientProvider>
     </ThemeProvider>
   )

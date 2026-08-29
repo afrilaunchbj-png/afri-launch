@@ -1,3 +1,4 @@
+import { getAccessToken } from "@/lib/auth"
 import { AppError, type ErrorKind, type FieldError } from "@/lib/errors"
 
 const API_URL = import.meta.env.VITE_API_URL ?? ""
@@ -40,11 +41,13 @@ async function toAppError(response: Response): Promise<AppError> {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let response: Response
   try {
+    const token = await getAccessToken()
     response = await fetch(`${API_URL}${path}`, {
       ...init,
       credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...init?.headers,
       },
     })

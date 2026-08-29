@@ -1,5 +1,5 @@
-import { RegisterForm } from "@/features/auth"
+import { AuthView } from "@neondatabase/auth-ui"
 
 export default function RegisterPage() {
-  return <RegisterForm />
+  return <AuthView pathname="sign-up" />
 }

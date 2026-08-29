@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/features/auth/auth-provider"
-import { useLogout } from "@/features/auth/hooks"
+import { useSignOut } from "@/features/auth/hooks"
 import { useCreditsSummary } from "@/features/credits/hooks"
 import { cn } from "@/lib/utils"
 
@@ -54,11 +54,11 @@ function CreditsBalance() {
 function SidebarNav() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const logout = useLogout()
+  const signOut = useSignOut()
   const navigate = useNavigate()
 
   const handleLogout = () => {
-    logout.mutate(undefined, { onSettled: () => navigate("/login") })
+    signOut.mutate(undefined, { onSettled: () => navigate("/login") })
   }
 
   return (
@@ -74,9 +74,9 @@ function SidebarNav() {
 
       <div className="px-4">
         <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
-          <UserAvatar name={user?.full_name ?? ""} />
+          <UserAvatar name={user?.name ?? ""} />
           <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{user?.full_name}</p>
+            <p className="truncate text-sm font-medium">{user?.name}</p>
             <CreditsBalance />
           </div>
         </div>
@@ -129,7 +129,7 @@ function SidebarNav() {
             size="icon"
             className="ml-auto text-muted-foreground"
             onClick={handleLogout}
-            disabled={logout.isPending}
+            disabled={signOut.isPending}
             aria-label={t("auth:logout")}
           >
             <LogOut className="h-4 w-4" />

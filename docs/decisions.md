@@ -76,3 +76,11 @@
 - **Contexte** : maquettes Stitch imposent une palette (émeraude/ambre) et typo Lexend/Inter.
 - **Décision** : mapper les tokens (`primary #003527`, `secondary #855300`, …) en variables CSS shadcn (`--primary`, `--secondary`, …) + Tailwind `class` pour le dark mode.
 - **Conséquences** : `frontend/src/styles/globals.css` définit les tokens ; composants shadcn héritent du thème.
+
+## ADR-011 — Authentification : Neon Auth (Managed Better Auth) au lieu de l'auth maison
+
+- **Date** : 2026-08-29
+- **Contexte** : l'utilisateur active Neon Auth sur son projet Neon et veut Google comme provider OAuth, avec Neon pour Postgres + Object Storage. L'ADR-005 (JWT maison HS256 + argon2 + refresh tokens) est remplacé.
+- **Options** : (A) Neon Auth managé (Better Auth) ; (B) garder l'auth maison (email/mot de passe) + Google OAuth PKCE.
+- **Décision** : **(A)** — identité/sessions gérées par Neon (schéma `neon_auth`), Google en provider OAuth ; le backend **vérifie les JWT** (EdDSA/Ed25519, 15 min) via le JWKS `<NEON_AUTH_URL>/.well-known/jwks.json` (issuer/audience = origine) ; `users` devient une table profil cléée par `sub`, avec bonus de bienvenue au 1er login. Frontend : `@neondatabase/neon-js` + `@neondatabase/auth-ui`.
+- **Conséquences** : suppression d'argon2, des refresh tokens, du `JWTManager` HS256 et du Google OAuth PKCE maison ; les JWT partent en `Authorization: Bearer` vers l'API Go (pas de cookies de session cross-origin) ; dépendances beta (`neon-js`, `auth-ui`).

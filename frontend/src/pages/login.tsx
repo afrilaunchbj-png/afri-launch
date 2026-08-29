@@ -1,5 +1,5 @@
-import { LoginForm } from "@/features/auth"
+import { AuthView } from "@neondatabase/auth-ui"
 
 export default function LoginPage() {
-  return <LoginForm />
+  return <AuthView pathname="sign-in" />
 }

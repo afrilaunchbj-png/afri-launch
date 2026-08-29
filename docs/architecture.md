@@ -87,10 +87,11 @@ Format de réponse : ressource unique `{ "data": … }` ; liste `{ "data": […]
 
 ## 4. Authentification & autorisation
 
-- **JWT** access (15 min) + refresh (rotation, 7–30 j) en **cookies httpOnly/Secure/SameSite** (jamais localStorage).
-- Hachage mot de passe **Argon2id**.
-- **Google OAuth** via OIDC + PKCE.
-- **Autorisation** : vérification serveur à chaque endpoint ; isolation tenant (`WHERE user_id = $1`) systématique. Le frontend n'est **jamais** une frontière de sécurité.
+- **Neon Auth (Managed Better Auth)** : identité/sessions/OAuth dans le schéma `neon_auth` de la base ; **Google** comme provider OAuth.
+- Le backend **vérifie les JWT** (signature **EdDSA/Ed25519**, validité 15 min) via le JWKS `<NEON_AUTH_URL>/.well-known/jwks.json` ; issuer/audience = origine de l'URL. Librairies : `golang-jwt/jwt/v5`.
+- Le frontend récupère le JWT de session (`authClient.getSession()` → `session.token`) et l'envoie en `Authorization: Bearer` ; `users` est une table profil cléée par le `sub` Neon (upsert au login, bonus de bienvenue au 1er login).
+- **Autorisation** : vérification serveur à chaque endpoint ; isolation tenant (`WHERE user_id = $1`). Le frontend n'est **jamais** une frontière de sécurité.
+- (Déprécié — ADR-005 remplacé par ADR-011 : l'ancien schéma `password_hash`/`refresh_tokens` reste en base mais n'est plus utilisé.)
 
 ## 5. Workflows asynchrones (queue/workers)
 

@@ -18,7 +18,7 @@ export default function DashboardPage() {
       <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">
-            {t("dashboard:welcome", { name: user?.full_name ?? "" })}
+            {t("dashboard:welcome", { name: user?.name ?? "" })}
           </h1>
           <p className="mt-1 text-muted-foreground">{t("dashboard:subtitle")}</p>
         </div>

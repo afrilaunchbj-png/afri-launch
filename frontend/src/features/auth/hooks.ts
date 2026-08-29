@@ -1,28 +1,10 @@
 import { useMutation } from "@tanstack/react-query"
 
-import { login, logout, register } from "./api"
-import { useAuth } from "./auth-provider"
+import { authClient, clearAccessTokenCache } from "@/lib/auth"
 
-export function useLogin() {
-  const { invalidate } = useAuth()
+export function useSignOut() {
   return useMutation({
-    mutationFn: login,
-    onSuccess: () => invalidate(),
-  })
-}
-
-export function useRegister() {
-  const { invalidate } = useAuth()
-  return useMutation({
-    mutationFn: register,
-    onSuccess: () => invalidate(),
-  })
-}
-
-export function useLogout() {
-  const { invalidate } = useAuth()
-  return useMutation({
-    mutationFn: logout,
-    onSettled: () => invalidate(),
+    mutationFn: () => authClient.signOut(),
+    onSettled: () => clearAccessTokenCache(),
   })
 }

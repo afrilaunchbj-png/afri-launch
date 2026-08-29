@@ -1,6 +1,3 @@
-export { AuthProvider, useAuth } from "./auth-provider"
-export { useLogin, useLogout, useRegister } from "./hooks"
-export { LoginForm } from "./components/login-form"
-export { RegisterForm } from "./components/register-form"
+export { AuthProvider, useAuth, type SessionUser } from "./auth-provider"
+export { useSignOut } from "./hooks"
 export { ProtectedRoute } from "./components/protected-route"
-export type { User } from "./types"

@@ -1,36 +1,49 @@
 import { createContext, useContext, useMemo } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 
-import { authKeys, fetchMe } from "./api"
-import type { User } from "./types"
+import { authClient } from "@/lib/auth"
+
+import { fetchMe } from "./api"
+
+export interface SessionUser {
+  id: string
+  name: string
+  email: string
+  image?: string | null
+}
 
 interface AuthContextValue {
-  user: User | null
+  user: SessionUser | null
   isLoading: boolean
   isAuthenticated: boolean
-  invalidate: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const queryClient = useQueryClient()
+  const { data: session, isPending } = authClient.useSession()
 
-  const { data: user, isLoading } = useQuery({
-    queryKey: authKeys.me(),
+  const user = session?.user ?? null
+  const isAuthenticated = user != null
+
+  // Déclenche l'upsert du profil local + le bonus de bienvenue côté backend.
+  useQuery({
+    queryKey: ["auth", "me"],
     queryFn: fetchMe,
+    enabled: isAuthenticated,
     retry: false,
     staleTime: 5 * 60 * 1000,
   })
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user: user ?? null,
-      isLoading,
-      isAuthenticated: user != null,
-      invalidate: () => queryClient.invalidateQueries({ queryKey: authKeys.me() }),
+      user: user
+        ? { id: user.id, name: user.name ?? "", email: user.email ?? "", image: user.image ?? null }
+        : null,
+      isLoading: isPending,
+      isAuthenticated,
     }),
-    [user, isLoading, queryClient],
+    [user, isPending, isAuthenticated],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
