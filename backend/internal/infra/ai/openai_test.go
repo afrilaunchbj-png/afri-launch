@@ -80,6 +80,34 @@ func TestOpenAIError(t *testing.T) {
 	}
 }
 
+func TestOpenAIStreamComplete(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/chat/completions" {
+			t.Errorf("path = %q, want /chat/completions", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "text/event-stream")
+		_, _ = w.Write([]byte(
+			"data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n" +
+				"data: {\"choices\":[{\"delta\":{\"content\":\" world\"}}]}\n\n" +
+				"data: [DONE]\n\n",
+		))
+	}))
+	defer ts.Close()
+
+	c := NewOpenAI("test-key", ts.URL)
+	var got string
+	err := c.StreamComplete(context.Background(), port.LLMRequest{Model: "gpt-5.6-luna", Messages: []port.LLMMessage{{Role: "user", Content: "hi"}}}, func(delta string) error {
+		got += delta
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("StreamComplete: %v", err)
+	}
+	if got != "Hello world" {
+		t.Fatalf("streamed = %q, want %q", got, "Hello world")
+	}
+}
+
 func TestOpenAIResearch(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/responses" {

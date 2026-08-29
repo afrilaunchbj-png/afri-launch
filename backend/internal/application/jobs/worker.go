@@ -28,7 +28,6 @@ type Worker struct {
 	jobs          port.JobRepository
 	credits       port.CreditRepository
 	ideas         port.IdeaRepository
-	ideaMessages  port.IdeaMessageRepository
 	projects      port.ProjectRepository
 	assets        port.AssetRepository
 	opportunities port.OpportunityRepository
@@ -43,7 +42,6 @@ func NewWorker(
 	jobs port.JobRepository,
 	credits port.CreditRepository,
 	ideas port.IdeaRepository,
-	ideaMessages port.IdeaMessageRepository,
 	projects port.ProjectRepository,
 	assets port.AssetRepository,
 	opportunities port.OpportunityRepository,
@@ -57,7 +55,6 @@ func NewWorker(
 		jobs:          jobs,
 		credits:       credits,
 		ideas:         ideas,
-		ideaMessages:  ideaMessages,
 		projects:      projects,
 		assets:        assets,
 		opportunities: opportunities,
@@ -166,8 +163,6 @@ func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte,
 		return w.runSalesPage(ctx, job)
 	case domain.JobResearch:
 		return w.runResearch(ctx, job)
-	case domain.JobIdeaRevise:
-		return w.runIdeaRevise(ctx, job)
 	default:
 		return nil, fmt.Errorf("unknown job kind %q", job.Kind)
 	}
@@ -374,58 +369,6 @@ func (w *Worker) runResearch(ctx context.Context, job domain.GenerationJob) ([]b
 	return json.Marshal(map[string]any{"opportunity_ids": ids})
 }
 
-// runIdeaRevise révise titre/accroche/explication d'une idée à partir du feedback.
-func (w *Worker) runIdeaRevise(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
-	if job.IdeaID == nil {
-		return nil, errors.New("idée manquante")
-	}
-	idea, err := w.ideas.Get(ctx, job.UserID, *job.IdeaID)
-	if err != nil {
-		return nil, err
-	}
-	history, err := w.ideaMessages.ListByIdea(ctx, idea.ID)
-	if err != nil {
-		return nil, err
-	}
-	feedback := ""
-	for i := len(history) - 1; i >= 0; i-- {
-		if history[i].Role == domain.IdeaMessageUser {
-			feedback = history[i].Content
-			break
-		}
-	}
-	if feedback == "" {
-		return nil, errors.New("feedback manquant")
-	}
-
-	var out struct {
-		Title       string `json:"title"`
-		Hook        string `json:"hook"`
-		Explanation string `json:"explanation"`
-	}
-	if err := w.ai.CompleteJSON(ctx, ai.TaskIdeation, ideaReviseSystem, ideaRevisePrompt(idea, history, feedback), &out); err != nil {
-		return nil, err
-	}
-
-	updated, err := w.ideas.UpdateContent(ctx, domain.ProductIdea{
-		ID: idea.ID, Title: out.Title, Hook: out.Hook, Explanation: out.Explanation,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err := w.ideaMessages.Create(ctx, domain.IdeaMessage{
-		IdeaID:  idea.ID,
-		UserID:  job.UserID,
-		Role:    domain.IdeaMessageAssistant,
-		Content: fmt.Sprintf("Titre: %s\nAccroche: %s\nExplication: %s", updated.Title, updated.Hook, updated.Explanation),
-	}); err != nil {
-		return nil, err
-	}
-
-	return json.Marshal(map[string]any{"idea_id": updated.ID})
-}
-
 func stripFences(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.TrimPrefix(s, "```json")
@@ -540,8 +483,6 @@ func operationFor(kind string) string {
 		return domain.OperationSalesPage
 	case domain.JobResearch:
 		return domain.OperationNicheResearch
-	case domain.JobIdeaRevise:
-		return domain.OperationIdeaGeneration
 	default:
 		return ""
 	}

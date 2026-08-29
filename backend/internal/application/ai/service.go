@@ -32,6 +32,15 @@ func (s *Service) Complete(ctx context.Context, task Task, system, prompt string
 	})
 }
 
+// StreamComplete génère du texte en continu pour une tâche donnée.
+func (s *Service) StreamComplete(ctx context.Context, task Task, system, prompt string, emit func(delta string) error) error {
+	return s.llm.StreamComplete(ctx, port.LLMRequest{
+		Model:    s.router.ModelFor(task),
+		System:   system,
+		Messages: []port.LLMMessage{{Role: "user", Content: prompt}},
+	}, emit)
+}
+
 // CompleteJSON génère une sortie structurée (JSON) et la décode dans out.
 func (s *Service) CompleteJSON(ctx context.Context, task Task, system, prompt string, out any) error {
 	resp, err := s.llm.Complete(ctx, port.LLMRequest{

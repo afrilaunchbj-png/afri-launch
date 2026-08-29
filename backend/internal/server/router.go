@@ -75,7 +75,7 @@ func NewRouter(d Deps) http.Handler {
 
 			r.Get("/ideas", d.Ideas.List)
 			r.Get("/ideas/{id}/messages", d.Ideas.ListMessages)
-			r.Post("/ideas/{id}/messages", d.Ideas.SendMessage)
+			r.Post("/ideas/{id}/messages", d.Ideas.StreamMessage)
 			r.Post("/ideas/{id}/confirm", d.Ideas.Confirm)
 
 			r.Post("/research", d.Research.Start)

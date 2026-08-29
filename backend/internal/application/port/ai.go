@@ -30,6 +30,8 @@ type LLMResponse struct {
 // LLMProvider est le port d'accès aux modèles de langage (OpenAI).
 type LLMProvider interface {
 	Complete(ctx context.Context, req LLMRequest) (LLMResponse, error)
+	// StreamComplete génère en continu : emit est appelé avec chaque delta.
+	StreamComplete(ctx context.Context, req LLMRequest, emit func(delta string) error) error
 }
 
 // ImageRequest est une demande de génération d'image.

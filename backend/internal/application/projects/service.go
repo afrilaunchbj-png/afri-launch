@@ -11,13 +11,14 @@ import (
 
 // Service orchestre les projets.
 type Service struct {
-	jobs    *jobs.Worker
+	jobs     *jobs.Worker
 	projects port.ProjectRepository
+	ideas    port.IdeaRepository
 }
 
 // NewService construit le service de projets.
-func NewService(jobs *jobs.Worker, projects port.ProjectRepository) *Service {
-	return &Service{jobs: jobs, projects: projects}
+func NewService(jobs *jobs.Worker, projects port.ProjectRepository, ideas port.IdeaRepository) *Service {
+	return &Service{jobs: jobs, projects: projects, ideas: ideas}
 }
 
 // Create crée un projet à partir d'une idée (et d'une opportunité).
@@ -44,9 +45,29 @@ func (s *Service) List(ctx context.Context, userID string) ([]domain.Project, er
 	return s.projects.ListByUser(ctx, userID)
 }
 
+// requireConfirmed vérifie que l'idée du projet est confirmée avant de générer
+// les assets. Le parcours impose de confirmer le résultat final d'abord.
+func (s *Service) requireConfirmed(ctx context.Context, userID, projectID string) error {
+	project, err := s.projects.Get(ctx, userID, projectID)
+	if err != nil {
+		return err
+	}
+	if project.IdeaID == nil {
+		return nil
+	}
+	idea, err := s.ideas.Get(ctx, userID, *project.IdeaID)
+	if err != nil {
+		return err
+	}
+	if idea.Status != domain.IdeaConfirmed {
+		return domain.ErrNotConfirmed
+	}
+	return nil
+}
+
 // GenerateEbook lance la génération de l'ebook (PDF).
 func (s *Service) GenerateEbook(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
-	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
+	if err := s.requireConfirmed(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
 	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobEbook})
@@ -54,7 +75,7 @@ func (s *Service) GenerateEbook(ctx context.Context, userID, projectID string) (
 
 // GenerateCover lance la génération de la couverture.
 func (s *Service) GenerateCover(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
-	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
+	if err := s.requireConfirmed(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
 	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobCover})
@@ -62,7 +83,7 @@ func (s *Service) GenerateCover(ctx context.Context, userID, projectID string) (
 
 // GeneratePosters lance la génération des affiches publicitaires (x3).
 func (s *Service) GeneratePosters(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
-	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
+	if err := s.requireConfirmed(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
 	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobPosters})
@@ -70,7 +91,7 @@ func (s *Service) GeneratePosters(ctx context.Context, userID, projectID string)
 
 // GenerateSalesPage lance la génération de la page de vente.
 func (s *Service) GenerateSalesPage(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
-	if _, err := s.projects.Get(ctx, userID, projectID); err != nil {
+	if err := s.requireConfirmed(ctx, userID, projectID); err != nil {
 		return domain.GenerationJob{}, err
 	}
 	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobSalesPage})

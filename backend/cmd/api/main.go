@@ -83,11 +83,11 @@ func main() {
 	docSvc := documentapp.NewService(aiSvc, renderer)
 
 	// Worker asynchrone de génération (idées, ebook, assets, recherche).
-	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, ideaMessageRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc)
+	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc)
 
 	// Services applicatifs.
-	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo)
-	projectSvc := projectsapp.NewService(worker, projectRepo)
+	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo, creditRepo, aiSvc)
+	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo)
 	assetSvc := assetsapp.NewService(assetRepo, objStorage)
 	researchSvc := researchapp.NewService(worker, researchRepo)
 

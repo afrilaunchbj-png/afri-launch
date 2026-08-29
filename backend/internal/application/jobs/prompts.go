@@ -111,26 +111,3 @@ type researchOpportunityInput struct {
 	Scores     domain.OpportunityScores `json:"scores"`
 	Evidence   []domain.Evidence        `json:"evidence"`
 }
-
-// ideaReviseSystem est la consigne système de l'itération sur une idée.
-const ideaReviseSystem = `You are a product-idea coach. Given a product idea and the user's feedback,
-revise the title, hook and explanation accordingly. Return ONLY a JSON object
-(no markdown fences) with this exact shape: {"title","hook","explanation"}.
-- "hook" is a punchy one-line pitch with a clear, honest number (only numbers already present in the idea/evidence — never invent).
-- Keep the revised text in the same language as the current idea.`
-
-// ideaRevisePrompt construit la consigne d'itération avec l'historique.
-func ideaRevisePrompt(idea domain.ProductIdea, history []domain.IdeaMessage, feedback string) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "Product idea to refine:\nTitle: %s\nHook: %s\nExplanation: %s\n\n", idea.Title, idea.Hook, idea.Explanation)
-	if len(history) > 0 {
-		b.WriteString("Conversation history:\n")
-		for _, m := range history {
-			fmt.Fprintf(&b, "%s: %s\n", m.Role, m.Content)
-		}
-		b.WriteString("\n")
-	}
-	b.WriteString("Latest user feedback: " + feedback + "\n\n")
-	b.WriteString("Revise the title, hook and explanation to address this feedback.")
-	return b.String()
-}

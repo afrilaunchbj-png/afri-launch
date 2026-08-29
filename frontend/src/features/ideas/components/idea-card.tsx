@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { useQueryClient } from "@tanstack/react-query"
 import { CheckCircle2, MessageSquare, Send } from "lucide-react"
@@ -8,9 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useJob } from "@/features/generation/hooks"
-import { ideaKeys, useConfirmIdea, useIdeaMessages, useSendIdeaMessage } from "@/features/ideas/hooks"
-import type { Idea } from "@/features/ideas/api"
+import { ideaKeys, useConfirmIdea, useIdeaMessages } from "@/features/ideas/hooks"
+import { streamIdeaMessage, type Idea } from "@/features/ideas/api"
 import { isAppError } from "@/lib/errors"
 import { cn } from "@/lib/utils"
 
@@ -19,36 +18,31 @@ export function IdeaCard({ idea, onCreate }: { idea: Idea; onCreate: (idea: Idea
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [draft, setDraft] = useState("")
-  const [jobId, setJobId] = useState<string | null>(null)
+  const [streaming, setStreaming] = useState(false)
+  const [streamedText, setStreamedText] = useState("")
 
-  const { data: job } = useJob(jobId)
   const { data: messages, refetch: refetchMessages } = useIdeaMessages(idea.id)
-  const send = useSendIdeaMessage(idea.id)
   const confirm = useConfirmIdea(idea.id)
 
-  useEffect(() => {
-    if (!job) return
-    if (job.status === "completed") {
-      refetchMessages()
-      queryClient.invalidateQueries({ queryKey: ideaKeys.all })
-      setJobId(null)
-    } else if (job.status === "failed") {
-      toast.error(t("common.generationFailed", { error: job.error ?? "" }))
-      setJobId(null)
-    }
-  }, [job, refetchMessages, queryClient, t])
-
-  const busy = send.isPending || (job && (job.status === "pending" || job.status === "processing"))
   const confirmed = idea.status === "confirmed"
 
-  const handleSend = () => {
-    if (!draft.trim() || busy) return
-    send.mutate(draft.trim(), {
-      onSuccess: (j) => {
-        setDraft("")
-        setJobId(j.id)
+  const handleSend = async () => {
+    if (!draft.trim() || streaming) return
+    const content = draft.trim()
+    setDraft("")
+    setStreaming(true)
+    setStreamedText("")
+    await streamIdeaMessage(idea.id, content, {
+      onDelta: (delta) => setStreamedText((prev) => prev + delta),
+      onDone: () => {
+        refetchMessages()
+        queryClient.invalidateQueries({ queryKey: ideaKeys.all })
+        setStreaming(false)
       },
-      onError: (e) => toast.error(isAppError(e) ? e.message : t("common.genericError")),
+      onError: (message) => {
+        toast.error(message || t("common.genericError"))
+        setStreaming(false)
+      },
     })
   }
 
@@ -107,7 +101,14 @@ export function IdeaCard({ idea, onCreate }: { idea: Idea; onCreate: (idea: Idea
                   </div>
                 </div>
               ))}
-              {!messages || messages.length === 0 ? (
+              {streaming ? (
+                <div className="flex justify-start">
+                  <div className="max-w-[85%] whitespace-pre-wrap rounded-lg bg-card px-3 py-2 text-sm text-foreground">
+                    {streamedText || "…"}
+                  </div>
+                </div>
+              ) : null}
+              {!streaming && (!messages || messages.length === 0) ? (
                 <p className="text-xs text-muted-foreground">{t("ideas:noMessages")}</p>
               ) : null}
             </div>
@@ -120,7 +121,7 @@ export function IdeaCard({ idea, onCreate }: { idea: Idea; onCreate: (idea: Idea
                   if (e.key === "Enter") handleSend()
                 }}
               />
-              <Button size="icon" onClick={handleSend} disabled={busy || !draft.trim()} loading={busy} aria-label={t("ideas:send")}>
+              <Button size="icon" onClick={handleSend} disabled={streaming || !draft.trim()} loading={streaming} aria-label={t("ideas:send")}>
                 <Send className="h-4 w-4" />
               </Button>
             </div>

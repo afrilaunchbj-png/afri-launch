@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { confirmIdea, fetchIdeas, fetchIdeaMessages, generateIdeas, sendIdeaMessage } from "./api"
+import { confirmIdea, fetchIdeas, fetchIdeaMessages, generateIdeas } from "./api"
 
 export const ideaKeys = {
   all: ["ideas"] as const,
@@ -29,17 +29,6 @@ export function useIdeaMessages(ideaId: string) {
   return useQuery({
     queryKey: ideaKeys.messages(ideaId),
     queryFn: () => fetchIdeaMessages(ideaId),
-  })
-}
-
-export function useSendIdeaMessage(ideaId: string) {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (content: string) => sendIdeaMessage(ideaId, content),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ideaKeys.messages(ideaId) })
-      queryClient.invalidateQueries({ queryKey: ideaKeys.all })
-    },
   })
 }
 

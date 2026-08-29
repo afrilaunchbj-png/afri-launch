@@ -14,4 +14,5 @@ var (
 	ErrInsufficient = errors.New("insufficient credits")
 	ErrAlreadySaved = errors.New("already saved")
 	ErrInvalidToken = errors.New("invalid or expired token")
+	ErrNotConfirmed = errors.New("idea not confirmed")
 )

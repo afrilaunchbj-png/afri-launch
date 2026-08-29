@@ -112,13 +112,12 @@ type GenerationJob struct {
 
 // Kinds et statuts de job.
 const (
-	JobIdeas      = "ideas"
-	JobEbook      = "ebook"
-	JobCover      = "cover"
-	JobPosters    = "posters"
-	JobSalesPage  = "sales_page"
-	JobResearch   = "research"
-	JobIdeaRevise = "idea_revise"
+	JobIdeas     = "ideas"
+	JobEbook     = "ebook"
+	JobCover     = "cover"
+	JobPosters   = "posters"
+	JobSalesPage = "sales_page"
+	JobResearch  = "research"
 )
 
 const (

@@ -4,6 +4,7 @@ package ideas
 import (
 	"context"
 
+	"afrilaunch/backend/internal/application/ai"
 	"afrilaunch/backend/internal/application/jobs"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
@@ -15,11 +16,13 @@ type Service struct {
 	ideas         port.IdeaRepository
 	ideaMessages  port.IdeaMessageRepository
 	opportunities port.OpportunityRepository
+	credits       port.CreditRepository
+	ai            *ai.Service
 }
 
 // NewService construit le service d'idées.
-func NewService(jobs *jobs.Worker, ideas port.IdeaRepository, ideaMessages port.IdeaMessageRepository, opportunities port.OpportunityRepository) *Service {
-	return &Service{jobs: jobs, ideas: ideas, ideaMessages: ideaMessages, opportunities: opportunities}
+func NewService(jobs *jobs.Worker, ideas port.IdeaRepository, ideaMessages port.IdeaMessageRepository, opportunities port.OpportunityRepository, credits port.CreditRepository, ai *ai.Service) *Service {
+	return &Service{jobs: jobs, ideas: ideas, ideaMessages: ideaMessages, opportunities: opportunities, credits: credits, ai: ai}
 }
 
 // Generate lance la génération d'idées pour une opportunité (asynchrone).
@@ -43,25 +46,6 @@ func (s *Service) List(ctx context.Context, userID string) ([]domain.ProductIdea
 // Get renvoie une idée.
 func (s *Service) Get(ctx context.Context, userID, id string) (domain.ProductIdea, error) {
 	return s.ideas.Get(ctx, userID, id)
-}
-
-// SendMessage enregistre le feedback de l'utilisateur et lance la révision.
-func (s *Service) SendMessage(ctx context.Context, userID, ideaID, content string) (domain.GenerationJob, error) {
-	if content == "" {
-		return domain.GenerationJob{}, domain.ErrInvalidInput
-	}
-	if _, err := s.ideas.Get(ctx, userID, ideaID); err != nil {
-		return domain.GenerationJob{}, err
-	}
-	if _, err := s.ideaMessages.Create(ctx, domain.IdeaMessage{
-		IdeaID:  ideaID,
-		UserID:  userID,
-		Role:    domain.IdeaMessageUser,
-		Content: content,
-	}); err != nil {
-		return domain.GenerationJob{}, err
-	}
-	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, IdeaID: &ideaID, Kind: domain.JobIdeaRevise})
 }
 
 // ListMessages renvoie l'historique de conversation d'une idée.

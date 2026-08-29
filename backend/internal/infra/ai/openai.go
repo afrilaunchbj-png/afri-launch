@@ -2,6 +2,7 @@
 package ai
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -9,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"afrilaunch/backend/internal/application/port"
@@ -41,6 +43,7 @@ type openAIChatRequest struct {
 	Messages       []openAIMessage  `json:"messages"`
 	MaxTokens      int              `json:"max_tokens,omitempty"`
 	Temperature    *float64         `json:"temperature,omitempty"`
+	Stream         bool             `json:"stream,omitempty"`
 	ResponseFormat *json.RawMessage `json:"response_format,omitempty"`
 }
 
@@ -121,6 +124,84 @@ func (o *OpenAI) Complete(ctx context.Context, req port.LLMRequest) (port.LLMRes
 		InputTokens:  out.Usage.PromptTokens,
 		OutputTokens: out.Usage.CompletionTokens,
 	}, nil
+}
+
+// openAIChatChunk est un fragment d'une réponse streamée.
+type openAIChatChunk struct {
+	Choices []struct {
+		Delta struct {
+			Content string `json:"content"`
+		} `json:"delta"`
+	} `json:"choices"`
+}
+
+// StreamComplete appelle /chat/completions en mode streaming (SSE) et émet
+// chaque delta de texte via emit.
+func (o *OpenAI) StreamComplete(ctx context.Context, req port.LLMRequest, emit func(string) error) error {
+	messages := make([]openAIMessage, 0, len(req.Messages)+1)
+	if req.System != "" {
+		messages = append(messages, openAIMessage{Role: "system", Content: req.System})
+	}
+	for _, m := range req.Messages {
+		messages = append(messages, openAIMessage{Role: m.Role, Content: m.Content})
+	}
+
+	body := openAIChatRequest{
+		Model:       req.Model,
+		Messages:    messages,
+		MaxTokens:   req.MaxTokens,
+		Temperature: req.Temperature,
+		Stream:      true,
+	}
+	payload, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, o.baseURL+"/chat/completions", bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+o.apiKey)
+
+	resp, err := o.http.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		var apiErr openAIChatResponse
+		_ = json.NewDecoder(resp.Body).Decode(&apiErr)
+		if apiErr.Error != nil {
+			return fmt.Errorf("openai: %s (status %d)", apiErr.Error.Message, resp.StatusCode)
+		}
+		return fmt.Errorf("openai: status %d", resp.StatusCode)
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		data := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if data == "[DONE]" {
+			break
+		}
+		var chunk openAIChatChunk
+		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+			continue
+		}
+		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
+			if err := emit(chunk.Choices[0].Delta.Content); err != nil {
+				return err
+			}
+		}
+	}
+	return scanner.Err()
 }
 
 // Generate appelle /images/generations. Les modèles gpt-image renvoient du

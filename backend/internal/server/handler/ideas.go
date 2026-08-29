@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -111,8 +113,8 @@ func (h *IdeaHandler) ListMessages(w http.ResponseWriter, r *http.Request) {
 	writeData(w, http.StatusOK, out)
 }
 
-// SendMessage gère POST /ideas/{id}/messages.
-func (h *IdeaHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
+// StreamMessage gère POST /ideas/{id}/messages (SSE streaming).
+func (h *IdeaHandler) StreamMessage(w http.ResponseWriter, r *http.Request) {
 	userID := authctx.UserID(r.Context())
 	ideaID := chi.URLParam(r, "id")
 
@@ -122,12 +124,33 @@ func (h *IdeaHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	job, err := h.svc.SendMessage(r.Context(), userID, ideaID, in.Content)
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	flusher, _ := w.(http.Flusher)
+
+	idea, err := h.svc.StreamMessage(r.Context(), userID, ideaID, in.Content, func(delta string) error {
+		if _, err := fmt.Fprintf(w, "data: %s\n\n", sseString(delta)); err != nil {
+			return err
+		}
+		if flusher != nil {
+			flusher.Flush()
+		}
+		return nil
+	})
 	if err != nil {
-		writeAPIError(w, r, err)
+		_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", sseString(err.Error()))
 		return
 	}
-	writeData(w, http.StatusAccepted, jobDTOFrom(job))
+
+	payload, _ := json.Marshal(toIdeaDTO(idea))
+	_, _ = fmt.Fprintf(w, "event: done\ndata: %s\n\n", payload)
+}
+
+// sseString sérialise une chaîne en JSON pour l'embarquer dans un champ data SSE.
+func sseString(s string) string {
+	b, _ := json.Marshal(s)
+	return string(b)
 }
 
 // Confirm gère POST /ideas/{id}/confirm.
