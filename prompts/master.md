@@ -299,7 +299,7 @@ Ne raisonne pas en nombre de pages.
 Utilise plutôt une cible de :
 
 ```text
-4 000 à 6 000 mots
+3 000 mots
 ```
 
 pour un premier ebook, avec possibilité de configuration par l'utilisateur.

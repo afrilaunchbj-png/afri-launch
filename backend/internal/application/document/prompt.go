@@ -52,7 +52,7 @@ func BuildEbookPrompt(req EbookRequest) Prompt {
   short sections, a practical checklist, and a conclusion with a call to action.`
 
 	user := fmt.Sprintf(
-		"Write an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s. Aim for 4000-6000 words equivalent, clear and actionable.",
+		"Write an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s. Aim for about 3000 words, clear and actionable.",
 		req.Language, req.Country, req.Audience, req.Topic, req.Product,
 	)
 	return Prompt{System: system, User: user}

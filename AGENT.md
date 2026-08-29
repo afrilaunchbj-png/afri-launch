@@ -6,7 +6,7 @@
 
 **AfriLaunch** est un SaaS B2C/B2B2C qui permet à un créateur, entrepreneur, consultant ou expert **africain** de transformer une opportunité de marché en **produit digital commercialisable** (ebook/guide + assets marketing + page de vente) avec un minimum de travail manuel.
 
-Workflow cœur : Recherche de marché → Identification d'opportunités → Sélection de niche → Génération d'idées → Itération → Création du produit (ebook 4k–6k mots) → Assets marketing → Contrôle qualité → Packaging → Export.
+Workflow cœur : Recherche de marché → Identification d'opportunités → Sélection de niche → Génération d'idées → Itération → Création du produit (ebook ~3000 mots) → Assets marketing → Contrôle qualité → Packaging → Export.
 
 Positionnement : **verticalisation géographique/sectorielle africaine**, **données locales vérifiées** (jamais de statistiques inventées), workflow end-to-end **mobile-first** + paiements locaux (Mobile Money).
 

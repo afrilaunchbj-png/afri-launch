@@ -17,7 +17,7 @@ Le projet vise à créer un "Product Architect" IA pour entrepreneurs africains.
 
 ## 5. MVP Recommandé
 - Recherche d'opportunités (Niche scoring).
-- Générateur d'Ebook/Guide (4k-6k mots).
+- Générateur d'Ebook/Guide (~3000 mots).
 - Pack marketing (Landing page, Social Media assets).
 - Ledger de crédits & Paiement Mobile Money.
 

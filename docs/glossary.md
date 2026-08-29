@@ -12,7 +12,7 @@
 | **Market** | Contexte géo-économique : pays, langue, devise, secteurs, audience, problème, pouvoir d'achat, canaux de distribution, méthodes de paiement. |
 | **Product Idea** | Concept de produit généré (titre, sous-titre, audience, problème, promesse, solution, format, prix estimé, difficulté, preuves, angle concurrentiel). |
 | **Idea Version** | Version historique d'une idée (jamais écrasée silencieusement). |
-| **Ebook / Guide digital** | Produit livrable initial (4 000–6 000 mots configurables) : titre, intro, problème, contexte local, méthode, chapitres, exemples, cas, checklist, conclusion, CTA. |
+| **Ebook / Guide digital** | Produit livrable initial (~3 000 mots) : titre, intro, problème, contexte local, méthode, chapitres, exemples, cas, checklist, conclusion, CTA. |
 | **Asset** | Fichier généré : couverture, illustration, post réseau social, visuel pub, page de vente, script/storyboard vidéo. |
 | **Quality Score** | Note 0–100 du contrôle qualité (complétude, vérification des faits, validité des citations, qualité de langue, cohérence, détection de doublons, cohérence marque). |
 | **Crédit** | Unité de compte pay-as-you-go ; chaque opération consomme un coût configurable. |
