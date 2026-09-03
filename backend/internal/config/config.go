@@ -38,6 +38,10 @@ type Config struct {
 
 	// Métier
 	WelcomeCredits int
+
+	// Superadmins (emails séparés par des virgules) — promus au login,
+	// accès au suivi global /admin.
+	SuperadminEmails []string
 }
 
 // Load lit la configuration depuis les variables d'environnement.
@@ -68,7 +72,20 @@ func Load() Config {
 		StorageDir: get("STORAGE_DIR", "./.storage"),
 
 		WelcomeCredits: getInt("WELCOME_CREDITS", 100),
+
+		SuperadminEmails: parseEmails(os.Getenv("SUPERADMIN_EMAILS")),
 	}
+}
+
+// parseEmails découpe une liste d'emails séparés par des virgules.
+func parseEmails(raw string) []string {
+	emails := make([]string, 0)
+	for _, e := range strings.Split(raw, ",") {
+		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
+			emails = append(emails, e)
+		}
+	}
+	return emails
 }
 
 // jwksURL dérive l'URL JWKS de l'URL de base Neon Auth.

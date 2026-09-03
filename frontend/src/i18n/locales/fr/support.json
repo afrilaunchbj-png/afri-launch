@@ -1,0 +1,17 @@
+{
+  "title": "Support",
+  "subtitle": "Une question, un souci ? Écrivez-nous, on vous répond.",
+  "newTicket": "Nouvelle demande",
+  "subject": "Sujet",
+  "subjectPlaceholder": "Ex. : problème de génération d'ebook",
+  "message": "Message",
+  "messagePlaceholder": "Décrivez votre demande le plus précisément possible…",
+  "send": "Envoyer la demande",
+  "created": "Votre demande a été envoyée.",
+  "history": "Mes demandes",
+  "empty": "Aucune demande pour l'instant.",
+  "status": {
+    "open": "En cours",
+    "resolved": "Résolue"
+  }
+}

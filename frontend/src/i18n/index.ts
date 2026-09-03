@@ -2,17 +2,23 @@ import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 
 import authEn from "./locales/en/auth.json"
+import adminEn from "./locales/en/admin.json"
 import chatEn from "./locales/en/chat.json"
 import commonEn from "./locales/en/common.json"
 import creditsEn from "./locales/en/credits.json"
 import dashboardEn from "./locales/en/dashboard.json"
 import projectsEn from "./locales/en/projects.json"
+import settingsEn from "./locales/en/settings.json"
+import supportEn from "./locales/en/support.json"
 import authFr from "./locales/fr/auth.json"
+import adminFr from "./locales/fr/admin.json"
 import chatFr from "./locales/fr/chat.json"
 import commonFr from "./locales/fr/common.json"
 import creditsFr from "./locales/fr/credits.json"
 import dashboardFr from "./locales/fr/dashboard.json"
 import projectsFr from "./locales/fr/projects.json"
+import settingsFr from "./locales/fr/settings.json"
+import supportFr from "./locales/fr/support.json"
 
 export const resources = {
   fr: {
@@ -22,6 +28,9 @@ export const resources = {
     dashboard: dashboardFr,
     chat: chatFr,
     projects: projectsFr,
+    settings: settingsFr,
+    support: supportFr,
+    admin: adminFr,
   },
   en: {
     common: commonEn,
@@ -30,6 +39,9 @@ export const resources = {
     dashboard: dashboardEn,
     chat: chatEn,
     projects: projectsEn,
+    settings: settingsEn,
+    support: supportEn,
+    admin: adminEn,
   },
 } as const
 

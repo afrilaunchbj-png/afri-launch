@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"afrilaunch/backend/internal/application/port"
+	"afrilaunch/backend/internal/domain"
 	"afrilaunch/backend/internal/server/apierror"
 	"afrilaunch/backend/internal/server/authctx"
 	"afrilaunch/backend/internal/server/handler"
@@ -26,6 +27,26 @@ func RequireAuth(tv port.TokenVerifier) func(http.Handler) http.Handler {
 				return
 			}
 			next.ServeHTTP(w, r.WithContext(authctx.WithUser(r.Context(), user)))
+		})
+	}
+}
+
+// RequireSuperadmin protège les routes de suivi global : exige un JWT valide
+// ET le rôle superadmin dans la table `users` locale.
+func RequireSuperadmin(users port.UserRepository) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			userID := authctx.UserID(r.Context())
+			if userID == "" {
+				handler.WriteError(w, r, apierror.Unauthorized("Authentification requise."))
+				return
+			}
+			user, err := users.GetByID(r.Context(), userID)
+			if err != nil || user.Role != domain.RoleSuperadmin {
+				handler.WriteError(w, r, apierror.Forbidden("Accès réservé aux administrateurs."))
+				return
+			}
+			next.ServeHTTP(w, r)
 		})
 	}
 }

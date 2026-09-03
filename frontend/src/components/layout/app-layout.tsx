@@ -9,13 +9,13 @@ import {
 } from "lucide-react"
 
 import { LanguageToggle } from "@/components/language-toggle"
-import { futureNav, mainNav } from "@/components/layout/nav-items"
+import { buildMainNav, buildMobileNav, futureNav } from "@/components/layout/nav-items"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/features/auth/auth-provider"
-import { useSignOut } from "@/features/auth/hooks"
+import { useMe, useSignOut } from "@/features/auth/hooks"
 import { useCreditsSummary } from "@/features/credits/hooks"
 import { PreferencesSync } from "@/features/preferences/preferences-sync"
 import { cn } from "@/lib/utils"
@@ -55,6 +55,9 @@ function CreditsBalance() {
 function SidebarNav() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const { data: me } = useMe()
+  const isSuperadmin = me?.role === "superadmin"
+  const mainNav = buildMainNav(isSuperadmin)
   const signOut = useSignOut()
   const navigate = useNavigate()
 
@@ -170,9 +173,11 @@ function MobileTopBar() {
 
 function BottomNav() {
   const { t } = useTranslation()
+  const { data: me } = useMe()
+  const mobileNav = buildMobileNav(me?.role === "superadmin")
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t bg-card py-2 md:hidden">
-      {mainNav.map((item) => (
+      {mobileNav.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}

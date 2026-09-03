@@ -247,6 +247,16 @@ type SavedOpportunity struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+type SupportTicket struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Subject   string    `json:"subject"`
+	Message   string    `json:"message"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type User struct {
 	ID              string             `json:"id"`
 	Email           string             `json:"email"`
@@ -258,6 +268,7 @@ type User struct {
 	OrganizationID  pgtype.UUID        `json:"organization_id"`
 	AvatarUrl       *string            `json:"avatar_url"`
 	EmailVerifiedAt pgtype.Timestamptz `json:"email_verified_at"`
+	Role            string             `json:"role"`
 }
 
 type UserPreference struct {

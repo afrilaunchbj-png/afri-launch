@@ -43,12 +43,40 @@ func (r *userRepo) Upsert(ctx context.Context, user domain.User) (domain.User, e
 	return toUser(u), nil
 }
 
+func (r *userRepo) SetRole(ctx context.Context, userID, role string) (domain.User, error) {
+	u, err := r.s.q.SetUserRole(ctx, db.SetUserRoleParams{ID: userID, Role: role})
+	if err != nil {
+		if isNoRows(err) {
+			return domain.User{}, domain.ErrNotFound
+		}
+		return domain.User{}, err
+	}
+	return toUser(u), nil
+}
+
+func (r *userRepo) List(ctx context.Context, limit, offset int) ([]domain.User, int64, error) {
+	rows, err := r.s.q.ListUsers(ctx, db.ListUsersParams{Limit: int32(limit), Offset: int32(offset)})
+	if err != nil {
+		return nil, 0, err
+	}
+	total, err := r.s.q.CountUsers(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	out := make([]domain.User, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toUser(row))
+	}
+	return out, total, nil
+}
+
 func toUser(u db.User) domain.User {
 	return domain.User{
 		ID:        u.ID,
 		Email:     u.Email,
 		FullName:  u.FullName,
 		AvatarURL: u.AvatarUrl,
+		Role:      u.Role,
 		CreatedAt: u.CreatedAt,
 	}
 }

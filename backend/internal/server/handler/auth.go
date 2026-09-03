@@ -24,6 +24,7 @@ type userDTO struct {
 	Email     string  `json:"email"`
 	FullName  string  `json:"full_name"`
 	AvatarURL *string `json:"avatar_url,omitempty"`
+	Role      string  `json:"role"`
 }
 
 // Me gère GET /auth/me : renvoie (et crée si besoin) le profil local.
@@ -43,5 +44,6 @@ func toUserDTO(u domain.User) userDTO {
 		Email:     u.Email,
 		FullName:  u.FullName,
 		AvatarURL: u.AvatarURL,
+		Role:      u.Role,
 	}
 }

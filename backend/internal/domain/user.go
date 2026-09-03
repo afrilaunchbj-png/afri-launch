@@ -10,5 +10,12 @@ type User struct {
 	Email     string
 	FullName  string
 	AvatarURL *string
+	Role      string
 	CreatedAt time.Time
 }
+
+// Rôles utilisateur.
+const (
+	RoleUser       = "user"
+	RoleSuperadmin = "superadmin"
+)

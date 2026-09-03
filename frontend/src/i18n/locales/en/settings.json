@@ -1,0 +1,14 @@
+{
+  "title": "Settings",
+  "subtitle": "Your profile and usage preferences.",
+  "profile": "Profile",
+  "superadmin": "Superadmin",
+  "memberSince": "Member since {{date}}",
+  "preferences": "Preferences",
+  "language": "Language",
+  "theme": "Theme",
+  "preferencesHint": "These preferences are stored on your account and applied on all your devices.",
+  "account": "Account",
+  "balanceHint": "Your credit balance for generations.",
+  "needHelp": "Need help?"
+}

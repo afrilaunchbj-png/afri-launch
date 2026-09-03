@@ -5,6 +5,7 @@ import RootProviders from "@/app/root-providers"
 import AppLayout from "@/components/layout/app-layout"
 import AuthLayout from "@/components/layout/auth-layout"
 import { ProtectedRoute } from "@/features/auth"
+import AdminPage from "@/pages/admin"
 import AuthViewPage from "@/pages/auth-view"
 import CreditsPage from "@/pages/credits"
 import DashboardPage from "@/pages/dashboard"
@@ -15,6 +16,8 @@ import NotFoundPage from "@/pages/not-found"
 import ProjectPage from "@/pages/project"
 import ProjectsPage from "@/pages/projects"
 import RegisterPage from "@/pages/register"
+import SettingsPage from "@/pages/settings"
+import SupportPage from "@/pages/support"
 
 export const router = createBrowserRouter([
   {
@@ -49,6 +52,9 @@ export const router = createBrowserRouter([
           { path: "projects", element: <ProjectsPage /> },
           { path: "projects/:id", element: <ProjectPage /> },
           { path: "credits", element: <CreditsPage /> },
+          { path: "support", element: <SupportPage /> },
+          { path: "settings", element: <SettingsPage /> },
+          { path: "admin", element: <AdminPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

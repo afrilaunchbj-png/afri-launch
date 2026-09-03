@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	adminapp "afrilaunch/backend/internal/application/admin"
 	appai "afrilaunch/backend/internal/application/ai"
 	assetsapp "afrilaunch/backend/internal/application/assets"
 	authapp "afrilaunch/backend/internal/application/auth"
@@ -22,6 +23,7 @@ import (
 	preferencesapp "afrilaunch/backend/internal/application/preferences"
 	projectsapp "afrilaunch/backend/internal/application/projects"
 	researchapp "afrilaunch/backend/internal/application/research"
+	supportapp "afrilaunch/backend/internal/application/support"
 	"afrilaunch/backend/internal/config"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
 	authinfra "afrilaunch/backend/internal/infra/auth"
@@ -71,7 +73,7 @@ func main() {
 	}
 
 	// Services (application).
-	authSvc := authapp.NewService(users, creditRepo)
+	authSvc := authapp.NewService(users, creditRepo, cfg.SuperadminEmails)
 	creditSvc := creditsapp.NewService(creditRepo)
 	oppSvc := opportunitiesapp.NewService(oppRepo)
 
@@ -99,6 +101,10 @@ func main() {
 	researchSvc := researchapp.NewService(worker, researchRepo)
 	prefRepo := postgres.NewPreferenceRepository(store)
 	prefSvc := preferencesapp.NewService(prefRepo)
+	supportRepo := postgres.NewSupportRepository(store)
+	supportSvc := supportapp.NewService(supportRepo)
+	adminRepo := postgres.NewAdminRepository(store)
+	adminSvc := adminapp.NewService(adminRepo, supportRepo)
 	chatRepo := postgres.NewConversationRepository(store)
 	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, prefRepo, aiSvc, eventBus)
 
@@ -115,11 +121,14 @@ func main() {
 	chatH := handler.NewConversationHandler(chatSvc)
 	eventsH := handler.NewEventHandler(eventBus)
 	prefH := handler.NewPreferenceHandler(prefSvc)
+	supportH := handler.NewSupportHandler(supportSvc)
+	adminH := handler.NewAdminHandler(adminSvc)
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
 		Config:        cfg,
 		Tokens:        verifier,
+		Users:         users,
 		Health:        healthH,
 		Auth:          authH,
 		Credits:       creditH,
@@ -133,6 +142,8 @@ func main() {
 		Conversations: chatH,
 		Events:        eventsH,
 		Preferences:   prefH,
+		Support:       supportH,
+		Admin:         adminH,
 		AI:            aiSvc,
 		Documents:     docSvc,
 	})

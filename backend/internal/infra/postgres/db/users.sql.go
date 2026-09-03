@@ -10,7 +10,7 @@ import (
 )
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, email, password_hash, full_name, created_at, updated_at, deleted_at, organization_id, avatar_url, email_verified_at FROM users WHERE id = $1 AND deleted_at IS NULL
+SELECT id, email, password_hash, full_name, created_at, updated_at, deleted_at, organization_id, avatar_url, email_verified_at, role FROM users WHERE id = $1 AND deleted_at IS NULL
 `
 
 func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
@@ -27,6 +27,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 		&i.OrganizationID,
 		&i.AvatarUrl,
 		&i.EmailVerifiedAt,
+		&i.Role,
 	)
 	return i, err
 }
@@ -39,7 +40,7 @@ ON CONFLICT (id) DO UPDATE SET
     full_name  = EXCLUDED.full_name,
     avatar_url = EXCLUDED.avatar_url,
     updated_at = now()
-RETURNING id, email, password_hash, full_name, created_at, updated_at, deleted_at, organization_id, avatar_url, email_verified_at
+RETURNING id, email, password_hash, full_name, created_at, updated_at, deleted_at, organization_id, avatar_url, email_verified_at, role
 `
 
 type UpsertUserParams struct {
@@ -68,6 +69,7 @@ func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, e
 		&i.OrganizationID,
 		&i.AvatarUrl,
 		&i.EmailVerifiedAt,
+		&i.Role,
 	)
 	return i, err
 }

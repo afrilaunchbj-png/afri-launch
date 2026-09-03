@@ -1,0 +1,17 @@
+{
+  "title": "Support",
+  "subtitle": "A question, an issue? Write to us, we'll get back to you.",
+  "newTicket": "New request",
+  "subject": "Subject",
+  "subjectPlaceholder": "e.g. ebook generation issue",
+  "message": "Message",
+  "messagePlaceholder": "Describe your request as precisely as possible…",
+  "send": "Send request",
+  "created": "Your request has been sent.",
+  "history": "My requests",
+  "empty": "No request yet.",
+  "status": {
+    "open": "Open",
+    "resolved": "Resolved"
+  }
+}

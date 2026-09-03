@@ -6,6 +6,7 @@ package auth
 
 import (
 	"context"
+	"strings"
 
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
@@ -13,13 +14,14 @@ import (
 
 // Service réconcilie l'identité Neon Auth avec la table `users`.
 type Service struct {
-	users   port.UserRepository
-	credits port.CreditRepository
+	users       port.UserRepository
+	credits     port.CreditRepository
+	superadmins []string // emails promus superadmin au login
 }
 
 // NewService construit le service d'identité.
-func NewService(users port.UserRepository, credits port.CreditRepository) *Service {
-	return &Service{users: users, credits: credits}
+func NewService(users port.UserRepository, credits port.CreditRepository, superadminEmails []string) *Service {
+	return &Service{users: users, credits: credits, superadmins: superadminEmails}
 }
 
 // GetOrCreateUser crée ou met à jour le profil local à partir de l'identité
@@ -46,11 +48,32 @@ func (s *Service) GetOrCreateUser(ctx context.Context, identity port.AuthUser, w
 				return domain.User{}, err
 			}
 		}
+		// Promotion superadmin déclarative (SUPERADMIN_EMAILS).
+		if s.isSuperadmin(created.Email) {
+			return s.users.SetRole(ctx, created.ID, domain.RoleSuperadmin)
+		}
 		return created, nil
 	}
 
 	// Login suivant : on synchronise le profil (nom/email/avatar).
-	return s.users.Upsert(ctx, user)
+	user, err := s.users.Upsert(ctx, user)
+	if err != nil {
+		return domain.User{}, err
+	}
+	// Promotion superadmin déclarative (SUPERADMIN_EMAILS).
+	if user.Role != domain.RoleSuperadmin && s.isSuperadmin(user.Email) {
+		return s.users.SetRole(ctx, user.ID, domain.RoleSuperadmin)
+	}
+	return user, nil
+}
+
+func (s *Service) isSuperadmin(email string) bool {
+	for _, e := range s.superadmins {
+		if e == strings.ToLower(email) {
+			return true
+		}
+	}
+	return false
 }
 
 func stringPtr(s string) *string {

@@ -18,6 +18,7 @@ import (
 type Deps struct {
 	Config        config.Config
 	Tokens        port.TokenVerifier
+	Users         port.UserRepository
 	Health        *handler.Health
 	Auth          *handler.AuthHandler
 	Credits       *handler.CreditHandler
@@ -31,6 +32,8 @@ type Deps struct {
 	Conversations *handler.ConversationHandler
 	Events        *handler.EventHandler
 	Preferences   *handler.PreferenceHandler
+	Support       *handler.SupportHandler
+	Admin         *handler.AdminHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -77,6 +80,19 @@ func NewRouter(d Deps) http.Handler {
 			// Préférences utilisateur (langue, thème).
 			r.Get("/preferences", d.Preferences.Get)
 			r.Put("/preferences", d.Preferences.Update)
+
+			// Support utilisateur.
+			r.Post("/support/tickets", d.Support.Create)
+			r.Get("/support/tickets", d.Support.ListMine)
+
+			// Suivi global superadmin.
+			r.Route("/admin", func(r chi.Router) {
+				r.Use(RequireSuperadmin(d.Users))
+				r.Get("/stats", d.Admin.Stats)
+				r.Get("/users", d.Admin.Users)
+				r.Get("/tickets", d.Admin.Tickets)
+				r.Post("/tickets/{id}/resolve", d.Admin.ResolveTicket)
+			})
 
 			r.Get("/credits", d.Credits.Summary)
 			r.Get("/credits/transactions", d.Credits.Transactions)

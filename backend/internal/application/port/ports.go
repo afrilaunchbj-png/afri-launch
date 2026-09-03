@@ -21,6 +21,8 @@ type AuthUser struct {
 type UserRepository interface {
 	GetByID(ctx context.Context, id string) (domain.User, error)
 	Upsert(ctx context.Context, u domain.User) (domain.User, error)
+	SetRole(ctx context.Context, userID, role string) (domain.User, error)
+	List(ctx context.Context, limit, offset int) ([]domain.User, int64, error)
 }
 
 // CreditRepository implémente le ledger de crédits idempotent.

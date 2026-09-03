@@ -11,7 +11,8 @@
     "settings": "Settings",
     "support": "Support",
     "comingSoon": "Coming soon",
-    "soon": "Soon"
+    "soon": "Soon",
+    "admin": "Administration"
   },
   "common": {
     "retry": "Retry",
