@@ -98,3 +98,50 @@
     background-size: 20px 20px;
   }
 }
+
+/* Animations soft (landing) — respecte prefers-reduced-motion */
+@layer utilities {
+  @media (prefers-reduced-motion: no-preference) {
+    .animate-fade-up {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .animate-fade-in {
+      opacity: 0;
+      animation: fade-in 0.9s ease-out forwards;
+    }
+    .animate-slow-zoom {
+      animation: slow-zoom 1.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fade-up {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fade-in {
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes slow-zoom {
+    from {
+      transform: scale(1.06);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+}

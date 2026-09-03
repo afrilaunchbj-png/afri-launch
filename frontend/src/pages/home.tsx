@@ -11,11 +11,10 @@ import {
   PenTool,
   ShieldCheck,
   Smartphone,
-  Sparkles,
 } from "lucide-react"
 
+import { Reveal } from "@/components/reveal"
 import { api, type ApiSingle } from "@/lib/api/client"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
@@ -58,44 +57,58 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero */}
+      {/* Hero : promesse + visuel éditorial */}
       <section className="relative overflow-hidden">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-transparent dark:from-primary/20"
         />
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center py-16 text-center sm:py-24">
-          <Badge variant="secondary" className="gap-1.5 rounded-full px-3 py-1">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t("home.badge")}
-          </Badge>
-          <h1 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight text-primary sm:text-5xl">
-            {t("home.heroTitle")}
-          </h1>
-          <p className="mt-4 max-w-2xl text-balance text-base text-muted-foreground sm:text-lg">
-            {t("home.heroSubtitle")}
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button asChild size="touch">
-              <Link to="/register">
-                {t("home.ctaStart")} <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Button asChild size="touch" variant="outline">
-              <a href="#how">{t("home.ctaHow")}</a>
-            </Button>
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 py-14 sm:py-20 lg:grid-cols-[1.1fr_1fr]">
+          <div className="animate-fade-up text-center lg:text-left">
+            <h1 className="text-balance font-display text-4xl font-bold leading-tight tracking-tight text-primary sm:text-5xl">
+              {t("home.heroTitle")}
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-balance text-base text-muted-foreground sm:text-lg lg:mx-0">
+              {t("home.heroSubtitle")}
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <Button asChild size="touch">
+                <Link to="/register">
+                  {t("home.ctaStart")} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild size="touch" variant="outline">
+                <a href="#how">{t("home.ctaHow")}</a>
+              </Button>
+            </div>
+            <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground lg:justify-start">
+              <span className="inline-flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                {t("home.trustData")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <Smartphone className="h-3.5 w-3.5" />
+                {t("home.trustMobileMoney")}
+              </span>
+            </p>
           </div>
-          <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              {t("home.trustData")}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <Smartphone className="h-3.5 w-3.5" />
-              {t("home.trustMobileMoney")}
-            </span>
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+
+          <div className="animate-fade-in">
+            <div className="overflow-hidden rounded-2xl border shadow-lg shadow-primary/10">
+              <img
+                src="/images/landing/hero.webp"
+                alt={t("home.imgHero")}
+                width={1536}
+                height={1024}
+                loading="eager"
+                className="animate-slow-zoom aspect-[3/2] w-full object-cover"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mx-auto max-w-6xl px-4 pb-12 sm:px-6">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="text-xs text-muted-foreground">{t("home.marketsLabel")}</span>
             {markets.map((m) => (
               <span
@@ -112,56 +125,82 @@ export default function HomePage() {
       {/* Comment ça marche */}
       <section id="how" className="border-t bg-muted/30 py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-center font-display text-2xl font-bold text-primary sm:text-3xl">
-            {t("home.howTitle")}
-          </h2>
-          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
-            {t("home.howSubtitle")}
-          </p>
+          <Reveal>
+            <h2 className="text-center font-display text-2xl font-bold text-primary sm:text-3xl">
+              {t("home.howTitle")}
+            </h2>
+            <p className="mx-auto mt-2 max-w-xl text-center text-sm text-muted-foreground">
+              {t("home.howSubtitle")}
+            </p>
+          </Reveal>
           <ol className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {STEPS.map((step, i) => (
               <li key={step.key}>
-                <Card className="h-full rounded-2xl">
-                  <CardContent className="flex h-full flex-col gap-3 p-5">
-                    <div className="flex items-center justify-between">
-                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-                        <step.icon className="h-5 w-5" />
-                      </span>
-                      <span className="font-display text-2xl font-bold text-primary/20">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold leading-snug">{t(`home.steps.${step.key}.title`)}</h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {t(`home.steps.${step.key}.description`)}
-                    </p>
-                  </CardContent>
-                </Card>
+                <Reveal delay={i * 90}>
+                  <Card className="h-full rounded-2xl">
+                    <CardContent className="flex h-full flex-col gap-3 p-5">
+                      <div className="flex items-center justify-between">
+                        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                          <step.icon className="h-5 w-5" />
+                        </span>
+                        <span className="font-display text-2xl font-bold text-primary/20">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                      </div>
+                      <h3 className="font-semibold leading-snug">{t(`home.steps.${step.key}.title`)}</h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {t(`home.steps.${step.key}.description`)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Reveal>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
+      {/* Bandeau : le terrain, vos marchés */}
+      <section className="px-4 pt-16 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <div className="overflow-hidden rounded-3xl">
+              <img
+                src="/images/landing/market.webp"
+                alt={t("home.imgMarket")}
+                width={1536}
+                height={1024}
+                loading="lazy"
+                className="aspect-[21/9] w-full object-cover"
+              />
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* Ce qui vous est livré */}
       <section className="py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <h2 className="text-center font-display text-2xl font-bold text-primary sm:text-3xl">
-            {t("home.featuresTitle")}
-          </h2>
+          <Reveal>
+            <h2 className="text-center font-display text-2xl font-bold text-primary sm:text-3xl">
+              {t("home.featuresTitle")}
+            </h2>
+          </Reveal>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {FEATURES.map((f) => (
-              <Card key={f.key} className="rounded-2xl transition-shadow hover:shadow-md">
-                <CardContent className="flex h-full flex-col gap-3 p-6">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
-                    <f.icon className="h-5 w-5" />
-                  </span>
-                  <h3 className="font-semibold">{t(`home.features.${f.key}.title`)}</h3>
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {t(`home.features.${f.key}.description`)}
-                  </p>
-                </CardContent>
-              </Card>
+            {FEATURES.map((f, i) => (
+              <Reveal key={f.key} delay={i * 90}>
+                <Card className="h-full rounded-2xl transition-shadow hover:shadow-md">
+                  <CardContent className="flex h-full flex-col gap-3 p-6">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-secondary/10 text-secondary">
+                      <f.icon className="h-5 w-5" />
+                    </span>
+                    <h3 className="font-semibold">{t(`home.features.${f.key}.title`)}</h3>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                      {t(`home.features.${f.key}.description`)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -169,21 +208,34 @@ export default function HomePage() {
 
       {/* CTA final */}
       <section className="px-4 pb-16 sm:px-6">
-        <div className="mx-auto max-w-5xl rounded-3xl bg-primary px-6 py-14 text-center text-primary-foreground">
-          <h2 className="font-display text-2xl font-bold sm:text-3xl">{t("home.finalCtaTitle")}</h2>
-          <p className="mx-auto mt-3 max-w-xl text-sm text-primary-foreground/80 sm:text-base">
-            {t("home.finalCtaSubtitle")}
-          </p>
-          <Button
-            asChild
-            size="touch"
-            variant="secondary"
-            className="mt-7 bg-background text-primary hover:bg-background/90"
-          >
-            <Link to="/register">
-              {t("home.ctaStart")} <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <div className="grid overflow-hidden rounded-3xl bg-primary lg:grid-cols-[1.2fr_1fr]">
+              <div className="flex flex-col items-center justify-center px-6 py-14 text-center text-primary-foreground lg:items-start lg:px-14 lg:text-left">
+                <h2 className="font-display text-2xl font-bold sm:text-3xl">
+                  {t("home.finalCtaTitle")}
+                </h2>
+                <p className="mt-3 max-w-md text-sm text-primary-foreground/80 sm:text-base">
+                  {t("home.finalCtaSubtitle")}
+                </p>
+                <Button asChild size="touch" className="mt-7 bg-background text-primary hover:bg-background/90">
+                  <Link to="/register">
+                    {t("home.ctaStart")} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <div className="min-h-[240px]">
+                <img
+                  src="/images/landing/launch.webp"
+                  alt={t("home.imgLaunch")}
+                  width={1536}
+                  height={1024}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

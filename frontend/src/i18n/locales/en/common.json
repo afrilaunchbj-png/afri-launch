@@ -40,7 +40,6 @@
     "back": "Back to home"
   },
   "home": {
-    "badge": "New · AI copilot for African creators",
     "heroTitle": "Turn a local opportunity into a sellable digital product",
     "heroSubtitle": "From idea to finished product: verified opportunity, ebook, cover, posters and sales page — generated in minutes, tailored to your markets.",
     "ctaStart": "Start for free",
@@ -85,6 +84,9 @@
     },
     "finalCtaTitle": "Ready to launch your first digital product?",
     "finalCtaSubtitle": "Create your account, chat with the copilot and walk away with a complete product.",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "imgHero": "West African entrepreneur working on her digital product",
+    "imgMarket": "African market vendor using mobile payment",
+    "imgLaunch": "Digital product materials ready to launch"
   }
 }

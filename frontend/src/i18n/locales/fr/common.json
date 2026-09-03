@@ -40,7 +40,6 @@
     "back": "Retour à l'accueil"
   },
   "home": {
-    "badge": "Nouveau · Copilote IA pour créateurs africains",
     "heroTitle": "Transformez une opportunité locale en produit digital vendable",
     "heroSubtitle": "De l'idée au produit fini : opportunité vérifiée, ebook, couverture, affiches et page de vente — générés en minutes, pensés pour vos marchés.",
     "ctaStart": "Commencer gratuitement",
@@ -85,6 +84,9 @@
     },
     "finalCtaTitle": "Prêt à lancer votre premier produit digital ?",
     "finalCtaSubtitle": "Créez votre compte, discutez avec le copilote et repartez avec un produit complet.",
-    "rights": "Tous droits réservés."
+    "rights": "Tous droits réservés.",
+    "imgHero": "Entrepreneure ouest-africaine travaillant sur son produit digital",
+    "imgMarket": "Commerçante africaine utilisant le paiement mobile sur son marché",
+    "imgLaunch": "Supports de produits digitaux prêts à être lancés"
   }
 }
