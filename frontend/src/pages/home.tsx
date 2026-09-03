@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { Link } from "react-router"
 import { useTranslation } from "react-i18next"
 import {
@@ -13,11 +14,20 @@ import {
   Sparkles,
 } from "lucide-react"
 
+import { api, type ApiSingle } from "@/lib/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 
-const MARKETS = ["Bénin", "Sénégal", "Côte d'Ivoire", "Ghana", "Nigeria", "Kenya"]
+// Fallback si l'API marchés est indisponible (les chips sont chargées depuis GET /markets).
+const DEFAULT_MARKETS = ["Bénin", "Sénégal", "Côte d'Ivoire", "Ghana", "Nigeria", "Kenya"]
+
+interface Market {
+  code: string
+  name: string
+  currency: string
+  language: string
+}
 
 const STEPS = [
   { icon: MessageCircle, key: "chat" },
@@ -34,6 +44,17 @@ const FEATURES = [
 
 export default function HomePage() {
   const { t } = useTranslation()
+  const [markets, setMarkets] = useState<string[]>(DEFAULT_MARKETS)
+
+  useEffect(() => {
+    api
+      .get<ApiSingle<Market[]>>("/api/v1/markets")
+      .then((r) => {
+        const names = r.data.map((m) => m.name).sort((a, b) => a.localeCompare(b, "fr"))
+        if (names.length > 0) setMarkets(names)
+      })
+      .catch(() => {})
+  }, [])
 
   return (
     <div className="flex flex-col">
@@ -76,7 +97,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
             <span className="text-xs text-muted-foreground">{t("home.marketsLabel")}</span>
-            {MARKETS.map((m) => (
+            {markets.map((m) => (
               <span
                 key={m}
                 className="rounded-full border bg-card px-3 py-1 text-xs font-medium text-foreground/80"
