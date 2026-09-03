@@ -4,6 +4,22 @@ import type { Job } from "@/features/generation/api"
 
 export type ProjectStatus = "draft" | "idea_selected" | "generating" | "content_ready" | "completed" | "failed"
 
+export interface ProjectPalette {
+  primary?: string
+  secondary?: string
+  accent?: string
+  background?: string
+  text?: string
+  source?: "ai" | "user"
+}
+
+export interface ProjectConfig {
+  palette?: ProjectPalette | null
+  style?: string
+  ebook_min_pages?: number
+  ebook_max_pages?: number
+}
+
 export interface Project {
   id: string
   title: string
@@ -11,6 +27,7 @@ export interface Project {
   credits_consumed: number
   opportunity_id?: string | null
   idea_id?: string | null
+  config?: ProjectConfig
   created_at: string
 }
 
@@ -45,8 +62,22 @@ export function generateEbook(id: string) {
   return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/ebook`).then((r) => r.data)
 }
 
-export function generateCover(id: string) {
-  return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/cover`).then((r) => r.data)
+export function generateCover(id: string, instructions?: string) {
+  return api
+    .post<ApiSingle<Job>>(`/api/v1/projects/${id}/cover`, instructions ? { instructions } : undefined)
+    .then((r) => r.data)
+}
+
+export function updateProjectConfig(id: string, input: ProjectConfigInput) {
+  return api.put<ApiSingle<Project>>(`/api/v1/projects/${id}/config`, input).then((r) => r.data)
+}
+
+export interface ProjectConfigInput {
+  palette?: ProjectPalette
+  clear_palette?: boolean
+  style?: string
+  ebook_min_pages?: number
+  ebook_max_pages?: number
 }
 
 export function generatePosters(id: string) {

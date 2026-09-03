@@ -97,6 +97,19 @@ func (r *ChromedpRenderer) SlidesToPPTX(ctx context.Context, html []byte) ([]byt
 	return pptx.Build(pngs, 12192000, 6858000) // 16:9 en EMU
 }
 
+// SlidesToPPTXWithCover assemble le PPTX avec coverPNG en première slide
+// (workflow cover-first).
+func (r *ChromedpRenderer) SlidesToPPTXWithCover(ctx context.Context, html []byte, coverPNG []byte) ([]byte, error) {
+	pngs, err := r.SlidesToPNG(ctx, html)
+	if err != nil {
+		return nil, err
+	}
+	if coverPNG != nil {
+		pngs = append([][]byte{coverPNG}, pngs...)
+	}
+	return pptx.Build(pngs, 12192000, 6858000)
+}
+
 func dataURL(html []byte) string {
 	return "data:text/html;charset=utf-8;base64," + base64.StdEncoding.EncodeToString(html)
 }

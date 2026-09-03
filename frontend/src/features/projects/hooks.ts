@@ -12,6 +12,8 @@ import {
   generateEbook,
   generatePosters,
   generateSalesPage,
+  updateProjectConfig,
+  type ProjectConfigInput,
 } from "./api"
 
 export const projectKeys = {
@@ -45,14 +47,38 @@ export function useCreateProject() {
   })
 }
 
-export function useGenerate(kind: "ebook" | "cover" | "posters" | "sales-page") {
+export function useGenerate(kind: "ebook" | "posters" | "sales-page") {
   const queryClient = useQueryClient()
-  const fn = { ebook: generateEbook, cover: generateCover, posters: generatePosters, "sales-page": generateSalesPage }[kind]
+  const fn = { ebook: generateEbook, posters: generatePosters, "sales-page": generateSalesPage }[kind]
   return useMutation({
     mutationFn: (id: string) => fn(id),
     onSettled: (_data, _err, id) => {
       queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) })
       queryClient.invalidateQueries({ queryKey: projectKeys.assets(id) })
+    },
+  })
+}
+
+/** useGenerateCover : génération/régénération (chaque appel consomme des crédits). */
+export function useGenerateCover(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (instructions?: string) => generateCover(id, instructions),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: projectKeys.assets(id) })
+      queryClient.invalidateQueries({ queryKey: ["credits"] })
+    },
+  })
+}
+
+/** useUpdateProjectConfig persiste palette/réglages (mise à jour du cache). */
+export function useUpdateProjectConfig(id: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: ProjectConfigInput) => updateProjectConfig(id, input),
+    onSuccess: (project) => {
+      queryClient.setQueryData(projectKeys.detail(id), project)
     },
   })
 }

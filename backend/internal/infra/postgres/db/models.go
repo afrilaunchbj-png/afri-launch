@@ -109,6 +109,7 @@ type GenerationJob struct {
 	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
 	ResearchID    pgtype.UUID        `json:"research_id"`
 	IdeaID        pgtype.UUID        `json:"idea_id"`
+	Params        []byte             `json:"params"`
 }
 
 type IdeaMessage struct {
@@ -214,6 +215,7 @@ type Project struct {
 	CreditsConsumed int32       `json:"credits_consumed"`
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
+	Config          []byte      `json:"config"`
 }
 
 type RefreshToken struct {
@@ -256,4 +258,12 @@ type User struct {
 	OrganizationID  pgtype.UUID        `json:"organization_id"`
 	AvatarUrl       *string            `json:"avatar_url"`
 	EmailVerifiedAt pgtype.Timestamptz `json:"email_verified_at"`
+}
+
+type UserPreference struct {
+	UserID    string    `json:"user_id"`
+	Language  string    `json:"language"`
+	Theme     string    `json:"theme"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

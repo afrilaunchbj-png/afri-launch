@@ -36,13 +36,28 @@ func (f *fakeLLM) StreamComplete(ctx context.Context, req port.LLMRequest, emit 
 
 func newTestService(chunks []string) *Service {
 	aiSvc := appai.NewService(&fakeLLM{chunks: chunks}, nil, nil, nil, appai.NewModelRouter("m-research", "m-idea", "m-img"))
-	return NewService(nil, nil, nil, nil, aiSvc, nil)
+	return NewService(nil, nil, nil, nil, nil, aiSvc, nil)
+}
+
+func TestChatSystemPromptLanguage(t *testing.T) {
+	fr := chatSystemPrompt(domain.LanguageFr)
+	if !strings.Contains(fr, "French") {
+		t.Error("la directive de langue française manque pour 'fr'")
+	}
+	en := chatSystemPrompt(domain.LanguageEn)
+	if !strings.Contains(en, "English") {
+		t.Error("la directive de langue anglaise manque pour 'en'")
+	}
+	// Langue inconnue : repli sur le français.
+	if u := chatSystemPrompt("es"); !strings.Contains(u, "French") {
+		t.Error("langue inconnue devrait retomber sur le français")
+	}
 }
 
 func TestStreamAnswerPlainText(t *testing.T) {
 	svc := newTestService([]string{"Salut ! Je peux t'", "aider à explorer le ma", "rché béninois."})
 
-	res, err := svc.streamAnswer(testCtx(), testConv(), "msg-1", nil)
+	res, err := svc.streamAnswer(testCtx(), testConv(), "msg-1", domain.LanguageFr, nil)
 	if err != nil {
 		t.Fatalf("streamAnswer: %v", err)
 	}
@@ -59,7 +74,7 @@ func TestStreamAnswerMarkerSplitAcrossDeltas(t *testing.T) {
 	// Le "@" coupé entre deux deltas ne doit pas corrompre la détection.
 	svc := newTestService([]string{"Voici mes idées @", "@IDEAS\n", `{"ideas":[{"title":"A","hook":"h","explanation":"e"}]}`, "\n@@END"})
 
-	res, err := svc.streamAnswer(testCtx(), testConv(), "msg-1", nil)
+	res, err := svc.streamAnswer(testCtx(), testConv(), "msg-1", domain.LanguageFr, nil)
 	if err != nil {
 		t.Fatalf("streamAnswer: %v", err)
 	}
@@ -83,7 +98,7 @@ func TestStreamAnswerMarkerSplitAcrossDeltas(t *testing.T) {
 func TestStreamAnswerSearchFirstLine(t *testing.T) {
 	svc := newTestService([]string{"@@SEA", `RCH {"query":"mobil-money","sector":"fintech","markets":["Bénin"]}`, "\n"})
 
-	res, err := svc.streamAnswer(testCtx(), testConv(), "msg-1", nil)
+	res, err := svc.streamAnswer(testCtx(), testConv(), "msg-1", domain.LanguageFr, nil)
 	if err != nil {
 		t.Fatalf("streamAnswer: %v", err)
 	}

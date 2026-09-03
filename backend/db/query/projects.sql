@@ -14,3 +14,9 @@ UPDATE projects SET status = $2, updated_at = now() WHERE id = $1 AND user_id = 
 
 -- name: AddProjectCredits :one
 UPDATE projects SET credits_consumed = credits_consumed + $2, updated_at = now() WHERE id = $1 RETURNING *;
+
+-- name: UpdateProjectConfig :one
+UPDATE projects
+SET config = $2, updated_at = now()
+WHERE id = $1 AND user_id = $3
+RETURNING *;

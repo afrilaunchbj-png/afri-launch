@@ -113,7 +113,7 @@ func TestChatTurnSearchFlow(t *testing.T) {
 	aiSvc := appai.NewService(llm, nil, nil, &fakeResearchProvider{}, appai.NewModelRouter("m-research", "m-idea", "m-img"))
 
 	broker := eventsinfra.NewBroker()
-	chatSvc := chat.NewService(conversations, ideas, opps, credits, aiSvc, broker)
+	chatSvc := chat.NewService(conversations, ideas, opps, credits, nil, aiSvc, broker)
 
 	conv, err := chatSvc.Create(ctx, user.ID)
 	if err != nil {
@@ -242,7 +242,7 @@ func TestChatTurnIdeaFlow(t *testing.T) {
 	aiSvc := appai.NewService(llm, nil, nil, nil, appai.NewModelRouter("m-research", "m-idea", "m-img"))
 
 	broker := eventsinfra.NewBroker()
-	chatSvc := chat.NewService(conversations, ideas, opps, credits, aiSvc, broker)
+	chatSvc := chat.NewService(conversations, ideas, opps, credits, nil, aiSvc, broker)
 
 	conv, err := chatSvc.Create(ctx, user.ID)
 	if err != nil {

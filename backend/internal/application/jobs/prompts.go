@@ -44,20 +44,62 @@ func ideaPrompt(opp domain.Opportunity) string {
 	)
 }
 
-// coverPrompt construit le prompt de génération de couverture.
-func coverPrompt(topic, audience string) string {
-	return fmt.Sprintf(
-		"Book cover design, deep emerald (#003527) and warm amber (#FEA619) palette, clean modern African professional aesthetic, title \"%s\", target audience %s, no text besides the title, high quality, print-ready.",
-		topic, audience,
+// coverPrompt construit le prompt de génération de couverture. La palette
+// est celle du projet (proposée par l'IA ou fixée par l'utilisateur) ;
+// fallback = identité de l'application.
+func coverPrompt(p *domain.ProjectPalette, style, topic, audience, instructions string) string {
+	colors := "deep emerald (#003527) and warm amber (#FEA619)"
+	if p != nil && !p.Empty() {
+		colors = fmt.Sprintf("primary %s, secondary %s, accent %s, background %s, text %s",
+			p.Primary, p.Secondary, p.Accent, p.Background, p.Text)
+	}
+	base := fmt.Sprintf(
+		"Book cover design, %s palette, %s, clean modern African professional aesthetic, title \"%s\", target audience %s, no text besides the title, high quality, print-ready.",
+		colors, style, topic, audience,
 	)
+	if instructions != "" {
+		base += "\nAdditional directions from the user: " + instructions
+	}
+	return base
+}
+
+// paletteSystem est la consigne de proposition d'identité visuelle par l'IA.
+const paletteSystem = `You are a brand designer. Given a digital product project and its market context,
+propose a visual identity. Return ONLY a JSON object (no markdown fences) with this exact shape:
+{"primary":"#RRGGBB","secondary":"#RRGGBB","accent":"#RRGGBB","background":"#RRGGBB","text":"#RRGGBB","style":"3-6 style keywords"}
+Rules:
+- All colors are hex codes starting with # (e.g. "#0F766E").
+- "background" must be light/neutral and "text" dark (or a consistent dark-brand variant) — printed documents must stay highly readable.
+- High contrast between text and background; harmonious, culturally appropriate for the target market.
+- "style": 3-6 short keywords describing the visual mood, in the project language.`
+
+// palettePrompt construit la demande d'identité visuelle.
+func palettePrompt(c genContext, instructions string) string {
+	b := fmt.Sprintf(
+		"Product: %s\nFormat: %s\nAudience: %s\nCountry: %s\nLanguage: %s",
+		c.topic, c.format, c.audience, c.country, c.language,
+	)
+	if c.promise != "" {
+		b += "\nPromise: " + c.promise
+	}
+	if instructions != "" {
+		b += "\nUser directions: " + instructions
+	}
+	b += "\nPropose the visual identity (palette + style keywords in the language above)."
+	return b
 }
 
 // posterPrompt construit le prompt d'une affiche publicitaire (3 variantes).
 // Tous les textes sont dans la langue du marché (c.language).
 func posterPrompt(c genContext, variant int) string {
+	colors := "deep emerald (#003527) and warm amber (#FEA619)"
+	if c.palette != nil && !c.palette.Empty() {
+		colors = fmt.Sprintf("primary %s, secondary %s, accent %s, background %s, text %s",
+			c.palette.Primary, c.palette.Secondary, c.palette.Accent, c.palette.Background, c.palette.Text)
+	}
 	base := fmt.Sprintf(
-		"Advertising poster, deep emerald (#003527) and warm amber (#FEA619) palette, clean modern African professional aesthetic, all text in %s, print-ready, no invented statistics, generous whitespace, high contrast.",
-		c.language,
+		"Advertising poster, %s palette, %s, clean modern African professional aesthetic, all text in %s, print-ready, no invented statistics, generous whitespace, high contrast.",
+		colors, c.config.Style, c.language,
 	)
 	switch variant {
 	case 1:

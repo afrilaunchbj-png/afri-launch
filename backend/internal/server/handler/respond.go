@@ -3,7 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
+
+	"github.com/go-chi/chi/v5/middleware"
 
 	"afrilaunch/backend/internal/domain"
 	"afrilaunch/backend/internal/server/apierror"
@@ -40,10 +43,15 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 }
 
 // writeAPIError sérialise une erreur en Problem Details (RFC 9457).
+// Les erreurs inattendues (statut ≥ 500) sont loggées avec leur cause :
+// le client ne reçoit jamais le détail technique.
 func writeAPIError(w http.ResponseWriter, r *http.Request, err error) {
 	apiErr, ok := err.(*apierror.APIError)
 	if !ok {
 		apiErr = mapError(err)
+		if apiErr.Status >= 500 {
+			slog.Error("unexpected handler error", "path", r.URL.Path, "request_id", middleware.GetReqID(r.Context()), "err", err)
+		}
 	}
 	apiErr.Instance = r.URL.Path
 	writeJSON(w, apiErr.Status, apiErr)
@@ -68,6 +76,8 @@ func mapError(err error) *apierror.APIError {
 		return apierror.Business("Crédits insuffisants pour cette opération.")
 	case errors.Is(err, domain.ErrNotConfirmed):
 		return apierror.Business("Confirmez l'idée avant de générer les assets.")
+	case errors.Is(err, domain.ErrCoverRequired):
+		return apierror.Business("Générez et validez d'abord la couverture : elle sert d'identité visuelle à tous les assets.")
 	default:
 		return apierror.Internal()
 	}

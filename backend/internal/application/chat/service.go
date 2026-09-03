@@ -74,6 +74,7 @@ type Service struct {
 	ideas         port.IdeaRepository
 	opportunities port.OpportunityRepository
 	credits       port.CreditRepository
+	prefs         port.PreferenceRepository
 	ai            *ai.Service
 	events        port.EventPublisher
 
@@ -88,6 +89,7 @@ func NewService(
 	ideas port.IdeaRepository,
 	opportunities port.OpportunityRepository,
 	credits port.CreditRepository,
+	prefs port.PreferenceRepository,
 	aiSvc *ai.Service,
 	events port.EventPublisher,
 ) *Service {
@@ -96,6 +98,7 @@ func NewService(
 		ideas:         ideas,
 		opportunities: opportunities,
 		credits:       credits,
+		prefs:         prefs,
 		ai:            aiSvc,
 		events:        events,
 		locks:         make(map[string]*sync.Mutex),
@@ -179,6 +182,14 @@ func (s *Service) SendMessage(ctx context.Context, userID, convID, content strin
 		"conversation_id": convID, "message_id": assistantID,
 	})
 
+	// Langue du compte : le copilote répond toujours dans cette langue.
+	language := domain.LanguageFr
+	if s.prefs != nil {
+		if pref, err := s.prefs.GetOrCreate(ctx, userID); err == nil && pref.Language != "" {
+			language = pref.Language
+		}
+	}
+
 	// Le tour survit à la requête HTTP (réponse 202 immédiate).
 	runCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), turnTimeout)
 	go func() {
@@ -186,7 +197,7 @@ func (s *Service) SendMessage(ctx context.Context, userID, convID, content strin
 		mu := s.lockFor(convID)
 		mu.Lock()
 		defer mu.Unlock()
-		s.runTurn(runCtx, conv, assistantID)
+		s.runTurn(runCtx, conv, assistantID, language)
 	}()
 	return assistantID, nil
 }
@@ -202,7 +213,9 @@ func (s *Service) lockFor(convID string) *sync.Mutex {
 
 // runTurn exécute une boucle agent bornée : réponse (streamée) ou recherche
 // en ligne (outil) suivie d'une réponse. Maximum 2 rounds, 1 recherche/tour.
-func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assistantID string) {
+// language est la langue du compte (préférences) : toutes les sorties LLM
+// (messages + champs d'idées) sont dans cette langue.
+func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assistantID, language string) {
 	history, err := s.conversations.ListMessages(ctx, conv.ID)
 	if err != nil {
 		s.failTurn(ctx, conv, assistantID, err)
@@ -212,7 +225,7 @@ func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assista
 
 	searched := false
 	for round := 0; round < 2; round++ {
-		res, err := s.streamAnswer(ctx, conv, assistantID, msgs)
+		res, err := s.streamAnswer(ctx, conv, assistantID, language, msgs)
 		if err != nil {
 			s.failTurn(ctx, conv, assistantID, err)
 			return
@@ -228,7 +241,7 @@ func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assista
 				continue
 			}
 			searched = true
-			ops, err := s.runSearch(ctx, conv, assistantID, *res.search)
+			ops, err := s.runSearch(ctx, conv, assistantID, *res.search, language)
 			if err != nil {
 				s.failTurn(ctx, conv, assistantID, err)
 				return
@@ -282,7 +295,7 @@ func markerHold(s string) int {
 // streamAnswer streame la réponse du modèle et détecte les marqueurs d'outils.
 // Machine à états : 0 = texte visible, 1 = capture du bloc @@IDEAS, 2 = ligne
 // @@SEARCH (drainage puis arrêt du flux).
-func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, assistantID string, msgs []port.LLMMessage) (turnResult, error) {
+func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, assistantID, language string, msgs []port.LLMMessage) (turnResult, error) {
 	var res turnResult
 
 	var (
@@ -349,7 +362,7 @@ func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, as
 		return nil
 	}
 
-	err := s.ai.StreamMessages(ctx, ai.TaskIdeation, chatSystem, msgs, emit)
+	err := s.ai.StreamMessages(ctx, ai.TaskIdeation, chatSystemPrompt(language), msgs, emit)
 	if errors.Is(err, errAbortStop) {
 		err = nil
 	}
@@ -374,7 +387,7 @@ func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, as
 }
 
 // runSearch exécute la recherche en ligne (facturée) et crée les opportunités.
-func (s *Service) runSearch(ctx context.Context, conv domain.Conversation, assistantID string, args searchArgs) ([]domain.Opportunity, error) {
+func (s *Service) runSearch(ctx context.Context, conv domain.Conversation, assistantID string, args searchArgs, language string) ([]domain.Opportunity, error) {
 	s.publish(conv.UserID, port.EventChatTool, map[string]any{
 		"conversation_id": conv.ID, "message_id": assistantID, "tool": "search", "status": "running",
 	})
@@ -388,7 +401,7 @@ func (s *Service) runSearch(ctx context.Context, conv domain.Conversation, assis
 		return nil, err
 	}
 
-	result, err := s.ai.Research(ctx, jobs.ResearchSystem, jobs.ResearchQuery(args.Query, args.Sector, args.Markets, "fr"))
+	result, err := s.ai.Research(ctx, jobs.ResearchSystem, jobs.ResearchQuery(args.Query, args.Sector, args.Markets, language))
 	if err != nil {
 		_ = s.credits.Release(ctx, conv.UserID, reference)
 		s.publish(conv.UserID, port.EventChatTool, map[string]any{
@@ -405,7 +418,7 @@ func (s *Service) runSearch(ctx context.Context, conv domain.Conversation, assis
 
 	ops := make([]domain.Opportunity, 0, len(inputs))
 	for _, in := range inputs {
-		opp, err := s.opportunities.Create(ctx, jobs.OpportunityFromResearch(in, args.Sector, "fr", conv.UserID, nil))
+		opp, err := s.opportunities.Create(ctx, jobs.OpportunityFromResearch(in, args.Sector, language, conv.UserID, nil))
 		if err != nil {
 			_ = s.credits.Release(ctx, conv.UserID, reference)
 			return nil, err

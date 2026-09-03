@@ -33,9 +33,29 @@ export const resources = {
   },
 } as const
 
+const LANGUAGE_STORAGE_KEY = "afrilaunch-lang"
+
+/** setStoredLanguage mémorise la langue (utilisée avant le login / hors compte). */
+export function setStoredLanguage(language: string) {
+  try {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language)
+  } catch {
+    /* stockage indisponible : on ignore */
+  }
+}
+
+function getStoredLanguage(): string | undefined {
+  try {
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    return stored === "fr" || stored === "en" ? stored : undefined
+  } catch {
+    return undefined
+  }
+}
+
 void i18n.use(initReactI18next).init({
   resources,
-  lng: "fr",
+  lng: getStoredLanguage() ?? "fr",
   fallbackLng: "fr",
   supportedLngs: ["fr", "en"],
   defaultNS: "common",

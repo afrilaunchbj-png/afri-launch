@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -21,13 +22,14 @@ type ProjectHandler struct {
 func NewProjectHandler(svc *projects.Service) *ProjectHandler { return &ProjectHandler{svc: svc} }
 
 type projectDTO struct {
-	ID              string    `json:"id"`
-	Title           string    `json:"title"`
-	Status          string    `json:"status"`
-	CreditsConsumed int64     `json:"credits_consumed"`
-	OpportunityID   *string   `json:"opportunity_id,omitempty"`
-	IdeaID          *string   `json:"idea_id,omitempty"`
-	CreatedAt       time.Time `json:"created_at"`
+	ID              string          `json:"id"`
+	Title           string          `json:"title"`
+	Status          string          `json:"status"`
+	CreditsConsumed int64           `json:"credits_consumed"`
+	OpportunityID   *string         `json:"opportunity_id,omitempty"`
+	IdeaID          *string         `json:"idea_id,omitempty"`
+	Config          json.RawMessage `json:"config,omitempty"`
+	CreatedAt       time.Time       `json:"created_at"`
 }
 
 type createProjectRequest struct {
@@ -84,9 +86,27 @@ func (h *ProjectHandler) GenerateEbook(w http.ResponseWriter, r *http.Request) {
 	h.dispatch(w, r, h.svc.GenerateEbook)
 }
 
-// GenerateCover gère POST /projects/{id}/cover.
+// GenerateCover gère POST /projects/{id}/cover (body optionnel : instructions).
 func (h *ProjectHandler) GenerateCover(w http.ResponseWriter, r *http.Request) {
-	h.dispatch(w, r, h.svc.GenerateCover)
+	var in struct {
+		Instructions string `json:"instructions"`
+	}
+	// Body optionnel : absent = première génération sans consignes.
+	if r.ContentLength > 0 {
+		if err := decodeJSON(w, r, &in); err != nil {
+			writeAPIError(w, r, err)
+			return
+		}
+	}
+	userID := authctx.UserID(r.Context())
+	projectID := chi.URLParam(r, "id")
+
+	job, err := h.svc.GenerateCover(r.Context(), userID, projectID, in.Instructions)
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	writeData(w, http.StatusAccepted, jobDTOFrom(job))
 }
 
 // GeneratePosters gère POST /projects/{id}/posters.
@@ -97,6 +117,25 @@ func (h *ProjectHandler) GeneratePosters(w http.ResponseWriter, r *http.Request)
 // GenerateSalesPage gère POST /projects/{id}/sales-page.
 func (h *ProjectHandler) GenerateSalesPage(w http.ResponseWriter, r *http.Request) {
 	h.dispatch(w, r, h.svc.GenerateSalesPage)
+}
+
+// UpdateConfig gère PUT /projects/{id}/config (identité visuelle + réglages).
+func (h *ProjectHandler) UpdateConfig(w http.ResponseWriter, r *http.Request) {
+	userID := authctx.UserID(r.Context())
+	projectID := chi.URLParam(r, "id")
+
+	var in projects.ConfigInput
+	if err := decodeJSON(w, r, &in); err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+
+	project, err := h.svc.UpdateConfig(r.Context(), userID, projectID, in)
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, toProjectDTO(project))
 }
 
 func (h *ProjectHandler) dispatch(w http.ResponseWriter, r *http.Request, fn func(ctx context.Context, userID, projectID string) (domain.GenerationJob, error)) {
@@ -119,6 +158,7 @@ func toProjectDTO(p domain.Project) projectDTO {
 		CreditsConsumed: p.CreditsConsumed,
 		OpportunityID:   p.OpportunityID,
 		IdeaID:          p.IdeaID,
+		Config:          json.RawMessage(p.Config),
 		CreatedAt:       p.CreatedAt,
 	}
 }

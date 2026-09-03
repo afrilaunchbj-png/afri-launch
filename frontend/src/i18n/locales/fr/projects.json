@@ -28,5 +28,35 @@
     "cover": "Couverture",
     "poster": "Affiche publicitaire",
     "sales_page": "Page de vente"
-  }
+  },
+  "regenerate": "Régénérer",
+  "stepCover": "Couverture",
+  "visualTitle": "Identité visuelle & couverture",
+  "paletteTitle": "Palette de couleurs",
+  "aiProposed": "Proposée par l'IA",
+  "visualHint": "L'IA propose une palette adaptée à votre projet. Ajustez les couleurs puis appliquez-les : elles serviront à la couverture, l'ebook et les supports marketing.",
+  "applyColors": "Appliquer ces couleurs",
+  "color": {
+    "primary": "Primaire",
+    "secondary": "Secondaire",
+    "accent": "Accent",
+    "background": "Fond",
+    "text": "Texte"
+  },
+  "coverTitle": "Couverture",
+  "feedbackPlaceholder": "Consignes pour la prochaine génération (ex. : plus minimaliste, fond beige…)",
+  "generateCover": "Générer la couverture",
+  "regenerateCover": "Régénérer la couverture",
+  "regenHint": "Chaque génération consomme des crédits.",
+  "coverHint": "L'IA choisira les couleurs d'après votre projet si aucune palette n'est appliquée.",
+  "coverReady": "Dernière couverture générée",
+  "coverNone": "Aucune couverture générée",
+  "coverRequired": "Générez d'abord la couverture : elle sert d'identité visuelle à tous les assets.",
+  "locked": "Verrouillé",
+  "assetsTitle": "Assets",
+  "files": "Fichiers générés",
+  "minPages": "Pages min",
+  "maxPages": "Pages max",
+  "save": "Enregistrer",
+  "saved": "Enregistré"
 }

@@ -12,7 +12,7 @@ import (
 )
 
 const addProjectCredits = `-- name: AddProjectCredits :one
-UPDATE projects SET credits_consumed = credits_consumed + $2, updated_at = now() WHERE id = $1 RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at
+UPDATE projects SET credits_consumed = credits_consumed + $2, updated_at = now() WHERE id = $1 RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at, config
 `
 
 type AddProjectCreditsParams struct {
@@ -33,6 +33,7 @@ func (q *Queries) AddProjectCredits(ctx context.Context, arg AddProjectCreditsPa
 		&i.CreditsConsumed,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Config,
 	)
 	return i, err
 }
@@ -40,7 +41,7 @@ func (q *Queries) AddProjectCredits(ctx context.Context, arg AddProjectCreditsPa
 const createProject = `-- name: CreateProject :one
 INSERT INTO projects (user_id, opportunity_id, idea_id, title, status)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at
+RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at, config
 `
 
 type CreateProjectParams struct {
@@ -70,12 +71,13 @@ func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (P
 		&i.CreditsConsumed,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Config,
 	)
 	return i, err
 }
 
 const getProject = `-- name: GetProject :one
-SELECT id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at FROM projects WHERE id = $1 AND user_id = $2
+SELECT id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at, config FROM projects WHERE id = $1 AND user_id = $2
 `
 
 type GetProjectParams struct {
@@ -96,12 +98,13 @@ func (q *Queries) GetProject(ctx context.Context, arg GetProjectParams) (Project
 		&i.CreditsConsumed,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Config,
 	)
 	return i, err
 }
 
 const listProjectsByUser = `-- name: ListProjectsByUser :many
-SELECT id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at FROM projects WHERE user_id = $1 ORDER BY created_at DESC
+SELECT id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at, config FROM projects WHERE user_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListProjectsByUser(ctx context.Context, userID string) ([]Project, error) {
@@ -123,6 +126,7 @@ func (q *Queries) ListProjectsByUser(ctx context.Context, userID string) ([]Proj
 			&i.CreditsConsumed,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Config,
 		); err != nil {
 			return nil, err
 		}
@@ -134,8 +138,39 @@ func (q *Queries) ListProjectsByUser(ctx context.Context, userID string) ([]Proj
 	return items, nil
 }
 
+const updateProjectConfig = `-- name: UpdateProjectConfig :one
+UPDATE projects
+SET config = $2, updated_at = now()
+WHERE id = $1 AND user_id = $3
+RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at, config
+`
+
+type UpdateProjectConfigParams struct {
+	ID     string `json:"id"`
+	Config []byte `json:"config"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) UpdateProjectConfig(ctx context.Context, arg UpdateProjectConfigParams) (Project, error) {
+	row := q.db.QueryRow(ctx, updateProjectConfig, arg.ID, arg.Config, arg.UserID)
+	var i Project
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.OpportunityID,
+		&i.IdeaID,
+		&i.Title,
+		&i.Status,
+		&i.CreditsConsumed,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Config,
+	)
+	return i, err
+}
+
 const updateProjectStatus = `-- name: UpdateProjectStatus :one
-UPDATE projects SET status = $2, updated_at = now() WHERE id = $1 AND user_id = $3 RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at
+UPDATE projects SET status = $2, updated_at = now() WHERE id = $1 AND user_id = $3 RETURNING id, user_id, opportunity_id, idea_id, title, status, credits_consumed, created_at, updated_at, config
 `
 
 type UpdateProjectStatusParams struct {
@@ -157,6 +192,7 @@ func (q *Queries) UpdateProjectStatus(ctx context.Context, arg UpdateProjectStat
 		&i.CreditsConsumed,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Config,
 	)
 	return i, err
 }

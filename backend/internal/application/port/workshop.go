@@ -37,6 +37,14 @@ type ConversationRepository interface {
 	ListMessages(ctx context.Context, conversationID string) ([]domain.ConversationMessage, error)
 }
 
+// PreferenceRepository accède aux préférences utilisateur (langue, thème).
+type PreferenceRepository interface {
+	// GetOrCreate renvoie les préférences, en créant les valeurs par défaut
+	// (langue fr, thème system) si absentes.
+	GetOrCreate(ctx context.Context, userID string) (domain.UserPreference, error)
+	Upsert(ctx context.Context, p domain.UserPreference) (domain.UserPreference, error)
+}
+
 // IdeaMessageRepository accède à l'historique de conversation d'une idée.
 type IdeaMessageRepository interface {
 	Create(ctx context.Context, m domain.IdeaMessage) (domain.IdeaMessage, error)
@@ -49,6 +57,7 @@ type ProjectRepository interface {
 	Get(ctx context.Context, userID, id string) (domain.Project, error)
 	ListByUser(ctx context.Context, userID string) ([]domain.Project, error)
 	UpdateStatus(ctx context.Context, userID, id, status string) (domain.Project, error)
+	UpdateConfig(ctx context.Context, userID, id string, config []byte) (domain.Project, error)
 	AddCredits(ctx context.Context, id string, amount int64) (domain.Project, error)
 }
 
@@ -61,7 +70,7 @@ type AssetRepository interface {
 
 // JobRepository accède aux jobs de génération.
 type JobRepository interface {
-	Create(ctx context.Context, userID string, projectID, opportunityID, researchID, ideaID *string, kind string, cost int64) (domain.GenerationJob, error)
+	Create(ctx context.Context, userID string, projectID, opportunityID, researchID, ideaID *string, kind string, cost int64, params []byte) (domain.GenerationJob, error)
 	Get(ctx context.Context, userID, id string) (domain.GenerationJob, error)
 	UpdateStatus(ctx context.Context, id, status string) (domain.GenerationJob, error)
 	Complete(ctx context.Context, id string, result []byte, cost int64) (domain.GenerationJob, error)

@@ -18,6 +18,8 @@ Implémenté et validé :
 - Migration complète + pool pgx (PostgreSQL).
 - **Auth via Neon Auth** : le backend vérifie les JWT EdDSA (JWKS) ; plus de mot de passe/argon2/refresh tokens (voir ADR-011).
 - Ledger de crédits idempotent (`reserve → consume|release`, bonus de bienvenue au 1er login).
+- **Préférences utilisateur en DB** (`user_preferences` : langue, thème) — chargées par le FE au login (`PreferencesSync`), mises à jour par les toggles langue/thème avec optimisme ; le localStorage ne sert qu'avant login.
+- **Copilote multilingue** : la langue du compte est injectée dans le prompt système (réponses + champs d'idées) et dans les requêtes de recherche.
 - Recherche d'opportunités (catalogue + filtres + sauvegarde) — catalogue conservé comme données/contexte du chat.
 - Frontend : layout applicatif, patterns formulaire/liste, pages login/register (UI Better Auth), dashboard, projets, crédits ; i18n FR/EN ; dark mode.
 - **Chat copilote (ADR-014)** : parcours opportunités→idées remplacé par une conversation (`/discover`) ; canal SSE unique `GET /api/v1/events` ; boucle agent bornée avec outils `@@SEARCH` (recherche web) et bloc `@@IDEAS` (idées persistées) ; validation d'idée explicite ; « Transformer en projet » inchangé.
@@ -110,6 +112,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Pipeline documents (Go)** : `port.Renderer` + `infra/render` (chromedp : HTML → PDF / slides → PNG) + `infra/pptx` (assemblage PPTX image-par-slide) + `application/document` (service `GenerateEbook`/`GenerateDeck` + prompts avec le vocabulaire Impeccable) + tests (chromedp sur Chrome réel, pptx, prompts).
 - [x] **Parcours MVP (idées → projet → assets → download)** : migration `00008` (`product_ideas`, `projects`, `assets`, `generation_jobs`), repos + ports, worker asynchrone in-process (`application/jobs`), services `ideas`/`projects`/`assets`, endpoints (idées, projets, ebook/couverture/page de vente, assets, download), crédits `reserve→consume|release` par génération, frontend (pages idées/projets/projet + téléchargement).
 - [x] **Chat copilote (ADR-014)** : migration `00011` (`conversations`, `conversation_messages`, `product_ideas.conversation_id`) ; port `EventBus` + broker in-process (`infra/events`, testé) ; service `application/chat` (boucle agent `@@SEARCH`/`@@IDEAS`, crédits, events) ; handlers conversations + `GET /events` ; worker publie `job.updated` ; FE `features/chat` + page `/discover` + client SSE global (`lib/api/events`) avec reconnexion/backoff ; pages `/opportunities` et `/ideas` supprimées (redirections) ; tests d'intégration des deux chemins (idées, recherche) sur Postgres réel.
+- [x] **Préférences utilisateur** : migration `00012` (`user_preferences`) ; service + handlers `GET/PUT /preferences` ; FE `features/preferences` (`PreferencesSync` dans AppLayout, toggles persistants avec mise à jour optimiste) ; langue du compte injectée dans le copilote (`chatSystemPrompt(language)`, `ResearchQuery(language)`).
+- [x] **Workflow cover-first + identité visuelle (ADR-015)** : migration `00013` (`projects.config` JSONB, `generation_jobs.params`) ; proposition de palette par l'IA (persistée, source `ai`) ajustable par l'utilisateur (source `user`) ; cover en première page du PDF et première slide du deck ; palette injectée dans ebook/affiches/page de vente ; gate `ErrCoverRequired` ; régénérations consomment des crédits ; page projet en stepper (FE) avec aperçu cover, éditeur de couleurs et plage de pages ebook ; tests unitaires (config, prompts, PrependCoverPage) + intégration (gate, config, instructions).
 
 ## Work In Progress
 
@@ -138,7 +142,6 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - **Worker in-process** (goroutines) pour les générations — pas asynq ; les jobs sont perdus au redémarrage. **Storage local** (fichiers) — pas durable sur Railway (éphémère) ; à remplacer par S3.
 - **Broker d'événements in-process** (`infra/events`) : mono-instance uniquement — avec plusieurs replicas backend, les events du worker n'atteindraient pas la bonne connexion SSE ; Redis pub/sub requis (voir Remaining Work #3).
 - Le protocole d'outils du chat repose sur des **marqueurs texte** (`@@SEARCH`, `@@IDEAS`) — dépend de la docilité du modèle ; passer aux **function calling** OpenAI si dérives observées.
-- La recherche du copilote fixe `language="fr"` (détection de langue à venir).
 - La génération (idées/ebook/assets) requiert `OPENAI_API_KEY` côté backend, sinon les jobs échouent (erreur 401 OpenAI).
 
 ## Tests & Validation
@@ -148,8 +151,10 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Database & Migrations
 
-- Base locale `afrilaunch` (schéma v11). `db/migrations/` 00001..00011.
+- Base locale `afrilaunch` (schéma v13). `db/migrations/` 00001..00013.
 - `00011_conversations.sql` : `conversations`, `conversation_messages` (payload JSONB), `product_ideas.conversation_id`.
+- `00012_user_preferences.sql` : `user_preferences` (language, theme) — clée par `user_id`.
+- `00013_project_config.sql` : `projects.config` (palette/style/pages) + `generation_jobs.params`.
 - `sqlc.yaml` : overrides `uuid→string`, `timestamptz→time.Time`, `jsonb→[]byte`. `make sqlc` après modif de `db/query`.
 - Note : `users.password_hash` et `refresh_tokens` ne sont **plus utilisés** (légacy) mais restent en base (nettoyage futur).
 
@@ -162,6 +167,14 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `backend/internal/server/handler/events.go` — `GET /api/v1/events` (SSE, heartbeat 25 s, `X-Accel-Buffering: no`).
 - `backend/internal/server/handler/conversations.go` — endpoints conversations (POST message → 202).
 - `backend/internal/infra/postgres/conversation_repo.go` + `db/query/conversations.sql` — persistance chat.
+- `backend/internal/application/preferences/` + `backend/internal/server/handler/preferences.go` — préférences (GET/PUT `/preferences`).
+- `backend/internal/infra/postgres/preference_repo.go` + `db/migrations/00012_user_preferences.sql` — stockage préférences.
+- `backend/internal/domain/project_config.go` — `ProjectConfig`/`ProjectPalette` (défauts, clamp, validation hex).
+- `backend/internal/application/jobs/worker.go` — `runCover` (proposition de palette IA + image), `runEbook` (pages + cover en 1re page), `latestCoverPNG`, `proposeVisualIdentity`.
+- `backend/internal/application/document/` — prompts avec palette/pages + `PrependCoverPage` + `GenerateEbookDeckWithCover`.
+- `backend/internal/application/projects/service.go` — `UpdateConfig` + gate `requireCover` (workflow cover-first).
+- `frontend/src/pages/project.tsx` — stepper cover-first (aperçu cover, éditeur palette, plage pages, régénérations).
+- `frontend/src/features/preferences/` — api/hooks + `preferences-sync.tsx` (application langue/thème au login).
 - `frontend/src/lib/api/events.ts` — client SSE global (reconnexion backoff, watchdog, `useAppEvent`/`useEventsConnection`).
 - `frontend/src/pages/discover.tsx` — page chat (`?c={id}`), abonnements events, panneau contexte.
 - `frontend/src/features/chat/` — api/hooks (conversations, confirm idée) + composants (messages, input, idea-card, context-panel).

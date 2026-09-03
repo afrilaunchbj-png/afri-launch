@@ -44,6 +44,8 @@ type Querier interface {
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetResearchRequest(ctx context.Context, arg GetResearchRequestParams) (ResearchRequest, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
+	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
+	InsertUserPreferences(ctx context.Context, arg InsertUserPreferencesParams) (UserPreference, error)
 	ListAssetsByProject(ctx context.Context, projectID string) ([]Asset, error)
 	ListConversationMessages(ctx context.Context, conversationID string) ([]ConversationMessage, error)
 	ListConversations(ctx context.Context, arg ListConversationsParams) ([]Conversation, error)
@@ -75,8 +77,10 @@ type Querier interface {
 	UpdateCreditReservationStatus(ctx context.Context, arg UpdateCreditReservationStatusParams) (CreditReservation, error)
 	UpdateIdeaContent(ctx context.Context, arg UpdateIdeaContentParams) (ProductIdea, error)
 	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (GenerationJob, error)
+	UpdateProjectConfig(ctx context.Context, arg UpdateProjectConfigParams) (Project, error)
 	UpdateProjectStatus(ctx context.Context, arg UpdateProjectStatusParams) (Project, error)
 	UpdateResearchRequestStatus(ctx context.Context, arg UpdateResearchRequestStatusParams) (ResearchRequest, error)
+	UpdateUserPreferences(ctx context.Context, arg UpdateUserPreferencesParams) (UserPreference, error)
 	UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error)
 }
 

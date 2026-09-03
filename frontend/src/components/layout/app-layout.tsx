@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/features/auth/auth-provider"
 import { useSignOut } from "@/features/auth/hooks"
 import { useCreditsSummary } from "@/features/credits/hooks"
+import { PreferencesSync } from "@/features/preferences/preferences-sync"
 import { cn } from "@/lib/utils"
 
 function UserAvatar({ name }: { name: string }) {
@@ -193,6 +194,7 @@ function BottomNav() {
 export default function AppLayout() {
   return (
     <div className="min-h-screen md:pl-64">
+      <PreferencesSync />
       <SidebarNav />
       <MobileTopBar />
       <main className="mx-auto w-full max-w-7xl px-4 py-6 pb-24 md:px-8 md:pb-10">

@@ -15,7 +15,7 @@ const completeJob = `-- name: CompleteJob :one
 UPDATE generation_jobs
 SET status = 'completed', result = $2, cost = $3, completed_at = now(), updated_at = now()
 WHERE id = $1
-RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id
+RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id, params
 `
 
 type CompleteJobParams struct {
@@ -42,14 +42,15 @@ func (q *Queries) CompleteJob(ctx context.Context, arg CompleteJobParams) (Gener
 		&i.CompletedAt,
 		&i.ResearchID,
 		&i.IdeaID,
+		&i.Params,
 	)
 	return i, err
 }
 
 const createJob = `-- name: CreateJob :one
-INSERT INTO generation_jobs (user_id, project_id, opportunity_id, research_id, idea_id, kind, status, cost)
-VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
-RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id
+INSERT INTO generation_jobs (user_id, project_id, opportunity_id, research_id, idea_id, kind, status, cost, params)
+VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
+RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id, params
 `
 
 type CreateJobParams struct {
@@ -60,6 +61,7 @@ type CreateJobParams struct {
 	IdeaID        pgtype.UUID `json:"idea_id"`
 	Kind          string      `json:"kind"`
 	Cost          int32       `json:"cost"`
+	Params        []byte      `json:"params"`
 }
 
 func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (GenerationJob, error) {
@@ -71,6 +73,7 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Generatio
 		arg.IdeaID,
 		arg.Kind,
 		arg.Cost,
+		arg.Params,
 	)
 	var i GenerationJob
 	err := row.Scan(
@@ -88,6 +91,7 @@ func (q *Queries) CreateJob(ctx context.Context, arg CreateJobParams) (Generatio
 		&i.CompletedAt,
 		&i.ResearchID,
 		&i.IdeaID,
+		&i.Params,
 	)
 	return i, err
 }
@@ -96,7 +100,7 @@ const failJob = `-- name: FailJob :one
 UPDATE generation_jobs
 SET status = 'failed', error = $2, updated_at = now(), completed_at = now()
 WHERE id = $1
-RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id
+RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id, params
 `
 
 type FailJobParams struct {
@@ -122,12 +126,13 @@ func (q *Queries) FailJob(ctx context.Context, arg FailJobParams) (GenerationJob
 		&i.CompletedAt,
 		&i.ResearchID,
 		&i.IdeaID,
+		&i.Params,
 	)
 	return i, err
 }
 
 const getJob = `-- name: GetJob :one
-SELECT id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id FROM generation_jobs WHERE id = $1 AND user_id = $2
+SELECT id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id, params FROM generation_jobs WHERE id = $1 AND user_id = $2
 `
 
 type GetJobParams struct {
@@ -153,12 +158,13 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (GenerationJob, 
 		&i.CompletedAt,
 		&i.ResearchID,
 		&i.IdeaID,
+		&i.Params,
 	)
 	return i, err
 }
 
 const listJobsByProject = `-- name: ListJobsByProject :many
-SELECT id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id FROM generation_jobs WHERE project_id = $1 ORDER BY created_at DESC
+SELECT id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id, params FROM generation_jobs WHERE project_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListJobsByProject(ctx context.Context, projectID pgtype.UUID) ([]GenerationJob, error) {
@@ -185,6 +191,7 @@ func (q *Queries) ListJobsByProject(ctx context.Context, projectID pgtype.UUID) 
 			&i.CompletedAt,
 			&i.ResearchID,
 			&i.IdeaID,
+			&i.Params,
 		); err != nil {
 			return nil, err
 		}
@@ -197,7 +204,7 @@ func (q *Queries) ListJobsByProject(ctx context.Context, projectID pgtype.UUID) 
 }
 
 const updateJobStatus = `-- name: UpdateJobStatus :one
-UPDATE generation_jobs SET status = $2, updated_at = now() WHERE id = $1 RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id
+UPDATE generation_jobs SET status = $2, updated_at = now() WHERE id = $1 RETURNING id, user_id, project_id, opportunity_id, kind, status, error, cost, result, created_at, updated_at, completed_at, research_id, idea_id, params
 `
 
 type UpdateJobStatusParams struct {
@@ -223,6 +230,7 @@ func (q *Queries) UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams
 		&i.CompletedAt,
 		&i.ResearchID,
 		&i.IdeaID,
+		&i.Params,
 	)
 	return i, err
 }

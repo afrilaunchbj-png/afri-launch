@@ -57,6 +57,7 @@ type Project struct {
 	Title           string
 	Status          string
 	CreditsConsumed int64
+	Config          []byte // JSONB : identité visuelle + réglages de génération
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
@@ -106,6 +107,7 @@ type GenerationJob struct {
 	Error         string
 	Cost          int64
 	Result        []byte // JSONB
+	Params        []byte // JSONB : paramètres d'entrée (ex. instructions cover)
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	CompletedAt   *time.Time

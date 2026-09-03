@@ -71,6 +71,17 @@ func (r *projectRepo) AddCredits(ctx context.Context, id string, amount int64) (
 	return toProject(row), nil
 }
 
+func (r *projectRepo) UpdateConfig(ctx context.Context, userID, id string, config []byte) (domain.Project, error) {
+	row, err := r.s.q.UpdateProjectConfig(ctx, db.UpdateProjectConfigParams{ID: id, UserID: userID, Config: config})
+	if err != nil {
+		if isNoRows(err) {
+			return domain.Project{}, domain.ErrNotFound
+		}
+		return domain.Project{}, err
+	}
+	return toProject(row), nil
+}
+
 func toProject(p db.Project) domain.Project {
 	return domain.Project{
 		ID:              p.ID,
@@ -82,5 +93,6 @@ func toProject(p db.Project) domain.Project {
 		CreditsConsumed: int64(p.CreditsConsumed),
 		CreatedAt:       p.CreatedAt,
 		UpdatedAt:       p.UpdatedAt,
+		Config:          p.Config,
 	}
 }

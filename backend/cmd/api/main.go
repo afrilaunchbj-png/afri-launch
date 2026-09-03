@@ -19,6 +19,7 @@ import (
 	ideasapp "afrilaunch/backend/internal/application/ideas"
 	"afrilaunch/backend/internal/application/jobs"
 	opportunitiesapp "afrilaunch/backend/internal/application/opportunities"
+	preferencesapp "afrilaunch/backend/internal/application/preferences"
 	projectsapp "afrilaunch/backend/internal/application/projects"
 	researchapp "afrilaunch/backend/internal/application/research"
 	"afrilaunch/backend/internal/config"
@@ -93,11 +94,13 @@ func main() {
 
 	// Services applicatifs.
 	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo, creditRepo, aiSvc)
-	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo)
+	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo, assetRepo)
 	assetSvc := assetsapp.NewService(assetRepo, objStorage)
 	researchSvc := researchapp.NewService(worker, researchRepo)
+	prefRepo := postgres.NewPreferenceRepository(store)
+	prefSvc := preferencesapp.NewService(prefRepo)
 	chatRepo := postgres.NewConversationRepository(store)
-	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, aiSvc, eventBus)
+	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, prefRepo, aiSvc, eventBus)
 
 	// Handlers HTTP.
 	authH := handler.NewAuthHandler(authSvc, int64(cfg.WelcomeCredits))
@@ -111,6 +114,7 @@ func main() {
 	researchH := handler.NewResearchHandler(researchSvc)
 	chatH := handler.NewConversationHandler(chatSvc)
 	eventsH := handler.NewEventHandler(eventBus)
+	prefH := handler.NewPreferenceHandler(prefSvc)
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
@@ -128,6 +132,7 @@ func main() {
 		Research:      researchH,
 		Conversations: chatH,
 		Events:        eventsH,
+		Preferences:   prefH,
 		AI:            aiSvc,
 		Documents:     docSvc,
 	})

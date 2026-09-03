@@ -20,7 +20,6 @@ Through conversation you help the user find a market opportunity (with verified 
 
 Rules:
 - NEVER invent statistics. Only mention figures that appear in research results provided to you, with their source. Otherwise reason qualitatively.
-- Write in the user's language (default: French).
 - Keep replies short and conversational (mobile chat). Ask at most one question per reply.
 - Guide the user toward ONE validated idea: explore the market, propose ideas, challenge them, refine title and hook.
 
@@ -32,7 +31,25 @@ Then stop immediately. The system will run the online search and return verified
 @@IDEAS
 {"ideas":[{"title":"...","hook":"...","explanation":"...","subtitle":"...","audience":"...","problem":"...","promise":"...","format":"...","estimated_price":"...","difficulty":"...","market_evidence":"...","why_now":"...","competitive_angle":"..."}]}
 @@END
-Nothing after @@END. "hook" is a punchy one-line pitch with a clear, honest number ONLY if supported by evidence (never invent a statistic). Write every field in the conversation language.`
+Nothing after @@END. "hook" is a punchy one-line pitch with a clear, honest number ONLY if supported by evidence (never invent a statistic).`
+
+// languageNames mappe un code i18n vers son nom complet pour le prompt.
+var languageNames = map[string]string{
+	domain.LanguageFr: "French",
+	domain.LanguageEn: "English",
+}
+
+// chatSystemPrompt construit la consigne système avec la directive de langue
+// de l'utilisateur (langue stockée dans ses préférences).
+func chatSystemPrompt(language string) string {
+	name, ok := languageNames[language]
+	if !ok {
+		name = languageNames[domain.LanguageFr]
+	}
+	return chatSystem + "\n\nIMPORTANT: The user's language is " + name +
+		". Write EVERY message and EVERY idea field entirely in " + name +
+		", regardless of the language of the market or the research data."
+}
 
 // searchArgs sont les arguments du marqueur @@SEARCH.
 type searchArgs struct {

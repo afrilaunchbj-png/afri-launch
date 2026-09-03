@@ -28,5 +28,35 @@
     "cover": "Cover",
     "poster": "Ad poster",
     "sales_page": "Sales page"
-  }
+  },
+  "regenerate": "Regenerate",
+  "stepCover": "Cover",
+  "visualTitle": "Visual identity & cover",
+  "paletteTitle": "Color palette",
+  "aiProposed": "AI proposed",
+  "visualHint": "The AI proposes a palette tailored to your project. Adjust the colors and apply them: they will be used for the cover, the ebook and the marketing assets.",
+  "applyColors": "Apply these colors",
+  "color": {
+    "primary": "Primary",
+    "secondary": "Secondary",
+    "accent": "Accent",
+    "background": "Background",
+    "text": "Text"
+  },
+  "coverTitle": "Cover",
+  "feedbackPlaceholder": "Directions for the next generation (e.g. more minimal, beige background…)",
+  "generateCover": "Generate cover",
+  "regenerateCover": "Regenerate cover",
+  "regenHint": "Each generation consumes credits.",
+  "coverHint": "If no palette is applied, the AI will pick colors based on your project.",
+  "coverReady": "Latest generated cover",
+  "coverNone": "No cover generated yet",
+  "coverRequired": "Generate the cover first: it defines the visual identity of every asset.",
+  "locked": "Locked",
+  "assetsTitle": "Assets",
+  "files": "Generated files",
+  "minPages": "Min pages",
+  "maxPages": "Max pages",
+  "save": "Save",
+  "saved": "Saved"
 }

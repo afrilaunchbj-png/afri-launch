@@ -30,6 +30,7 @@ type Deps struct {
 	Research      *handler.ResearchHandler
 	Conversations *handler.ConversationHandler
 	Events        *handler.EventHandler
+	Preferences   *handler.PreferenceHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -73,6 +74,10 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/conversations/{id}", d.Conversations.Get)
 			r.Post("/conversations/{id}/messages", d.Conversations.SendMessage)
 
+			// Préférences utilisateur (langue, thème).
+			r.Get("/preferences", d.Preferences.Get)
+			r.Put("/preferences", d.Preferences.Update)
+
 			r.Get("/credits", d.Credits.Summary)
 			r.Get("/credits/transactions", d.Credits.Transactions)
 			r.Post("/credits/reserve", d.Credits.Reserve)
@@ -94,6 +99,7 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/projects", d.Projects.List)
 			r.Post("/projects", d.Projects.Create)
 			r.Get("/projects/{id}", d.Projects.Get)
+			r.Put("/projects/{id}/config", d.Projects.UpdateConfig)
 			r.Post("/projects/{id}/ebook", d.Projects.GenerateEbook)
 			r.Post("/projects/{id}/cover", d.Projects.GenerateCover)
 			r.Post("/projects/{id}/posters", d.Projects.GeneratePosters)

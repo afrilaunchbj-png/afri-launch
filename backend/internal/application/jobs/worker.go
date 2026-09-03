@@ -81,6 +81,7 @@ type DispatchParams struct {
 	ResearchID    *string
 	IdeaID        *string
 	Kind          string
+	Params        []byte // paramètres d'entrée (ex. instructions de cover)
 }
 
 // Dispatch crée un job, réserve les crédits et le met en file.
@@ -94,7 +95,7 @@ func (w *Worker) Dispatch(ctx context.Context, p DispatchParams) (domain.Generat
 		return domain.GenerationJob{}, err
 	}
 
-	job, err := w.jobs.Create(ctx, p.UserID, p.ProjectID, p.OpportunityID, p.ResearchID, p.IdeaID, p.Kind, cost.Credits)
+	job, err := w.jobs.Create(ctx, p.UserID, p.ProjectID, p.OpportunityID, p.ResearchID, p.IdeaID, p.Kind, cost.Credits, p.Params)
 	if err != nil {
 		return domain.GenerationJob{}, err
 	}
@@ -242,12 +243,26 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	minPages, maxPages := c.config.ResolvedPageRange()
+
+	// Workflow cover-first : la dernière cover générée est chargée et
+	// intégrée en première page (PDF) / première slide (deck).
+	coverPNG, err := w.latestCoverPNG(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+
 	ebookReq := document.EbookRequest{
 		Topic:    c.topic,
 		Audience: c.audience,
 		Language: c.language,
 		Country:  c.country,
 		Product:  c.format,
+		Palette:  c.palette,
+		Style:    c.config.Style,
+		MinPages: minPages,
+		MaxPages: maxPages,
+		HasCover: coverPNG != nil,
 	}
 
 	// Version portrait (PDF).
@@ -255,12 +270,20 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 	if err != nil {
 		return nil, err
 	}
+	if coverPNG != nil {
+		pdf = document.PrependCoverPage(pdf, coverPNG)
+	}
 	if _, err := w.storeAsset(ctx, job, domain.AssetEbookPDF, c.topic+".pdf", "application/pdf", pdf); err != nil {
 		return nil, err
 	}
 
-	// Version paysage (PPTX, destinée à l'export PPT).
-	deck, err := w.docs.GenerateEbookDeck(ctx, ebookReq)
+	// Version paysage (PPTX, destinée à l'export PPT) — cover en 1re slide.
+	var deck []byte
+	if coverPNG != nil {
+		deck, err = w.docs.GenerateEbookDeckWithCover(ctx, ebookReq, coverPNG)
+	} else {
+		deck, err = w.docs.GenerateEbookDeck(ctx, ebookReq)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -272,12 +295,93 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 	return json.Marshal(map[string]any{"asset_ids": []string{deckAsset.ID}})
 }
 
+// latestCoverPNG charge le PNG de la cover la plus récente du projet
+// (les régénérations créent de nouveaux assets de kind "cover").
+func (w *Worker) latestCoverPNG(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	if job.ProjectID == nil {
+		return nil, nil
+	}
+	assets, err := w.assets.ListByProject(ctx, *job.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	var latest *domain.Asset
+	for i := range assets {
+		if assets[i].Kind == domain.AssetCover && (latest == nil || assets[i].CreatedAt.After(latest.CreatedAt)) {
+			latest = &assets[i]
+		}
+	}
+	if latest == nil {
+		return nil, nil
+	}
+	return w.storage.Get(ctx, latest.StorageKey)
+}
+
+// proposeVisualIdentity demande au LLM une palette + mots-clés de style
+// adaptés au projet (l'utilisateur peut donner des directions).
+func (w *Worker) proposeVisualIdentity(ctx context.Context, c genContext, instructions string) (domain.ProjectPalette, string, error) {
+	var out struct {
+		Primary    string `json:"primary"`
+		Secondary  string `json:"secondary"`
+		Accent     string `json:"accent"`
+		Background string `json:"background"`
+		Text       string `json:"text"`
+		Style      string `json:"style"`
+	}
+	if err := w.ai.CompleteJSON(ctx, ai.TaskIdeation, paletteSystem, palettePrompt(c, instructions), &out); err != nil {
+		return domain.ProjectPalette{}, "", err
+	}
+	palette := (domain.ProjectPalette{
+		Primary:    out.Primary,
+		Secondary:  out.Secondary,
+		Accent:     out.Accent,
+		Background: out.Background,
+		Text:       out.Text,
+	}).Normalize(domain.PaletteSourceAI)
+	if palette.Empty() {
+		return domain.ProjectPalette{}, "", errors.New("palette vide proposée par le modèle")
+	}
+	return palette, strings.TrimSpace(out.Style), nil
+}
+
+// runCover génère la couverture. Workflow cover-first : si le projet n'a pas
+// de palette, l'IA en propose une (persistée dans la config) ; l'utilisateur
+// peut régénérer (chaque génération consomme des crédits).
 func (w *Worker) runCover(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
 	c, err := w.context(ctx, job)
 	if err != nil {
 		return nil, err
 	}
-	img, err := w.ai.GenerateImage(ctx, coverPrompt(c.topic, c.audience))
+
+	var params struct {
+		Instructions string `json:"instructions"`
+	}
+	if len(job.Params) > 0 {
+		_ = json.Unmarshal(job.Params, &params)
+	}
+
+	palette := c.palette
+	if palette == nil {
+		proposed, style, err := w.proposeVisualIdentity(ctx, c, params.Instructions)
+		if err != nil {
+			return nil, err
+		}
+		palette = &proposed
+
+		// Persister l'identité proposée dans la config du projet.
+		cfg := c.config
+		cfg.Palette = palette
+		if cfg.Style == "" {
+			cfg.Style = style
+		}
+		if job.ProjectID != nil {
+			if _, err := w.projects.UpdateConfig(ctx, job.UserID, *job.ProjectID, cfg.Marshal()); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	img, err := w.ai.GenerateImage(ctx, coverPrompt(palette, c.config.Style, c.topic, c.audience, params.Instructions))
 	if err != nil {
 		return nil, err
 	}
@@ -285,14 +389,13 @@ func (w *Worker) runCover(ctx context.Context, job domain.GenerationJob) ([]byte
 	if err != nil {
 		return nil, fmt.Errorf("decode image: %w", err)
 	}
-	asset, err := w.storeAsset(ctx, job, domain.AssetCover, "cover.png", "image/png", png)
+	asset, err := w.storeAsset(ctx, job, domain.AssetCover, fmt.Sprintf("cover-%s.png", job.ID[:8]), "image/png", png)
 	if err != nil {
 		return nil, err
 	}
 	return json.Marshal(map[string]any{"asset_id": asset.ID})
 }
 
-// runPosters génère 3 affiches publicitaires.
 func (w *Worker) runPosters(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
 	c, err := w.context(ctx, job)
 	if err != nil {
@@ -330,6 +433,8 @@ func (w *Worker) runSalesPage(ctx context.Context, job domain.GenerationJob) ([]
 		Language: c.language,
 		Country:  c.country,
 		Price:    c.price,
+		Palette:  c.palette,
+		Style:    c.config.Style,
 	})
 	if err != nil {
 		return nil, err
@@ -420,6 +525,8 @@ type genContext struct {
 	format   string
 	promise  string
 	price    string
+	config   domain.ProjectConfig   // identité visuelle + réglages
+	palette  *domain.ProjectPalette // nil = l'IA la proposera
 }
 
 func (w *Worker) context(ctx context.Context, job domain.GenerationJob) (genContext, error) {
@@ -430,7 +537,8 @@ func (w *Worker) context(ctx context.Context, job domain.GenerationJob) (genCont
 	if err != nil {
 		return genContext{}, err
 	}
-	c := genContext{topic: project.Title, language: "fr"}
+	config := domain.ParseProjectConfig(project.Config)
+	c := genContext{topic: project.Title, language: "fr", config: config, palette: config.EffectivePalette()}
 
 	if project.IdeaID != nil {
 		if idea, err := w.ideas.Get(ctx, job.UserID, *project.IdeaID); err == nil {
