@@ -29,22 +29,6 @@
       "failed": "Failed"
     }
   },
-  "home": {
-    "title": "Welcome to AfriLaunch",
-    "cta": "Get started",
-    "research": {
-      "title": "Research",
-      "description": "Identify verified market opportunities."
-    },
-    "creation": {
-      "title": "Creation",
-      "description": "Generate an ebook or digital guide in minutes."
-    },
-    "marketing": {
-      "title": "Marketing",
-      "description": "Produce your sales page and marketing assets."
-    }
-  },
   "theme": {
     "light": "Light",
     "dark": "Dark",
@@ -54,5 +38,53 @@
     "title": "Page not found",
     "description": "The page you are looking for does not exist.",
     "back": "Back to home"
+  },
+  "home": {
+    "badge": "New · AI copilot for African creators",
+    "heroTitle": "Turn a local opportunity into a sellable digital product",
+    "heroSubtitle": "From idea to finished product: verified opportunity, ebook, cover, posters and sales page — generated in minutes, tailored to your markets.",
+    "ctaStart": "Start for free",
+    "ctaHow": "See how it works",
+    "trustData": "Verified market data",
+    "trustMobileMoney": "Mobile Money payments",
+    "marketsLabel": "Markets:",
+    "howTitle": "From idea to product, in four steps",
+    "howSubtitle": "A guided, conversational journey — no complicated tools.",
+    "steps": {
+      "chat": {
+        "title": "Chat with the copilot",
+        "description": "Explore your market with verified data and spot the opportunity that fits you."
+      },
+      "idea": {
+        "title": "Refine your idea",
+        "description": "Title, hook, positioning: the copilot challenges your idea until it's ready."
+      },
+      "assets": {
+        "title": "Generate your assets",
+        "description": "Cover, ebook in your own visual identity, ad posters and sales page."
+      },
+      "sell": {
+        "title": "Download and sell",
+        "description": "Ready-to-use files to launch and get paid, including via Mobile Money."
+      }
+    },
+    "featuresTitle": "What AfriLaunch brings you",
+    "features": {
+      "verified": {
+        "title": "Verified data",
+        "description": "Opportunities sourced online, with their evidence. Never invented statistics."
+      },
+      "identity": {
+        "title": "Per-product visual identity",
+        "description": "The AI proposes a palette tailored to your project: adjust the colors, regenerate, validate."
+      },
+      "marketing": {
+        "title": "From zero to full product",
+        "description": "Ebook PDF, presentation version, posters and sales page generated with your project's full context."
+      }
+    },
+    "finalCtaTitle": "Ready to launch your first digital product?",
+    "finalCtaSubtitle": "Create your account, chat with the copilot and walk away with a complete product.",
+    "rights": "All rights reserved."
   }
 }

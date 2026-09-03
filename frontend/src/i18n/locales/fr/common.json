@@ -29,22 +29,6 @@
       "failed": "Échoué"
     }
   },
-  "home": {
-    "title": "Bienvenue sur AfriLaunch",
-    "cta": "Commencer",
-    "research": {
-      "title": "Recherche",
-      "description": "Identifiez des opportunités de marché vérifiées."
-    },
-    "creation": {
-      "title": "Création",
-      "description": "Générez un ebook ou un guide digital en minutes."
-    },
-    "marketing": {
-      "title": "Marketing",
-      "description": "Produisez votre page de vente et vos assets."
-    }
-  },
   "theme": {
     "light": "Clair",
     "dark": "Sombre",
@@ -54,5 +38,53 @@
     "title": "Page introuvable",
     "description": "La page que vous cherchez n'existe pas.",
     "back": "Retour à l'accueil"
+  },
+  "home": {
+    "badge": "Nouveau · Copilote IA pour créateurs africains",
+    "heroTitle": "Transformez une opportunité locale en produit digital vendable",
+    "heroSubtitle": "De l'idée au produit fini : opportunité vérifiée, ebook, couverture, affiches et page de vente — générés en minutes, pensés pour vos marchés.",
+    "ctaStart": "Commencer gratuitement",
+    "ctaHow": "Voir comment ça marche",
+    "trustData": "Données de marché vérifiées",
+    "trustMobileMoney": "Paiement Mobile Money",
+    "marketsLabel": "Marchés :",
+    "howTitle": "De l'idée au produit, en quatre étapes",
+    "howSubtitle": "Un parcours guidé, conversationnel, sans outil compliqué.",
+    "steps": {
+      "chat": {
+        "title": "Discutez avec le copilote",
+        "description": "Explorez votre marché avec des données vérifiées et identifiez l'opportunité qui vous ressemble."
+      },
+      "idea": {
+        "title": "Affinez votre idée",
+        "description": "Titre, accroche, positionnement : le copilote challenge votre idée jusqu'à ce qu'elle soit prête."
+      },
+      "assets": {
+        "title": "Générez vos assets",
+        "description": "Couverture, ebook à votre identité visuelle, affiches publicitaires et page de vente."
+      },
+      "sell": {
+        "title": "Téléchargez et vendez",
+        "description": "Des fichiers prêts à l'emploi pour lancer et encaisser, y compris en Mobile Money."
+      }
+    },
+    "featuresTitle": "Ce qu'AfriLaunch vous apporte",
+    "features": {
+      "verified": {
+        "title": "Données vérifiées",
+        "description": "Des opportunités sourcées en ligne, avec leurs preuves. Jamais de statistiques inventées."
+      },
+      "identity": {
+        "title": "Identité visuelle par produit",
+        "description": "L'IA propose une palette adaptée à votre projet : ajustez les couleurs, régénérez, validez."
+      },
+      "marketing": {
+        "title": "Du zéro au produit complet",
+        "description": "Ebook PDF, version présentation, affiches et page de vente générés avec tout le contexte de votre projet."
+      }
+    },
+    "finalCtaTitle": "Prêt à lancer votre premier produit digital ?",
+    "finalCtaSubtitle": "Créez votre compte, discutez avec le copilote et repartez avec un produit complet.",
+    "rights": "Tous droits réservés."
   }
 }
