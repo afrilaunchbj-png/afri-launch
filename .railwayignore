@@ -1,0 +1,15 @@
+# Fichiers hors déploiement (railway up uploade le dépôt entier)
+.git
+.dev/
+.playwright-mcp/
+node_modules/
+docs/
+prompts/
+design/
+*.pdf
+*.pptx
+cover.png
+rapport-hebdomadaire*
+.~lock*
+.opencode/
+.project-ai/
