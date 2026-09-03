@@ -1,0 +1,26 @@
+{
+  "title": "New conversation",
+  "subtitle": "Find an opportunity and shape your idea with the copilot.",
+  "newChat": "New conversation",
+  "placeholder": "e.g. I want to launch something around mobile money in Benin…",
+  "send": "Send",
+  "thinking": "The copilot is thinking…",
+  "searching": "Online research with verified sources…",
+  "welcomeTitle": "What do you want to launch?",
+  "welcomeDesc": "Chat with the copilot: it explores the market with verified data, proposes product ideas and helps you refine the one that fits you. Then turn it into a project.",
+  "suggestions": {
+    "s1": "Find me an opportunity in Benin",
+    "s2": "Explore the online education niche",
+    "s3": "Product ideas for small merchants?"
+  },
+  "context": "Context",
+  "opportunity": "Opportunity",
+  "noOpportunity": "No opportunity attached yet. Ask the copilot to explore a market.",
+  "ideas": "Ideas",
+  "noIdeas": "No ideas yet. Ask the copilot to propose some.",
+  "contextHint": "Validate an idea to turn it into a project (ebook, posters, sales page).",
+  "ideaDraft": "Draft",
+  "ideaConfirmed": "Validated",
+  "confirmIdea": "Validate this idea",
+  "createProject": "Turn into project"
+}

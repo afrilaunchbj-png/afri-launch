@@ -19,6 +19,7 @@ func (r *ideaRepo) Create(ctx context.Context, idea domain.ProductIdea) (domain.
 	row, err := r.s.q.CreateIdea(ctx, db.CreateIdeaParams{
 		UserID:           idea.UserID,
 		OpportunityID:    strPtrToUUID(idea.OpportunityID),
+		ConversationID:   strPtrToUUID(idea.ConversationID),
 		Title:            idea.Title,
 		Hook:             idea.Hook,
 		Explanation:      idea.Explanation,
@@ -64,6 +65,18 @@ func (r *ideaRepo) ListByUser(ctx context.Context, userID string) ([]domain.Prod
 
 func (r *ideaRepo) ListByOpportunity(ctx context.Context, userID, opportunityID string) ([]domain.ProductIdea, error) {
 	rows, err := r.s.q.ListIdeasByOpportunity(ctx, db.ListIdeasByOpportunityParams{UserID: userID, OpportunityID: strPtrToUUID(&opportunityID)})
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.ProductIdea, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toIdea(row))
+	}
+	return out, nil
+}
+
+func (r *ideaRepo) ListByConversation(ctx context.Context, userID, conversationID string) ([]domain.ProductIdea, error) {
+	rows, err := r.s.q.ListIdeasByConversation(ctx, db.ListIdeasByConversationParams{UserID: userID, ConversationID: strPtrToUUID(&conversationID)})
 	if err != nil {
 		return nil, err
 	}
@@ -121,6 +134,7 @@ func toIdea(i db.ProductIdea) domain.ProductIdea {
 		ID:               i.ID,
 		UserID:           i.UserID,
 		OpportunityID:    uuidPtr(i.OpportunityID),
+		ConversationID:   uuidPtr(i.ConversationID),
 		Title:            i.Title,
 		Hook:             i.Hook,
 		Explanation:      i.Explanation,

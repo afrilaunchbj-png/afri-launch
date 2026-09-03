@@ -7,6 +7,7 @@ type ProductIdea struct {
 	ID               string
 	UserID           string
 	OpportunityID    *string
+	ConversationID   *string
 	Title            string
 	Hook             string
 	Explanation      string

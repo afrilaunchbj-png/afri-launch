@@ -11,8 +11,9 @@ import (
 	"time"
 
 	appai "afrilaunch/backend/internal/application/ai"
-	authapp "afrilaunch/backend/internal/application/auth"
 	assetsapp "afrilaunch/backend/internal/application/assets"
+	authapp "afrilaunch/backend/internal/application/auth"
+	chatapp "afrilaunch/backend/internal/application/chat"
 	creditsapp "afrilaunch/backend/internal/application/credits"
 	documentapp "afrilaunch/backend/internal/application/document"
 	ideasapp "afrilaunch/backend/internal/application/ideas"
@@ -21,10 +22,11 @@ import (
 	projectsapp "afrilaunch/backend/internal/application/projects"
 	researchapp "afrilaunch/backend/internal/application/research"
 	"afrilaunch/backend/internal/config"
-	authinfra "afrilaunch/backend/internal/infra/auth"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
-	renderinfra "afrilaunch/backend/internal/infra/render"
+	authinfra "afrilaunch/backend/internal/infra/auth"
+	eventsinfra "afrilaunch/backend/internal/infra/events"
 	"afrilaunch/backend/internal/infra/postgres"
+	renderinfra "afrilaunch/backend/internal/infra/render"
 	"afrilaunch/backend/internal/infra/storage"
 	"afrilaunch/backend/internal/server"
 	"afrilaunch/backend/internal/server/handler"
@@ -82,14 +84,20 @@ func main() {
 	renderer := renderinfra.NewChromedpRenderer(cfg.ChromePath)
 	docSvc := documentapp.NewService(aiSvc, renderer)
 
+	// Canal temps réel in-process (SSE unique) : chat + jobs.
+	// Multi-instance : à migrer sur Redis pub/sub avec asynq.
+	eventBus := eventsinfra.NewBroker()
+
 	// Worker asynchrone de génération (idées, ebook, assets, recherche).
-	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc)
+	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc, eventBus)
 
 	// Services applicatifs.
 	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo, creditRepo, aiSvc)
 	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo)
 	assetSvc := assetsapp.NewService(assetRepo, objStorage)
 	researchSvc := researchapp.NewService(worker, researchRepo)
+	chatRepo := postgres.NewConversationRepository(store)
+	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, aiSvc, eventBus)
 
 	// Handlers HTTP.
 	authH := handler.NewAuthHandler(authSvc, int64(cfg.WelcomeCredits))
@@ -101,6 +109,8 @@ func main() {
 	assetH := handler.NewAssetHandler(assetSvc)
 	jobH := handler.NewJobHandler(jobRepo)
 	researchH := handler.NewResearchHandler(researchSvc)
+	chatH := handler.NewConversationHandler(chatSvc)
+	eventsH := handler.NewEventHandler(eventBus)
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
@@ -116,6 +126,8 @@ func main() {
 		Assets:        assetH,
 		Jobs:          jobH,
 		Research:      researchH,
+		Conversations: chatH,
+		Events:        eventsH,
 		AI:            aiSvc,
 		Documents:     docSvc,
 	})

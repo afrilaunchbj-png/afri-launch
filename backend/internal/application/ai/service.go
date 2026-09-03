@@ -34,10 +34,16 @@ func (s *Service) Complete(ctx context.Context, task Task, system, prompt string
 
 // StreamComplete génère du texte en continu pour une tâche donnée.
 func (s *Service) StreamComplete(ctx context.Context, task Task, system, prompt string, emit func(delta string) error) error {
+	return s.StreamMessages(ctx, task, system, []port.LLMMessage{{Role: "user", Content: prompt}}, emit)
+}
+
+// StreamMessages génère du texte en continu avec une conversation
+// multi-tours complète (historique user/assistant).
+func (s *Service) StreamMessages(ctx context.Context, task Task, system string, messages []port.LLMMessage, emit func(delta string) error) error {
 	return s.llm.StreamComplete(ctx, port.LLMRequest{
 		Model:    s.router.ModelFor(task),
 		System:   system,
-		Messages: []port.LLMMessage{{Role: "user", Content: prompt}},
+		Messages: messages,
 	}, emit)
 }
 

@@ -1,6 +1,8 @@
 package jobs
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -76,8 +78,9 @@ func posterPrompt(c genContext, variant int) string {
 	}
 }
 
-// researchSystem est la consigne système de la recherche en ligne.
-const researchSystem = `You are a market researcher specialized in African digital-product opportunities.
+// ResearchSystem est la consigne système de la recherche en ligne
+// (réutilisée par le copilote conversationnel).
+const ResearchSystem = `You are a market researcher specialized in African digital-product opportunities.
 Use the web_search tool to gather real, current information before answering.
 Return ONLY a JSON object (no markdown fences) with this exact shape:
 {"opportunities":[{"country","title","summary","difficulty","signal","score","scores":{"demand","pain","competition","purchasing_power","digital_fit","evidence_strength"},"evidence":[{"source","title","url","publication_date","country","metric","value"}]}]}
@@ -88,8 +91,8 @@ Rules:
 - "score" and each sub-score are your qualitative assessment (0-100).
 - Write "title" and "summary" in the requested language.`
 
-// researchQuery construit la requête de recherche en ligne.
-func researchQuery(query, sector string, markets []string, language string) string {
+// ResearchQuery construit la requête de recherche en ligne.
+func ResearchQuery(query, sector string, markets []string, language string) string {
 	return fmt.Sprintf(
 		"Research this niche: %s.\nSector: %s.\nTarget markets: %s.\nLanguage for titles/summaries: %s.",
 		query, sector, strings.Join(markets, ", "), language,
@@ -98,10 +101,11 @@ func researchQuery(query, sector string, markets []string, language string) stri
 
 // researchInput est la structure JSON attendue du LLM pour la recherche.
 type researchInput struct {
-	Opportunities []researchOpportunityInput `json:"opportunities"`
+	Opportunities []ResearchOpportunityInput `json:"opportunities"`
 }
 
-type researchOpportunityInput struct {
+// ResearchOpportunityInput est une opportunité renvoyée par la recherche.
+type ResearchOpportunityInput struct {
 	Country    string                   `json:"country"`
 	Title      string                   `json:"title"`
 	Summary    string                   `json:"summary"`
@@ -110,4 +114,34 @@ type researchOpportunityInput struct {
 	Score      int                      `json:"score"`
 	Scores     domain.OpportunityScores `json:"scores"`
 	Evidence   []domain.Evidence        `json:"evidence"`
+}
+
+// ParseResearchResult décode et normalise le JSON renvoyé par le LLM.
+func ParseResearchResult(content string) ([]ResearchOpportunityInput, error) {
+	var out researchInput
+	if err := json.Unmarshal([]byte(stripFences(content)), &out); err != nil {
+		return nil, fmt.Errorf("decode research: %w", err)
+	}
+	if len(out.Opportunities) == 0 {
+		return nil, errors.New("aucune opportunité trouvée")
+	}
+	return out.Opportunities, nil
+}
+
+// OpportunityFromResearch convertit un résultat de recherche en entité domain.
+func OpportunityFromResearch(in ResearchOpportunityInput, sector, language, userID string, researchID *string) domain.Opportunity {
+	return domain.Opportunity{
+		UserID:     &userID,
+		ResearchID: researchID,
+		Title:      in.Title,
+		Summary:    in.Summary,
+		Country:    in.Country,
+		Sector:     sector,
+		Language:   language,
+		Difficulty: normalizeDifficulty(in.Difficulty),
+		Signal:     normalizeSignal(in.Signal),
+		Score:      clamp(in.Score, 0, 100),
+		Scores:     in.Scores,
+		Evidence:   in.Evidence,
+	}
 }

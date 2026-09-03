@@ -12,14 +12,15 @@ Positionnement : **verticalisation géographique/sectorielle africaine**, **donn
 
 ## Current Status
 
-**Phase 2 — Fondations + premières features, avec migration de l'auth vers Neon Auth.** L'identité est désormais gérée par **Neon Auth (Managed Better Auth)**, l'infra cible est **Neon** (Postgres + Object Storage) et Redis (Upstash).
+**Phase 2 — Fondations + premières features. Découverte conversationnelle (chat copilote) en place.** L'identité est gérée par **Neon Auth (Managed Better Auth)**, l'infra cible est **Neon** (Postgres + Object Storage) et Redis (Upstash).
 
 Implémenté et validé :
 - Migration complète + pool pgx (PostgreSQL).
 - **Auth via Neon Auth** : le backend vérifie les JWT EdDSA (JWKS) ; plus de mot de passe/argon2/refresh tokens (voir ADR-011).
 - Ledger de crédits idempotent (`reserve → consume|release`, bonus de bienvenue au 1er login).
-- Recherche d'opportunités (catalogue + filtres + sauvegarde).
-- Frontend : layout applicatif, patterns formulaire/liste, pages login/register (UI Better Auth), dashboard, opportunités, crédits ; i18n FR/EN ; dark mode.
+- Recherche d'opportunités (catalogue + filtres + sauvegarde) — catalogue conservé comme données/contexte du chat.
+- Frontend : layout applicatif, patterns formulaire/liste, pages login/register (UI Better Auth), dashboard, projets, crédits ; i18n FR/EN ; dark mode.
+- **Chat copilote (ADR-014)** : parcours opportunités→idées remplacé par une conversation (`/discover`) ; canal SSE unique `GET /api/v1/events` ; boucle agent bornée avec outils `@@SEARCH` (recherche web) et bloc `@@IDEAS` (idées persistées) ; validation d'idée explicite ; « Transformer en projet » inchangé.
 
 ## Architecture
 
@@ -35,20 +36,20 @@ afri-launch/
 │   ├── internal/
 │   │   ├── config/
 │   │   ├── server/          # routeur chi, middlewares, handlers, authctx
-│   │   │   └── handler/     # auth, credits, opportunities, markets, health
+│   │   │   └── handler/     # auth, credits, opportunities, markets, health, conversations, events
 │   │   ├── domain/          # entités + erreurs métier
-│   │   ├── application/     # ports + use cases (auth, credits, opportunities)
-│   │   └── infra/           # postgres (sqlc), auth (neon verifier)
+│   │   ├── application/     # ports + use cases (auth, credits, opportunities, chat, jobs)
+│   │   └── infra/           # postgres (sqlc), auth (neon verifier), events (broker SSE)
 │   └── db/
-│       ├── migrations/      # goose 00001..00007
+│       ├── migrations/      # goose 00001..00011
 │       └── query/           # sqlc -> internal/infra/postgres/db
 └── frontend/                # SPA React (Vite + React Router 7)
     └── src/
         ├── app/             # router, root-layout, root-providers
         ├── components/      # ui/ (shadcn), layout/, data-table/, states/
-        ├── features/        # auth/, credits/, opportunities/
+        ├── features/        # auth/, credits/, chat/, projects/, generation/
         ├── i18n/            # locales fr/en
-        └── lib/             # api client, auth (Neon Auth), errors, utils
+        └── lib/             # api client, events (SSE), auth (Neon Auth), errors, utils
 ```
 
 ## Tech Stack
@@ -87,6 +88,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 12. **Object Storage Neon S3** : S3-compatible, SDK AWS standard — config prête, adaptateur à câbler avec la feature « assets ».
 13. **IA = OpenAI (GPT) + HeyGen** (ADR-012) : recherche/images/documents via OpenAI, vidéo avatar via HeyGen ; `ModelRouter` (`gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-image-2`).
 14. **Documents = HTML → PDF/PPTX via chromedp** (ADR-013) : contenu structuré (JSON) → templates HTML (thème « Emerald & Amber Ledger » + vocabulaire [Impeccable](https://impeccable.style/)) → `chromedp` → PDF (ebook) ou PPTX image-par-slide (deck).
+15. **Découverte conversationnelle + canal SSE unique** (ADR-014) : un flux SSE par utilisateur (`GET /api/v1/events`, événements typés `chat.*`/`job.updated`), POST de message en 202, boucle agent bornée (outils `@@SEARCH` / bloc `@@IDEAS`), broker in-process (`EventBus`) → Redis pub/sub avec asynq. Chat gratuit, facturation aux actions lourdes (recherche 5 cr, idées 2 cr).
 
 ## Design & UI Conventions
 
@@ -107,6 +109,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Abstractions IA (Go)** : ports `LLMProvider`/`ImageProvider`/`VideoProvider` + `ModelRouter` (`gpt-5.6-terra`/`gpt-5.6-luna`/`gpt-image-2`) + `infra/ai/openai.go` + `infra/ai/heygen.go` + config multi-clés + tests (httptest).
 - [x] **Pipeline documents (Go)** : `port.Renderer` + `infra/render` (chromedp : HTML → PDF / slides → PNG) + `infra/pptx` (assemblage PPTX image-par-slide) + `application/document` (service `GenerateEbook`/`GenerateDeck` + prompts avec le vocabulaire Impeccable) + tests (chromedp sur Chrome réel, pptx, prompts).
 - [x] **Parcours MVP (idées → projet → assets → download)** : migration `00008` (`product_ideas`, `projects`, `assets`, `generation_jobs`), repos + ports, worker asynchrone in-process (`application/jobs`), services `ideas`/`projects`/`assets`, endpoints (idées, projets, ebook/couverture/page de vente, assets, download), crédits `reserve→consume|release` par génération, frontend (pages idées/projets/projet + téléchargement).
+- [x] **Chat copilote (ADR-014)** : migration `00011` (`conversations`, `conversation_messages`, `product_ideas.conversation_id`) ; port `EventBus` + broker in-process (`infra/events`, testé) ; service `application/chat` (boucle agent `@@SEARCH`/`@@IDEAS`, crédits, events) ; handlers conversations + `GET /events` ; worker publie `job.updated` ; FE `features/chat` + page `/discover` + client SSE global (`lib/api/events`) avec reconnexion/backoff ; pages `/opportunities` et `/ideas` supprimées (redirections) ; tests d'intégration des deux chemins (idées, recherche) sur Postgres réel.
 
 ## Work In Progress
 
@@ -116,8 +119,10 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 1. **Object Storage** : remplacer `LocalStorage` par un adaptateur S3 (Neon) + URLs présignées.
 2. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
-3. **Workers asynq** (Redis) : remplacer le worker in-process (`application/jobs`) par asynq pour la robustesse multi-instance.
+3. **Workers asynq** (Redis) : remplacer le worker in-process (`application/jobs`) par asynq + **Redis pub/sub pour le broker d'événements** (`infra/events`).
 4. **Tests** : unitaires + intégration + E2E du parcours complet.
+5. **Nettoyage legacy** : endpoints job-batch idées/recherche (`POST /opportunities/{id}/ideas`, `POST /research`) + table `idea_messages` non appelés par le FE depuis le chat (à supprimer lors d'une prochaine passe).
+6. **Liste des conversations** dans le chat (API `GET /conversations` prête, UI à ajouter).
 
 ## Known Issues
 
@@ -131,37 +136,48 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - **Abstractions IA codées** (`LLMProvider`, `ModelRouter`, OpenAI, HeyGen) et **pipeline documents codé** (chromedp + prompts Impeccable + PDF/PPTX) mais **pas encore consommés par des workers/endpoints** ; la génération réelle requiert `OPENAI_API_KEY` et `HEYGEN_API_KEY`.
 - Le rendu (chromedp) nécessite **Chrome/Chromium** : présent en dev (`/usr/bin/google-chrome`), installé via `chromium` dans le Dockerfile backend (`CHROME_PATH=/usr/bin/chromium`).
 - **Worker in-process** (goroutines) pour les générations — pas asynq ; les jobs sont perdus au redémarrage. **Storage local** (fichiers) — pas durable sur Railway (éphémère) ; à remplacer par S3.
+- **Broker d'événements in-process** (`infra/events`) : mono-instance uniquement — avec plusieurs replicas backend, les events du worker n'atteindraient pas la bonne connexion SSE ; Redis pub/sub requis (voir Remaining Work #3).
+- Le protocole d'outils du chat repose sur des **marqueurs texte** (`@@SEARCH`, `@@IDEAS`) — dépend de la docilité du modèle ; passer aux **function calling** OpenAI si dérives observées.
+- La recherche du copilote fixe `language="fr"` (détection de langue à venir).
 - La génération (idées/ebook/assets) requiert `OPENAI_API_KEY` côté backend, sinon les jobs échouent (erreur 401 OpenAI).
 
 ## Tests & Validation
 
-- **Backend** : `go build/vet/test` OK. Tests : `TestNeonVerifier` (EdDSA/JWKS), `TestCreditLedgerLifecycle` (ledger), `TestModelRouter` + OpenAI/HeyGen (httptest), prompts Impeccable, PPTX (zip), chromedp (Chrome réel : PDF + slides→PNG + PPTX).
-- **Frontend** : `pnpm typecheck` + `pnpm build` OK. Navigateur (Playwright) : home/login rendus (AuthView), dark mode, i18n — vérifié avant la migration auth ; le flux complet Neon Auth reste à tester avec de vraies credentials.
+- **Backend** : `go build/vet/test` OK. Tests : `TestNeonVerifier` (EdDSA/JWKS), `TestCreditLedgerLifecycle` (ledger), `TestModelRouter` + OpenAI/HeyGen (httptest), prompts Impeccable, PPTX (zip), chromedp (Chrome réel : PDF + slides→PNG + PPTX). **Chat** : `TestParseSearchLine`/`TestParseIdeasBlock`/`TestStreamAnswer*` (machine à états, marqueurs coupés multi-delta), `TestBroker*` (events, déconnexion client lent), et **tests d'intégration** `TestChatTurnIdeaFlow` + `TestChatTurnSearchFlow` (Postgres réel via `AFRILAUNCH_TEST_DB` : messages, idées liées, crédits, events, opportunités).
+- **Frontend** : `pnpm typecheck` + `pnpm build` OK. Page `/discover` (chat + panneau contexte) câblée sur les events SSE ; le flux complet Neon Auth reste à tester avec de vraies credentials.
 
 ## Database & Migrations
 
-- Base locale `afrilaunch` (schéma v7). `db/migrations/` 00001..00007.
+- Base locale `afrilaunch` (schéma v11). `db/migrations/` 00001..00011.
+- `00011_conversations.sql` : `conversations`, `conversation_messages` (payload JSONB), `product_ideas.conversation_id`.
 - `sqlc.yaml` : overrides `uuid→string`, `timestamptz→time.Time`, `jsonb→[]byte`. `make sqlc` après modif de `db/query`.
 - Note : `users.password_hash` et `refresh_tokens` ne sont **plus utilisés** (légacy) mais restent en base (nettoyage futur).
 
 ## Important Files
 
 - `docs/ai.md` — architecture IA (providers, ModelRouter, pipeline HTML→PDF/PPTX, Impeccable).
+- `backend/internal/application/chat/` — **copilote conversationnel** : `service.go` (conversations, boucle agent, runSearch, createIdeas), `prompts.go` (system prompt + outils `@@SEARCH`/`@@IDEAS`), `integration_test.go` (2 chemins sur Postgres réel).
+- `backend/internal/application/port/events.go` — `AppEvent`, `EventPublisher`, `EventBus` (canal temps réel).
+- `backend/internal/infra/events/broker.go` — broker in-process par user (SSE).
+- `backend/internal/server/handler/events.go` — `GET /api/v1/events` (SSE, heartbeat 25 s, `X-Accel-Buffering: no`).
+- `backend/internal/server/handler/conversations.go` — endpoints conversations (POST message → 202).
+- `backend/internal/infra/postgres/conversation_repo.go` + `db/query/conversations.sql` — persistance chat.
+- `frontend/src/lib/api/events.ts` — client SSE global (reconnexion backoff, watchdog, `useAppEvent`/`useEventsConnection`).
+- `frontend/src/pages/discover.tsx` — page chat (`?c={id}`), abonnements events, panneau contexte.
+- `frontend/src/features/chat/` — api/hooks (conversations, confirm idée) + composants (messages, input, idea-card, context-panel).
 - `backend/internal/application/port/ai.go` — interfaces IA (`LLMProvider`, `ImageProvider`, `VideoProvider`).
-- `backend/internal/application/ai/` — `ModelRouter` + `Service` (routage modèle par tâche).
+- `backend/internal/application/ai/` — `ModelRouter` + `Service` (routage modèle par tâche, `StreamMessages` multi-tours).
 - `backend/internal/application/port/render.go` — interface `Renderer` (HTML → PDF/PPTX).
 - `backend/internal/application/document/` — service de génération ebook/deck + prompts (Impeccable injecté).
-- `backend/internal/infra/ai/openai.go` — client OpenAI (chat + images).
+- `backend/internal/infra/ai/openai.go` — client OpenAI (chat + images) ; `openai_research.go` (Responses API + web_search).
 - `backend/internal/infra/ai/heygen.go` — client HeyGen (vidéo avatar, `/v3/videos`).
 - `backend/internal/infra/render/chromedp.go` — rendu chromedp (PDF + slides→PNG).
 - `backend/internal/infra/pptx/pptx.go` — assemblage PPTX image-par-slide.
-- `backend/internal/application/jobs/worker.go` — worker asynchrone (idées/ebook/couverture/page de vente) + prompts.
-- `backend/internal/application/{ideas,projects,assets}/` — services du parcours MVP.
-- `backend/internal/application/port/workshop.go` — interfaces `IdeaRepository`/`ProjectRepository`/`AssetRepository`/`JobRepository`/`Storage`.
+- `backend/internal/application/jobs/worker.go` — worker asynchrone (idées/ebook/couverture/page de vente/recherche) + publication `job.updated`.
+- `backend/internal/application/port/workshop.go` — interfaces `IdeaRepository`/`ConversationRepository`/`ProjectRepository`/`AssetRepository`/`JobRepository`/`Storage`.
 - `backend/internal/infra/storage/local.go` — stockage local (S3 à venir).
-- `backend/db/migrations/00008_products.sql` — idées/projets/assets/jobs.
+- `backend/db/migrations/00011_conversations.sql` — conversations/messages + lien idée↔conversation.
 - `backend/internal/infra/auth/neon.go` — vérifieur JWT Neon (EdDSA/JWKS).
-- `backend/internal/application/port/ports.go` — interfaces (dont `TokenVerifier`, `AuthUser`).
 - `backend/internal/server/auth.go` + `authctx/` — middleware + identité.
 - `backend/internal/infra/postgres/credit_repo.go` — ledger idempotent.
 - `frontend/src/lib/auth.ts` — client Neon Auth + `getAccessToken`.
@@ -179,10 +195,11 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Next Steps
 
-1. Configurer Neon Auth côté console (enable auth, provider Google, trusted domains) + renseigner `OPENAI_API_KEY` / `HEYGEN_API_KEY`, puis tester le parcours complet (idées → ebook → assets → download).
+1. Tester le parcours complet avec vraies credentials (Neon Auth + `OPENAI_API_KEY`) : chat → `@@SEARCH` → idées → valider → projet → ebook → download.
 2. **Object Storage** : adapter S3 (Neon) + URLs présignées (remplacer `LocalStorage`).
 3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
-4. **Workers asynq** : remplacer le worker in-process par asynq (Redis).
+4. **Workers asynq** : remplacer le worker in-process par asynq + Redis pub/sub pour le broker d'événements.
+5. UI liste des conversations + titres auto affichés dans le chat.
 
 ## Notes for the Next Agent
 

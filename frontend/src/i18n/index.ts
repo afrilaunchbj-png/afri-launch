@@ -2,18 +2,16 @@ import i18n from "i18next"
 import { initReactI18next } from "react-i18next"
 
 import authEn from "./locales/en/auth.json"
+import chatEn from "./locales/en/chat.json"
 import commonEn from "./locales/en/common.json"
 import creditsEn from "./locales/en/credits.json"
 import dashboardEn from "./locales/en/dashboard.json"
-import ideasEn from "./locales/en/ideas.json"
-import opportunitiesEn from "./locales/en/opportunities.json"
 import projectsEn from "./locales/en/projects.json"
 import authFr from "./locales/fr/auth.json"
+import chatFr from "./locales/fr/chat.json"
 import commonFr from "./locales/fr/common.json"
 import creditsFr from "./locales/fr/credits.json"
 import dashboardFr from "./locales/fr/dashboard.json"
-import ideasFr from "./locales/fr/ideas.json"
-import opportunitiesFr from "./locales/fr/opportunities.json"
 import projectsFr from "./locales/fr/projects.json"
 
 export const resources = {
@@ -22,8 +20,7 @@ export const resources = {
     auth: authFr,
     credits: creditsFr,
     dashboard: dashboardFr,
-    opportunities: opportunitiesFr,
-    ideas: ideasFr,
+    chat: chatFr,
     projects: projectsFr,
   },
   en: {
@@ -31,8 +28,7 @@ export const resources = {
     auth: authEn,
     credits: creditsEn,
     dashboard: dashboardEn,
-    opportunities: opportunitiesEn,
-    ideas: ideasEn,
+    chat: chatEn,
     projects: projectsEn,
   },
 } as const

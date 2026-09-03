@@ -1,0 +1,26 @@
+{
+  "title": "Nouvelle conversation",
+  "subtitle": "Trouvez une opportunité et façonnez votre idée avec le copilote.",
+  "newChat": "Nouvelle conversation",
+  "placeholder": "Ex. : je veux lancer une activité autour du mobile money au Bénin…",
+  "send": "Envoyer",
+  "thinking": "Le copilote réfléchit…",
+  "searching": "Recherche en ligne avec sources vérifiées…",
+  "welcomeTitle": "Que voulez-vous lancer ?",
+  "welcomeDesc": "Discutez avec le copilote : il explore le marché avec des données vérifiées, propose des idées de produits et vous aide à affiner celle qui vous ressemble. Transformez-la ensuite en projet.",
+  "suggestions": {
+    "s1": "Trouve-moi une opportunité au Bénin",
+    "s2": "Explore la niche de la formation en ligne",
+    "s3": "Des idées de produits pour les commerçants ?"
+  },
+  "context": "Contexte",
+  "opportunity": "Opportunité",
+  "noOpportunity": "Aucune opportunité rattachée pour l'instant. Demandez au copilote d'explorer un marché.",
+  "ideas": "Idées",
+  "noIdeas": "Aucune idée encore. Demandez au copilote de vous en proposer.",
+  "contextHint": "Validez une idée pour la transformer en projet (ebook, affiches, page de vente).",
+  "ideaDraft": "Brouillon",
+  "ideaConfirmed": "Validée",
+  "confirmIdea": "Valider cette idée",
+  "createProject": "Transformer en projet"
+}

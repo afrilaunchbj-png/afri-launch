@@ -35,9 +35,11 @@ type Worker struct {
 	storage       port.Storage
 	ai            *ai.Service
 	docs          *document.Service
+	events        port.EventPublisher
 }
 
 // NewWorker construit le worker et démarre un pool de goroutines.
+// events est optionnel (nil = pas de notifications temps réel).
 func NewWorker(
 	jobs port.JobRepository,
 	credits port.CreditRepository,
@@ -49,6 +51,7 @@ func NewWorker(
 	storage port.Storage,
 	ai *ai.Service,
 	docs *document.Service,
+	events port.EventPublisher,
 ) *Worker {
 	w := &Worker{
 		tasks:         make(chan task, 64),
@@ -62,6 +65,7 @@ func NewWorker(
 		storage:       storage,
 		ai:            ai,
 		docs:          docs,
+		events:        events,
 	}
 	for i := 0; i < 3; i++ {
 		go w.run()
@@ -119,6 +123,7 @@ func (w *Worker) process(t task) {
 		return
 	}
 	_, _ = w.jobs.UpdateStatus(ctx, job.ID, domain.JobProcessing)
+	w.publishEvent(job, domain.JobProcessing, "")
 
 	result, err := w.runKind(ctx, job)
 	if err != nil {
@@ -130,11 +135,13 @@ func (w *Worker) process(t task) {
 		if job.ResearchID != nil {
 			_, _ = w.research.UpdateStatus(ctx, *job.ResearchID, domain.ResearchFailed)
 		}
+		w.publishEvent(job, domain.JobFailed, err.Error())
 		return
 	}
 
 	_, _ = w.credits.Consume(ctx, job.UserID, "job:"+job.ID)
 	_, _ = w.jobs.Complete(ctx, job.ID, result, job.Cost)
+	w.publishEvent(job, domain.JobCompleted, "")
 
 	if job.ProjectID != nil {
 		switch job.Kind {
@@ -147,6 +154,21 @@ func (w *Worker) process(t task) {
 	if job.ResearchID != nil {
 		_, _ = w.research.UpdateStatus(ctx, *job.ResearchID, domain.ResearchCompleted)
 	}
+}
+
+// publishEvent notifie le canal temps réel d'un changement de statut de job.
+func (w *Worker) publishEvent(job domain.GenerationJob, status, errMsg string) {
+	if w.events == nil {
+		return
+	}
+	raw, err := json.Marshal(map[string]any{
+		"id": job.ID, "kind": job.Kind, "status": status,
+		"project_id": job.ProjectID, "error": errMsg,
+	})
+	if err != nil {
+		return
+	}
+	w.events.Publish(job.UserID, port.AppEvent{Type: port.EventJobUpdated, Data: raw})
 }
 
 func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
@@ -332,35 +354,19 @@ func (w *Worker) runResearch(ctx context.Context, job domain.GenerationJob) ([]b
 		return nil, err
 	}
 
-	result, err := w.ai.Research(ctx, researchSystem, researchQuery(req.Query, req.Sector, req.Markets, req.Language))
+	result, err := w.ai.Research(ctx, ResearchSystem, ResearchQuery(req.Query, req.Sector, req.Markets, req.Language))
 	if err != nil {
 		return nil, err
 	}
 
-	var out researchInput
-	if err := json.Unmarshal([]byte(stripFences(result.Content)), &out); err != nil {
-		return nil, fmt.Errorf("decode research: %w", err)
-	}
-	if len(out.Opportunities) == 0 {
-		return nil, errors.New("aucune opportunité trouvée")
+	inputs, err := ParseResearchResult(result.Content)
+	if err != nil {
+		return nil, err
 	}
 
-	ids := make([]string, 0, len(out.Opportunities))
-	for _, in := range out.Opportunities {
-		opp, err := w.opportunities.Create(ctx, domain.Opportunity{
-			UserID:     &job.UserID,
-			ResearchID: job.ResearchID,
-			Title:      in.Title,
-			Summary:    in.Summary,
-			Country:    in.Country,
-			Sector:     req.Sector,
-			Language:   req.Language,
-			Difficulty: normalizeDifficulty(in.Difficulty),
-			Signal:     normalizeSignal(in.Signal),
-			Score:      clamp(in.Score, 0, 100),
-			Scores:     in.Scores,
-			Evidence:   in.Evidence,
-		})
+	ids := make([]string, 0, len(inputs))
+	for _, in := range inputs {
+		opp, err := w.opportunities.Create(ctx, OpportunityFromResearch(in, req.Sector, req.Language, job.UserID, job.ResearchID))
 		if err != nil {
 			return nil, err
 		}

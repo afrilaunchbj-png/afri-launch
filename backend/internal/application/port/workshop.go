@@ -18,10 +18,23 @@ type IdeaRepository interface {
 	Get(ctx context.Context, userID, id string) (domain.ProductIdea, error)
 	ListByUser(ctx context.Context, userID string) ([]domain.ProductIdea, error)
 	ListByOpportunity(ctx context.Context, userID, opportunityID string) ([]domain.ProductIdea, error)
+	ListByConversation(ctx context.Context, userID, conversationID string) ([]domain.ProductIdea, error)
 	Select(ctx context.Context, userID, id string) (domain.ProductIdea, error)
 	Unselect(ctx context.Context, userID, id string) error
 	UpdateContent(ctx context.Context, idea domain.ProductIdea) (domain.ProductIdea, error)
 	SetStatus(ctx context.Context, userID, id, status string) (domain.ProductIdea, error)
+}
+
+// ConversationRepository accède aux conversations du chat.
+type ConversationRepository interface {
+	Create(ctx context.Context, c domain.Conversation) (domain.Conversation, error)
+	Get(ctx context.Context, userID, id string) (domain.Conversation, error)
+	List(ctx context.Context, userID string, limit, offset int) ([]domain.Conversation, error)
+	Touch(ctx context.Context, id string) (domain.Conversation, error)
+	SetOpportunity(ctx context.Context, id string, opportunityID *string) (domain.Conversation, error)
+	SetTitle(ctx context.Context, id, title string) (domain.Conversation, error)
+	CreateMessage(ctx context.Context, m domain.ConversationMessage) (domain.ConversationMessage, error)
+	ListMessages(ctx context.Context, conversationID string) ([]domain.ConversationMessage, error)
 }
 
 // IdeaMessageRepository accède à l'historique de conversation d'une idée.

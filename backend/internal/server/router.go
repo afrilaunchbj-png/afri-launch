@@ -28,6 +28,8 @@ type Deps struct {
 	Assets        *handler.AssetHandler
 	Jobs          *handler.JobHandler
 	Research      *handler.ResearchHandler
+	Conversations *handler.ConversationHandler
+	Events        *handler.EventHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -61,6 +63,15 @@ func NewRouter(d Deps) http.Handler {
 			r.Use(RequireAuth(d.Tokens))
 
 			r.Get("/auth/me", d.Auth.Me)
+
+			// Canal temps réel unique (SSE) : chat, jobs, notifications.
+			r.Get("/events", d.Events.Stream)
+
+			// Copilote conversationnel.
+			r.Get("/conversations", d.Conversations.List)
+			r.Post("/conversations", d.Conversations.Create)
+			r.Get("/conversations/{id}", d.Conversations.Get)
+			r.Post("/conversations/{id}/messages", d.Conversations.SendMessage)
 
 			r.Get("/credits", d.Credits.Summary)
 			r.Get("/credits/transactions", d.Credits.Transactions)

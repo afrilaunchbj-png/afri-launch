@@ -1,6 +1,6 @@
 -- name: CreateIdea :one
-INSERT INTO product_ideas (user_id, opportunity_id, title, hook, explanation, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+INSERT INTO product_ideas (user_id, opportunity_id, conversation_id, title, hook, explanation, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 RETURNING *;
 
 -- name: ListIdeasByUser :many

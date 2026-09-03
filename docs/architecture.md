@@ -76,8 +76,11 @@ backend/
 | GET | `/api/v1/opportunities` | JWT | Catalogue d'opportunités (filtres pays/secteur/difficulté/recherche) |
 | GET | `/api/v1/opportunities/filters` | JWT | Facettes disponibles |
 | POST/DELETE | `/api/v1/opportunities/{id}/save` | JWT | Sauvegarder / retirer une opportunité |
-| POST | `/api/v1/opportunities/{id}/ideas` | JWT | Génère des idées (job asynchrone, 2 crédits) |
-| GET | `/api/v1/ideas` (et `/opportunities/{id}/ideas`) | JWT | Liste les idées de produits |
+| GET | `/api/v1/events` | JWT | **Canal temps réel unique (SSE)** : `chat.*`, `job.updated`, notifications |
+| GET/POST | `/api/v1/conversations` | JWT | Conversations du copilote (liste / création) |
+| GET | `/api/v1/conversations/{id}` | JWT | Détail : conversation + opportunité + messages + idées |
+| POST | `/api/v1/conversations/{id}/messages` | JWT | Envoie un message (202) ; streaming du tour via `/events` (`chat.*`) |
+| POST | `/api/v1/ideas/{id}/confirm` | JWT | Valide une idée proposée par le chat (draft → confirmed) |
 | GET/POST | `/api/v1/projects` | JWT | Liste / crée un projet |
 | GET | `/api/v1/projects/{id}` | JWT | Détail d'un projet |
 | POST | `/api/v1/projects/{id}/ebook` | JWT | Génère l'ebook PDF (job, 20 crédits) |
@@ -110,6 +113,15 @@ Chaque `GenerationJob` porte : `id, status, progress, attempts, started_at, comp
 Propriétés requises : **idempotent, retryable, observable, annulable, reprenable**. Une erreur sur une étape ne détruit pas les résultats déjà produits (partial completion).
 
 Workers (cible) : Research, LLM (contenu), Image, Video (HeyGen), Render (HTML→PDF/PPT via chromedp), QC. Objectif < 30 min (jamais garanti — deadline/timeout/retry/fallback).
+
+## 5bis. Canal temps réel (SSE unique) — ADR-014
+
+Un **seul flux SSE par utilisateur** (`GET /api/v1/events`) transporte toutes les notifications server→client : événements du copilote (`chat.started|delta|tool|completed|error`), statuts des jobs (`job.updated`), et à terme paiements/vidéo. Le client (fetch + ReadableStream, l'header `Authorization` excluant `EventSource`) route par `event:` + payload.
+
+- **Découplage** : `POST /conversations/{id}/messages` répond **202** ; le tour du copilote s'exécute en arrière-plan et streame via le canal. Le tour survit à la requête (`context.WithoutCancel`, timeout 10 min).
+- **Broker** : port `EventBus` (publish/subscribe par `user_id`), implémentation in-process (`infra/events`) ; buffer 128 par connexion, client lent = déconnexion volontaire puis resync (refetch) à la reconnexion — les données du chat sont persistées. Multi-instance : remplacer par **Redis pub/sub** lors de la migration asynq (interface inchangée).
+- **Robustesse** : heartbeat 25 s, watchdog 60 s côté client, reconnexion avec backoff exponentiel, event `__reconnected` → invalidation des queries.
+- **Boucle agent du copilote** (bornée, max 2 rounds, 1 recherche/tour) : le LLM streame sa réponse ; s'il émet `@@SEARCH {json}` seul, le backend lance la recherche web (facturée, opportunités créées) et relance le LLM avec les résultats ; un bloc final `@@IDEAS … @@END` est retiré du texte visible et persisté en `product_ideas`. La validation d'idée reste un geste utilisateur explicite.
 
 ## 6. Architecture IA
 
@@ -160,7 +172,8 @@ Entités cœur :
 | `Project` | projet produit (status, crédits consommés) |
 | `Market` | pays + devise + langue + secteurs |
 | `Opportunity` | opportunité scorée (score, evidence JSON, classification signal) |
-| `ProductIdea` / `IdeaVersion` | idées + historique de versions |
+| `Conversation` / `ConversationMessage` | chat copilote (contexte opportunité, messages persistés, payload JSON) |
+| `ProductIdea` / `IdeaVersion` | idées (liées à leur conversation) + historique de versions |
 | `Product` / `Chapter` / `ContentVersion` | ebook + chapitres + versions |
 | `Asset` | assets générés (couverture, visuels, posts…) |
 | `GenerationJob` / `Workflow` / `WorkflowStep` | jobs + étapes |
@@ -180,7 +193,7 @@ Contraintes clés : `Evidence` classifié (`VERIFIED`/`ESTIMATED`/`INFERRED`/`HY
 - **i18n** : react-i18next, locales centralisées `src/i18n/locales/{fr,en}/`.
 - **Dark mode** : stratégie `class`, tokens CSS mappés sur « Emerald & Amber Ledger ».
 
-Pages (application) : `/dashboard`, `/opportunities`, `/opportunities/:id`, `/ideas`, `/ideas/:id`, `/projects`, `/projects/:id`, `/projects/:id/content`, `/projects/:id/assets`, `/projects/:id/marketing`, `/projects/:id/export`, `/credits`, `/settings`. Marketing : `/`, `/pricing`, `/how-it-works`, `/login`, `/register`.
+Pages (application) : `/discover` (chat copilote — point d'entrée du parcours, ADR-014), `/dashboard`, `/projects`, `/projects/:id`, `/credits`. Anciennes pages `/opportunities` et `/ideas` supprimées (redirection → `/discover`). Marketing : `/`, `/pricing`, `/how-it-works`, `/login`, `/register`.
 
 ## 11. Observabilité
 

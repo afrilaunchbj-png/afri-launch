@@ -54,7 +54,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <Button asChild size="touch" className="w-full sm:w-auto">
-                <Link to="/opportunities">{t("dashboard:start")}</Link>
+                <Link to="/discover">{t("dashboard:start")}</Link>
               </Button>
             </CardContent>
           </Card>

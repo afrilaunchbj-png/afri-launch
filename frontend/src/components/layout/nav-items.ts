@@ -2,8 +2,7 @@ import {
   Coins,
   FolderOpen,
   LayoutDashboard,
-  Lightbulb,
-  LineChart,
+  MessageCircle,
   Megaphone,
   type LucideIcon,
 } from "lucide-react"
@@ -21,8 +20,7 @@ export interface DisabledNavItem {
 
 export const mainNav: NavItem[] = [
   { to: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
-  { to: "/opportunities", icon: LineChart, labelKey: "nav.opportunities" },
-  { to: "/ideas", icon: Lightbulb, labelKey: "nav.ideas" },
+  { to: "/discover", icon: MessageCircle, labelKey: "nav.discover" },
   { to: "/projects", icon: FolderOpen, labelKey: "nav.projects" },
   { to: "/credits", icon: Coins, labelKey: "nav.credits" },
 ]

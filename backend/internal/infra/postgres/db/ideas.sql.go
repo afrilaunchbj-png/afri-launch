@@ -12,14 +12,15 @@ import (
 )
 
 const createIdea = `-- name: CreateIdea :one
-INSERT INTO product_ideas (user_id, opportunity_id, title, hook, explanation, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
+INSERT INTO product_ideas (user_id, opportunity_id, conversation_id, title, hook, explanation, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id
 `
 
 type CreateIdeaParams struct {
 	UserID           string      `json:"user_id"`
 	OpportunityID    pgtype.UUID `json:"opportunity_id"`
+	ConversationID   pgtype.UUID `json:"conversation_id"`
 	Title            string      `json:"title"`
 	Hook             string      `json:"hook"`
 	Explanation      string      `json:"explanation"`
@@ -39,6 +40,7 @@ func (q *Queries) CreateIdea(ctx context.Context, arg CreateIdeaParams) (Product
 	row := q.db.QueryRow(ctx, createIdea,
 		arg.UserID,
 		arg.OpportunityID,
+		arg.ConversationID,
 		arg.Title,
 		arg.Hook,
 		arg.Explanation,
@@ -75,12 +77,13 @@ func (q *Queries) CreateIdea(ctx context.Context, arg CreateIdeaParams) (Product
 		&i.Explanation,
 		&i.Status,
 		&i.UpdatedAt,
+		&i.ConversationID,
 	)
 	return i, err
 }
 
 const getIdea = `-- name: GetIdea :one
-SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at FROM product_ideas WHERE id = $1 AND user_id = $2
+SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id FROM product_ideas WHERE id = $1 AND user_id = $2
 `
 
 type GetIdeaParams struct {
@@ -112,12 +115,13 @@ func (q *Queries) GetIdea(ctx context.Context, arg GetIdeaParams) (ProductIdea, 
 		&i.Explanation,
 		&i.Status,
 		&i.UpdatedAt,
+		&i.ConversationID,
 	)
 	return i, err
 }
 
 const listIdeasByOpportunity = `-- name: ListIdeasByOpportunity :many
-SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at FROM product_ideas WHERE user_id = $1 AND opportunity_id = $2 ORDER BY created_at ASC
+SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id FROM product_ideas WHERE user_id = $1 AND opportunity_id = $2 ORDER BY created_at ASC
 `
 
 type ListIdeasByOpportunityParams struct {
@@ -155,6 +159,7 @@ func (q *Queries) ListIdeasByOpportunity(ctx context.Context, arg ListIdeasByOpp
 			&i.Explanation,
 			&i.Status,
 			&i.UpdatedAt,
+			&i.ConversationID,
 		); err != nil {
 			return nil, err
 		}
@@ -167,7 +172,7 @@ func (q *Queries) ListIdeasByOpportunity(ctx context.Context, arg ListIdeasByOpp
 }
 
 const listIdeasByUser = `-- name: ListIdeasByUser :many
-SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at FROM product_ideas WHERE user_id = $1 ORDER BY created_at DESC
+SELECT id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id FROM product_ideas WHERE user_id = $1 ORDER BY created_at DESC
 `
 
 func (q *Queries) ListIdeasByUser(ctx context.Context, userID string) ([]ProductIdea, error) {
@@ -200,6 +205,7 @@ func (q *Queries) ListIdeasByUser(ctx context.Context, userID string) ([]Product
 			&i.Explanation,
 			&i.Status,
 			&i.UpdatedAt,
+			&i.ConversationID,
 		); err != nil {
 			return nil, err
 		}
@@ -212,7 +218,7 @@ func (q *Queries) ListIdeasByUser(ctx context.Context, userID string) ([]Product
 }
 
 const selectIdea = `-- name: SelectIdea :one
-UPDATE product_ideas SET is_selected = true WHERE id = $1 AND user_id = $2 RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
+UPDATE product_ideas SET is_selected = true WHERE id = $1 AND user_id = $2 RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id
 `
 
 type SelectIdeaParams struct {
@@ -244,6 +250,7 @@ func (q *Queries) SelectIdea(ctx context.Context, arg SelectIdeaParams) (Product
 		&i.Explanation,
 		&i.Status,
 		&i.UpdatedAt,
+		&i.ConversationID,
 	)
 	return i, err
 }
@@ -252,7 +259,7 @@ const setIdeaStatus = `-- name: SetIdeaStatus :one
 UPDATE product_ideas
 SET status = $3, updated_at = now()
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
+RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id
 `
 
 type SetIdeaStatusParams struct {
@@ -285,6 +292,7 @@ func (q *Queries) SetIdeaStatus(ctx context.Context, arg SetIdeaStatusParams) (P
 		&i.Explanation,
 		&i.Status,
 		&i.UpdatedAt,
+		&i.ConversationID,
 	)
 	return i, err
 }
@@ -307,7 +315,7 @@ const updateIdeaContent = `-- name: UpdateIdeaContent :one
 UPDATE product_ideas
 SET title = $2, hook = $3, explanation = $4, updated_at = now()
 WHERE id = $1
-RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at
+RETURNING id, user_id, opportunity_id, title, subtitle, audience, problem, promise, format, estimated_price, difficulty, market_evidence, why_now, competitive_angle, is_selected, created_at, hook, explanation, status, updated_at, conversation_id
 `
 
 type UpdateIdeaContentParams struct {
@@ -346,6 +354,7 @@ func (q *Queries) UpdateIdeaContent(ctx context.Context, arg UpdateIdeaContentPa
 		&i.Explanation,
 		&i.Status,
 		&i.UpdatedAt,
+		&i.ConversationID,
 	)
 	return i, err
 }

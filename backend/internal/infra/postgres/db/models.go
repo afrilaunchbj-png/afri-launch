@@ -32,6 +32,26 @@ type AuditLog struct {
 	CreatedAt time.Time   `json:"created_at"`
 }
 
+type Conversation struct {
+	ID            string      `json:"id"`
+	UserID        string      `json:"user_id"`
+	Title         string      `json:"title"`
+	Status        string      `json:"status"`
+	OpportunityID pgtype.UUID `json:"opportunity_id"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+}
+
+type ConversationMessage struct {
+	ID             string    `json:"id"`
+	ConversationID string    `json:"conversation_id"`
+	UserID         string    `json:"user_id"`
+	Role           string    `json:"role"`
+	Content        string    `json:"content"`
+	Payload        []byte    `json:"payload"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
 type CreditAccount struct {
 	ID        string    `json:"id"`
 	UserID    string    `json:"user_id"`
@@ -181,6 +201,7 @@ type ProductIdea struct {
 	Explanation      string      `json:"explanation"`
 	Status           string      `json:"status"`
 	UpdatedAt        time.Time   `json:"updated_at"`
+	ConversationID   pgtype.UUID `json:"conversation_id"`
 }
 
 type Project struct {
