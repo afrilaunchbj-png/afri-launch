@@ -1,6 +1,7 @@
 {
   "title": "Suivi global",
   "subtitle": "Vue d'ensemble de la plateforme (superadmin).",
+  "navOverview": "Vue d'ensemble",
   "statUsers": "Utilisateurs",
   "statConversations": "Conversations",
   "statProjects": "Projets",
@@ -10,8 +11,19 @@
   "statOpenTickets": "Tickets ouverts",
   "ticketsTitle": "Tickets de support",
   "usersTitle": "Utilisateurs",
+  "jobsTitle": "Jobs de génération",
+  "transactionsTitle": "Transactions de crédits",
+  "auditTitle": "Journal d'activités",
+  "auditSubtitle": "Traçabilité des opérations sensibles de la plateforme.",
+  "ticketsOverviewDesc": "Consultez et répondez aux demandes des utilisateurs.",
+  "auditOverviewDesc": "Consultez l'historique des opérations sensibles.",
+  "viewAll": "Tout voir",
+  "filterOpenTickets": "Tickets ouverts",
+  "auditOpen": "Ouvrir le journal",
   "noTickets": "Aucun ticket.",
   "noUsers": "Aucun utilisateur.",
+  "noItems": "Aucun élément.",
+  "noAuditEntries": "Aucune entrée dans le journal.",
   "name": "Nom",
   "email": "Email",
   "role": "Rôle",
@@ -21,5 +33,67 @@
   "status": "Statut",
   "date": "Date",
   "resolve": "Résoudre",
-  "ticketResolved": "Ticket résolu."
+  "ticketResolved": "Ticket résolu.",
+  "openTicket": "Ouvrir",
+  "searchPlaceholder": "Rechercher…",
+  "filterAllStatuses": "Tous les statuts",
+  "filterAllRoles": "Tous les rôles",
+  "filterAllTypes": "Tous les types",
+  "titleColumn": "Titre",
+  "projectColumn": "Projet",
+  "creditsUsed": "Crédits utilisés",
+  "filename": "Fichier",
+  "assetKind": "Type",
+  "size": "Taille",
+  "jobKind": "Opération",
+  "jobStatus": {
+    "pending": "En attente",
+    "processing": "En cours",
+    "completed": "Terminé",
+    "failed": "Échoué"
+  },
+  "projectStatus": {
+    "draft": "Brouillon",
+    "idea_selected": "Idée sélectionnée",
+    "generating": "Génération",
+    "content_ready": "Contenu prêt",
+    "completed": "Terminé",
+    "failed": "Échoué"
+  },
+  "conversationStatus": {
+    "active": "Active",
+    "archived": "Archivée"
+  },
+  "operation": "Opération",
+  "type": "Type",
+  "amount": "Montant",
+  "cost": "Coût",
+  "transactionType": {
+    "credit": "Crédit",
+    "debit": "Débit"
+  },
+  "auditAction": "Action",
+  "auditEntity": "Entité",
+  "auditUser": "Utilisateur",
+  "auditDetails": "Détails",
+  "auditAllActions": "Toutes les actions",
+  "auditAllEntities": "Toutes les entités",
+  "auditActions": {
+    "user.register": "Inscription",
+    "user.role_promoted": "Promotion admin",
+    "ticket.create": "Création ticket",
+    "ticket.reply": "Réponse utilisateur",
+    "ticket.admin_reply": "Réponse support",
+    "ticket.resolve": "Ticket résolu"
+  },
+  "auditEntities": {
+    "user": "Utilisateur",
+    "support_ticket": "Ticket support"
+  },
+  "back": "Retour",
+  "discussion": "Discussion",
+  "supportTeam": "Support",
+  "replyPlaceholder": "Écrivez votre réponse à l'utilisateur…",
+  "sendReply": "Répondre",
+  "replySent": "Réponse envoyée."
 }

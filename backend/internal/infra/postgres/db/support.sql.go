@@ -11,11 +11,19 @@ import (
 )
 
 const countAllTickets = `-- name: CountAllTickets :one
-SELECT count(*) FROM support_tickets
+SELECT count(*) FROM support_tickets t
+JOIN users u ON u.id = t.user_id
+WHERE ($1::text = '' OR t.status = $1::text)
+  AND ($2::text = '' OR t.subject ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
 `
 
-func (q *Queries) CountAllTickets(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countAllTickets)
+type CountAllTicketsParams struct {
+	Status string `json:"status"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) CountAllTickets(ctx context.Context, arg CountAllTicketsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllTickets, arg.Status, arg.Search)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -67,17 +75,107 @@ func (q *Queries) GetTicket(ctx context.Context, id string) (SupportTicket, erro
 	return i, err
 }
 
+const getTicketWithUser = `-- name: GetTicketWithUser :one
+SELECT t.id, t.user_id, t.subject, t.message, t.status, t.created_at, t.updated_at, u.email AS user_email, u.full_name AS user_name
+FROM support_tickets t
+JOIN users u ON u.id = t.user_id
+WHERE t.id = $1
+`
+
+type GetTicketWithUserRow struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"user_id"`
+	Subject   string    `json:"subject"`
+	Message   string    `json:"message"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	UserEmail string    `json:"user_email"`
+	UserName  string    `json:"user_name"`
+}
+
+func (q *Queries) GetTicketWithUser(ctx context.Context, id string) (GetTicketWithUserRow, error) {
+	row := q.db.QueryRow(ctx, getTicketWithUser, id)
+	var i GetTicketWithUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Subject,
+		&i.Message,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.UserEmail,
+		&i.UserName,
+	)
+	return i, err
+}
+
+const insertTicketMessage = `-- name: InsertTicketMessage :one
+WITH new_message AS (
+    INSERT INTO support_ticket_messages (ticket_id, author_id, content, is_admin)
+    VALUES ($1, $2, $3, $4)
+    RETURNING id, ticket_id, author_id, content, is_admin, created_at
+)
+SELECT m.id, m.ticket_id, m.author_id, m.content, m.is_admin, m.created_at, u.email AS author_email, u.full_name AS author_name
+FROM new_message m
+JOIN users u ON u.id = m.author_id
+`
+
+type InsertTicketMessageParams struct {
+	TicketID string `json:"ticket_id"`
+	AuthorID string `json:"author_id"`
+	Content  string `json:"content"`
+	IsAdmin  bool   `json:"is_admin"`
+}
+
+type InsertTicketMessageRow struct {
+	ID          string    `json:"id"`
+	TicketID    string    `json:"ticket_id"`
+	AuthorID    string    `json:"author_id"`
+	Content     string    `json:"content"`
+	IsAdmin     bool      `json:"is_admin"`
+	CreatedAt   time.Time `json:"created_at"`
+	AuthorEmail string    `json:"author_email"`
+	AuthorName  string    `json:"author_name"`
+}
+
+func (q *Queries) InsertTicketMessage(ctx context.Context, arg InsertTicketMessageParams) (InsertTicketMessageRow, error) {
+	row := q.db.QueryRow(ctx, insertTicketMessage,
+		arg.TicketID,
+		arg.AuthorID,
+		arg.Content,
+		arg.IsAdmin,
+	)
+	var i InsertTicketMessageRow
+	err := row.Scan(
+		&i.ID,
+		&i.TicketID,
+		&i.AuthorID,
+		&i.Content,
+		&i.IsAdmin,
+		&i.CreatedAt,
+		&i.AuthorEmail,
+		&i.AuthorName,
+	)
+	return i, err
+}
+
 const listAllTickets = `-- name: ListAllTickets :many
 SELECT t.id, t.user_id, t.subject, t.message, t.status, t.created_at, t.updated_at, u.email AS user_email, u.full_name AS user_name
 FROM support_tickets t
 JOIN users u ON u.id = t.user_id
+WHERE ($1::text = '' OR t.status = $1::text)
+  AND ($2::text = '' OR t.subject ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
 ORDER BY t.created_at DESC
-LIMIT $1 OFFSET $2
+LIMIT $4 OFFSET $3
 `
 
 type ListAllTicketsParams struct {
-	Limit  int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Status    string `json:"status"`
+	Search    string `json:"search"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
 }
 
 type ListAllTicketsRow struct {
@@ -93,7 +191,12 @@ type ListAllTicketsRow struct {
 }
 
 func (q *Queries) ListAllTickets(ctx context.Context, arg ListAllTicketsParams) ([]ListAllTicketsRow, error) {
-	rows, err := q.db.Query(ctx, listAllTickets, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listAllTickets,
+		arg.Status,
+		arg.Search,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -111,6 +214,54 @@ func (q *Queries) ListAllTickets(ctx context.Context, arg ListAllTicketsParams) 
 			&i.UpdatedAt,
 			&i.UserEmail,
 			&i.UserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTicketMessages = `-- name: ListTicketMessages :many
+SELECT m.id, m.ticket_id, m.author_id, m.content, m.is_admin, m.created_at, u.email AS author_email, u.full_name AS author_name
+FROM support_ticket_messages m
+JOIN users u ON u.id = m.author_id
+WHERE m.ticket_id = $1
+ORDER BY m.created_at ASC
+`
+
+type ListTicketMessagesRow struct {
+	ID          string    `json:"id"`
+	TicketID    string    `json:"ticket_id"`
+	AuthorID    string    `json:"author_id"`
+	Content     string    `json:"content"`
+	IsAdmin     bool      `json:"is_admin"`
+	CreatedAt   time.Time `json:"created_at"`
+	AuthorEmail string    `json:"author_email"`
+	AuthorName  string    `json:"author_name"`
+}
+
+func (q *Queries) ListTicketMessages(ctx context.Context, ticketID string) ([]ListTicketMessagesRow, error) {
+	rows, err := q.db.Query(ctx, listTicketMessages, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListTicketMessagesRow
+	for rows.Next() {
+		var i ListTicketMessagesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TicketID,
+			&i.AuthorID,
+			&i.Content,
+			&i.IsAdmin,
+			&i.CreatedAt,
+			&i.AuthorEmail,
+			&i.AuthorName,
 		); err != nil {
 			return nil, err
 		}

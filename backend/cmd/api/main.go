@@ -13,9 +13,11 @@ import (
 	adminapp "afrilaunch/backend/internal/application/admin"
 	appai "afrilaunch/backend/internal/application/ai"
 	assetsapp "afrilaunch/backend/internal/application/assets"
+	auditapp "afrilaunch/backend/internal/application/audit"
 	authapp "afrilaunch/backend/internal/application/auth"
 	chatapp "afrilaunch/backend/internal/application/chat"
 	creditsapp "afrilaunch/backend/internal/application/credits"
+	dashboardapp "afrilaunch/backend/internal/application/dashboard"
 	documentapp "afrilaunch/backend/internal/application/document"
 	ideasapp "afrilaunch/backend/internal/application/ideas"
 	"afrilaunch/backend/internal/application/jobs"
@@ -72,8 +74,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Recorder d'audit (journal des opérations sensibles).
+	auditRec := auditapp.NewRecorder(postgres.NewAuditRepository(store))
+
 	// Services (application).
-	authSvc := authapp.NewService(users, creditRepo, cfg.SuperadminEmails)
+	authSvc := authapp.NewService(users, creditRepo, cfg.SuperadminEmails, auditRec)
 	creditSvc := creditsapp.NewService(creditRepo)
 	oppSvc := opportunitiesapp.NewService(oppRepo)
 
@@ -102,9 +107,10 @@ func main() {
 	prefRepo := postgres.NewPreferenceRepository(store)
 	prefSvc := preferencesapp.NewService(prefRepo)
 	supportRepo := postgres.NewSupportRepository(store)
-	supportSvc := supportapp.NewService(supportRepo)
+	supportSvc := supportapp.NewService(supportRepo, auditRec)
 	adminRepo := postgres.NewAdminRepository(store)
-	adminSvc := adminapp.NewService(adminRepo, supportRepo)
+	adminSvc := adminapp.NewService(adminRepo, supportRepo, auditRec)
+	dashSvc := dashboardapp.NewService(postgres.NewDashboardRepository(store))
 	chatRepo := postgres.NewConversationRepository(store)
 	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, prefRepo, aiSvc, eventBus)
 
@@ -123,6 +129,7 @@ func main() {
 	prefH := handler.NewPreferenceHandler(prefSvc)
 	supportH := handler.NewSupportHandler(supportSvc)
 	adminH := handler.NewAdminHandler(adminSvc)
+	dashboardH := handler.NewDashboardHandler(dashSvc)
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
@@ -144,6 +151,7 @@ func main() {
 		Preferences:   prefH,
 		Support:       supportH,
 		Admin:         adminH,
+		Dashboard:     dashboardH,
 		AI:            aiSvc,
 		Documents:     docSvc,
 	})

@@ -1,8 +1,9 @@
 import { useForm } from "react-hook-form"
+import { Link } from "react-router"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
-import { LifeBuoy } from "lucide-react"
+import { Headset } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -45,7 +46,7 @@ export default function SupportPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <header>
         <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-primary md:text-3xl">
-          <LifeBuoy className="h-6 w-6" />
+          <Headset className="h-6 w-6" />
           {t("support:title")}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("support:subtitle")}</p>
@@ -105,20 +106,22 @@ export default function SupportPage() {
         ) : (
           <div className="space-y-3">
             {tickets.map((ticket) => (
-              <Card key={ticket.id}>
-                <CardContent className="space-y-2 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="font-medium">{ticket.subject}</p>
-                    <Badge variant={ticket.status === "resolved" ? "success" : "secondary"}>
-                      {t(`support:status.${ticket.status}`)}
-                    </Badge>
-                  </div>
-                  <p className="whitespace-pre-wrap text-sm text-muted-foreground">{ticket.message}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(ticket.created_at).toLocaleString()}
-                  </p>
-                </CardContent>
-              </Card>
+              <Link key={ticket.id} to={`/support/${ticket.id}`} className="block">
+                <Card className="transition-shadow hover:shadow-md">
+                  <CardContent className="space-y-2 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-medium">{ticket.subject}</p>
+                      <Badge variant={ticket.status === "resolved" ? "success" : "secondary"}>
+                        {t(`support:status.${ticket.status}`)}
+                      </Badge>
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm text-muted-foreground">{ticket.message}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(ticket.created_at).toLocaleString()}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}

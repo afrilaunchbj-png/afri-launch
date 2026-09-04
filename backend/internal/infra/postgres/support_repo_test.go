@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 
+	auditapp "afrilaunch/backend/internal/application/audit"
 	authapp "afrilaunch/backend/internal/application/auth"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
@@ -41,7 +42,7 @@ func TestSuperadminPromotionAndTickets(t *testing.T) {
 	stamp := time.Now().UnixNano()
 	bossEmail := fmt.Sprintf("boss-%d@example.com", stamp)
 	plainEmail := fmt.Sprintf("simple-%d@example.com", stamp)
-	svc := authapp.NewService(users, credits, []string{bossEmail})
+	svc := authapp.NewService(users, credits, []string{bossEmail}, auditapp.NewRecorder(postgres.NewAuditRepository(store)))
 
 	identity := port.AuthUser{ID: uuid.NewString(), Email: strings.ToUpper(bossEmail), Name: "La Boss"}
 	user, err := svc.GetOrCreateUser(ctx, identity, 0)
@@ -82,7 +83,7 @@ func TestSuperadminPromotionAndTickets(t *testing.T) {
 	}
 
 	// Listing admin (avec auteur) + résolution.
-	all, total, err := support.ListAll(ctx, 20, 0)
+	all, total, err := support.ListAll(ctx, port.AdminListFilter{}, 20, 0)
 	if err != nil || total < 2 || len(all) < 2 {
 		t.Fatalf("list all: total=%d len=%d err=%v", total, len(all), err)
 	}
@@ -120,7 +121,7 @@ func TestSuperadminPromotionAndTickets(t *testing.T) {
 	if stats.Users < 2 || stats.OpenTickets < 1 {
 		t.Errorf("stats incohérentes : %+v", stats)
 	}
-	usersPage, totalUsers, err := adminRepo.ListUsers(ctx, 10, 0)
+	usersPage, totalUsers, err := adminRepo.ListUsers(ctx, port.AdminListFilter{}, 10, 0)
 	if err != nil || totalUsers < 2 || len(usersPage) < 2 {
 		t.Errorf("list users: %d/%d err=%v", len(usersPage), totalUsers, err)
 	}

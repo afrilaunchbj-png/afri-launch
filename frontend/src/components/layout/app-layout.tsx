@@ -1,12 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router"
 import { useTranslation } from "react-i18next"
-import {
-  Coins,
-  HelpCircle,
-  LogOut,
-  Rocket,
-  Settings,
-} from "lucide-react"
+import { Coins, LogOut, Rocket } from "lucide-react"
 
 import { LanguageToggle } from "@/components/language-toggle"
 import { buildMainNav, buildMobileNav, futureNav } from "@/components/layout/nav-items"
@@ -139,14 +133,6 @@ function SidebarNav() {
           >
             <LogOut className="h-4 w-4" />
           </Button>
-        </div>
-        <div className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground/60">
-          <Settings className="h-4 w-4" />
-          {t("nav.settings")}
-        </div>
-        <div className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground/60">
-          <HelpCircle className="h-4 w-4" />
-          {t("nav.support")}
         </div>
       </div>
     </aside>

@@ -10,14 +10,42 @@ SELECT * FROM support_tickets WHERE user_id = $1 ORDER BY created_at DESC;
 SELECT t.*, u.email AS user_email, u.full_name AS user_name
 FROM support_tickets t
 JOIN users u ON u.id = t.user_id
+WHERE (@status::text = '' OR t.status = @status::text)
+  AND (@search::text = '' OR t.subject ILIKE '%' || @search || '%' OR u.email ILIKE '%' || @search || '%')
 ORDER BY t.created_at DESC
-LIMIT $1 OFFSET $2;
+LIMIT @row_limit OFFSET @row_offset;
 
 -- name: CountAllTickets :one
-SELECT count(*) FROM support_tickets;
+SELECT count(*) FROM support_tickets t
+JOIN users u ON u.id = t.user_id
+WHERE (@status::text = '' OR t.status = @status::text)
+  AND (@search::text = '' OR t.subject ILIKE '%' || @search || '%' OR u.email ILIKE '%' || @search || '%');
 
 -- name: GetTicket :one
 SELECT * FROM support_tickets WHERE id = $1;
+
+-- name: GetTicketWithUser :one
+SELECT t.*, u.email AS user_email, u.full_name AS user_name
+FROM support_tickets t
+JOIN users u ON u.id = t.user_id
+WHERE t.id = $1;
+
+-- name: ListTicketMessages :many
+SELECT m.*, u.email AS author_email, u.full_name AS author_name
+FROM support_ticket_messages m
+JOIN users u ON u.id = m.author_id
+WHERE m.ticket_id = $1
+ORDER BY m.created_at ASC;
+
+-- name: InsertTicketMessage :one
+WITH new_message AS (
+    INSERT INTO support_ticket_messages (ticket_id, author_id, content, is_admin)
+    VALUES ($1, $2, $3, $4)
+    RETURNING *
+)
+SELECT m.*, u.email AS author_email, u.full_name AS author_name
+FROM new_message m
+JOIN users u ON u.id = m.author_id;
 
 -- name: SetTicketStatus :one
 UPDATE support_tickets SET status = $2, updated_at = now() WHERE id = $1 RETURNING *;

@@ -6,7 +6,7 @@ import {
   Megaphone,
   Settings,
   ShieldCheck,
-  LifeBuoy,
+  Headset,
   type LucideIcon,
 } from "lucide-react"
 
@@ -31,7 +31,7 @@ export function buildMainNav(isSuperadmin: boolean): NavItem[] {
     { to: "/discover", icon: MessageCircle, labelKey: "nav.discover" },
     { to: "/projects", icon: FolderOpen, labelKey: "nav.projects" },
     { to: "/credits", icon: Coins, labelKey: "nav.credits" },
-    { to: "/support", icon: LifeBuoy, labelKey: "nav.support" },
+    { to: "/support", icon: Headset, labelKey: "nav.support" },
     { to: "/settings", icon: Settings, labelKey: "nav.settings" },
   ]
   if (isSuperadmin) {

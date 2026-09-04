@@ -28,6 +28,26 @@ func strPtrToUUID(s *string) pgtype.UUID {
 	return pgtype.UUID{Bytes: id, Valid: true}
 }
 
+// uuidOrNull convertit un identifiant texte en UUID nullable (vide → NULL).
+func uuidOrNull(s string) pgtype.UUID {
+	if s == "" {
+		return pgtype.UUID{}
+	}
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return pgtype.UUID{}
+	}
+	return pgtype.UUID{Bytes: id, Valid: true}
+}
+
+// uuidString convertit un UUID nullable en texte ("" si NULL).
+func uuidString(u pgtype.UUID) string {
+	if !u.Valid {
+		return ""
+	}
+	return uuid.UUID(u.Bytes).String()
+}
+
 // timestamptzPtr convertit un timestamptz nullable en *time.Time.
 func timestamptzPtr(t pgtype.Timestamptz) *time.Time {
 	if !t.Valid {

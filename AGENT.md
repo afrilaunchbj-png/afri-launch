@@ -118,6 +118,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Couverture marchés étendue** : migration `00014` — 24 marchés (Afrique de l'Ouest complète : CEDEAO + Mauritanie ; Afrique centrale : CEMAC + RD Congo), seed idempotent ; landing synchronisée sur l'API (plus de liste en dur).
 - [x] **Paramètres, Support et Superadmin** : migration `00015` (`users.role`, `support_tickets`) ; promotion superadmin par `SUPERADMIN_EMAILS` (au 1er login et suivants) ; `POST/GET /support/tickets` ; suivi global `GET /admin/stats|users|tickets` + `POST /admin/tickets/{id}/resolve` derrière `RequireSuperadmin` (rôle relu en DB à chaque appel admin) ; `/auth/me` renvoie le rôle ; FE : pages `/settings` (profil + préférences DB + crédits), `/support` (formulaire + historique), `/admin` (stats + users DataTable + tickets, garde client + serveur) ; nav dynamique selon rôle (sidebar + bottom nav mobile).
 - [x] **Déploiement Railway production** : `backend` + `frontend` déployés via `railway up` (auto-deploy GitHub inactif — à activer dans le dashboard) ; `.railwayignore` ajouté ; vérifié (/healthz, /readyz, nouveaux endpoints 401, bundle FE à jour).
+- [x] **Journal d'activités, discussions tickets, admin filtrable, stats dashboard** : migration `00016` (`support_ticket_messages`) ; fil de discussion des tickets (`GET/POST /support/tickets/{id}/messages` côté user, `GET /admin/tickets/{id}` + `POST /admin/tickets/{id}/messages` côté support ; un ticket résolu est rouvert quand le client répond) ; `audit_logs` (table 00006) alimentée — inscription, promotion admin, cycle de vie des tickets — et exposée via `GET /admin/audit-logs` (filtres action/entity/userId) ; listes admin filtrables côté serveur (users, tickets, projets, conversations, assets, jobs, transactions de crédits — `?search=&status=&role=`) ; `GET /dashboard/stats` (compteurs perso, solde crédits, consommation 30 j, séries journalière 30 j + hebdomadaire 12 semaines) ; FE : sous-navigation admin (`features/admin/admin-nav`) + pages `/admin/{users,tickets,tickets/:id,projects,conversations,assets,jobs,transactions,audit-logs}` (cartes cliquables → liste filtrée, filtres dans l'URL, toolbar debouncée), `/support/:id` (discussion user), dashboard avec 4 StatCards + courbes recharts (crédits 30 j, projets/semaine) ; icône support `Headset`, doublons footer sidebar supprimés ; i18n FR/EN.
 
 ## Work In Progress
 
@@ -155,10 +156,13 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Database & Migrations
 
-- Base locale `afrilaunch` (schéma v13). `db/migrations/` 00001..00013.
+- Schéma v16 (Neon production + local). `db/migrations/` 00001..00016.
 - `00011_conversations.sql` : `conversations`, `conversation_messages` (payload JSONB), `product_ideas.conversation_id`.
 - `00012_user_preferences.sql` : `user_preferences` (language, theme) — clée par `user_id`.
 - `00013_project_config.sql` : `projects.config` (palette/style/pages) + `generation_jobs.params`.
+- `00014_west_africa_markets.sql` : 24 marchés (seed idempotent).
+- `00015_admin_support.sql` : `users.role`, `support_tickets`.
+- `00016_support_ticket_messages.sql` : `support_ticket_messages` (fil de discussion des tickets ; le message initial reste dans `support_tickets.message`).
 - `sqlc.yaml` : overrides `uuid→string`, `timestamptz→time.Time`, `jsonb→[]byte`. `make sqlc` après modif de `db/query`.
 - Note : `users.password_hash` et `refresh_tokens` ne sont **plus utilisés** (légacy) mais restent en base (nettoyage futur).
 

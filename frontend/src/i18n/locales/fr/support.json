@@ -10,6 +10,13 @@
   "created": "Votre demande a été envoyée.",
   "history": "Mes demandes",
   "empty": "Aucune demande pour l'instant.",
+  "back": "Retour au support",
+  "discussion": "Discussion",
+  "supportTeam": "Support",
+  "you": "Vous",
+  "replyPlaceholder": "Écrivez votre réponse…",
+  "sendReply": "Répondre",
+  "replySent": "Votre réponse a été envoyée.",
   "status": {
     "open": "En cours",
     "resolved": "Résolue"

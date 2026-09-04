@@ -7,7 +7,95 @@ package db
 
 import (
 	"context"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const countAllAssets = `-- name: CountAllAssets :one
+SELECT count(*) FROM assets a
+JOIN projects p ON p.id = a.project_id
+JOIN users u ON u.id = a.user_id
+WHERE ($1::text = '' OR a.filename ILIKE '%' || $1 || '%' OR p.title ILIKE '%' || $1 || '%')
+`
+
+func (q *Queries) CountAllAssets(ctx context.Context, search string) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllAssets, search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAllConversations = `-- name: CountAllConversations :one
+SELECT count(*) FROM conversations c
+JOIN users u ON u.id = c.user_id
+WHERE ($1::text = '' OR c.title ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%')
+`
+
+func (q *Queries) CountAllConversations(ctx context.Context, search string) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllConversations, search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAllCreditTransactions = `-- name: CountAllCreditTransactions :one
+SELECT count(*) FROM credit_transactions t
+JOIN credit_accounts a ON a.id = t.account_id
+JOIN users u ON u.id = a.user_id
+WHERE ($1::text = '' OR t.type = $1::text)
+  AND ($2::text = '' OR t.operation ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
+`
+
+type CountAllCreditTransactionsParams struct {
+	Type   string `json:"type"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) CountAllCreditTransactions(ctx context.Context, arg CountAllCreditTransactionsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllCreditTransactions, arg.Type, arg.Search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAllJobs = `-- name: CountAllJobs :one
+SELECT count(*) FROM generation_jobs j
+JOIN users u ON u.id = j.user_id
+WHERE ($1::text = '' OR j.status = $1::text)
+  AND ($2::text = '' OR j.kind ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
+`
+
+type CountAllJobsParams struct {
+	Status string `json:"status"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) CountAllJobs(ctx context.Context, arg CountAllJobsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllJobs, arg.Status, arg.Search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAllProjects = `-- name: CountAllProjects :one
+SELECT count(*) FROM projects p
+JOIN users u ON u.id = p.user_id
+WHERE ($1::text = '' OR p.status = $1::text)
+  AND ($2::text = '' OR p.title ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
+`
+
+type CountAllProjectsParams struct {
+	Status string `json:"status"`
+	Search string `json:"search"`
+}
+
+func (q *Queries) CountAllProjects(ctx context.Context, arg CountAllProjectsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllProjects, arg.Status, arg.Search)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const countAssets = `-- name: CountAssets :one
 SELECT count(*) FROM assets
@@ -93,6 +181,361 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	return count, err
 }
 
+const countUsersFiltered = `-- name: CountUsersFiltered :one
+SELECT count(*) FROM users
+WHERE deleted_at IS NULL
+  AND ($1::text = '' OR email ILIKE '%' || $1 || '%' OR full_name ILIKE '%' || $1 || '%')
+  AND ($2::text = '' OR role = $2::text)
+`
+
+type CountUsersFilteredParams struct {
+	Search string `json:"search"`
+	Role   string `json:"role"`
+}
+
+func (q *Queries) CountUsersFiltered(ctx context.Context, arg CountUsersFilteredParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countUsersFiltered, arg.Search, arg.Role)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const listAllAssets = `-- name: ListAllAssets :many
+SELECT a.id, a.user_id, a.project_id, a.kind, a.storage_key, a.filename, a.content_type, a.size_bytes, a.created_at, p.title AS project_title, u.email AS user_email
+FROM assets a
+JOIN projects p ON p.id = a.project_id
+JOIN users u ON u.id = a.user_id
+WHERE ($1::text = '' OR a.filename ILIKE '%' || $1 || '%' OR p.title ILIKE '%' || $1 || '%')
+ORDER BY a.created_at DESC
+LIMIT $3 OFFSET $2
+`
+
+type ListAllAssetsParams struct {
+	Search    string `json:"search"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+type ListAllAssetsRow struct {
+	ID           string    `json:"id"`
+	UserID       string    `json:"user_id"`
+	ProjectID    string    `json:"project_id"`
+	Kind         string    `json:"kind"`
+	StorageKey   string    `json:"storage_key"`
+	Filename     string    `json:"filename"`
+	ContentType  string    `json:"content_type"`
+	SizeBytes    int32     `json:"size_bytes"`
+	CreatedAt    time.Time `json:"created_at"`
+	ProjectTitle string    `json:"project_title"`
+	UserEmail    string    `json:"user_email"`
+}
+
+func (q *Queries) ListAllAssets(ctx context.Context, arg ListAllAssetsParams) ([]ListAllAssetsRow, error) {
+	rows, err := q.db.Query(ctx, listAllAssets, arg.Search, arg.RowOffset, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllAssetsRow
+	for rows.Next() {
+		var i ListAllAssetsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ProjectID,
+			&i.Kind,
+			&i.StorageKey,
+			&i.Filename,
+			&i.ContentType,
+			&i.SizeBytes,
+			&i.CreatedAt,
+			&i.ProjectTitle,
+			&i.UserEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllConversations = `-- name: ListAllConversations :many
+SELECT c.id, c.user_id, c.title, c.status, c.opportunity_id, c.created_at, c.updated_at, u.email AS user_email, u.full_name AS user_name
+FROM conversations c
+JOIN users u ON u.id = c.user_id
+WHERE ($1::text = '' OR c.title ILIKE '%' || $1 || '%' OR u.email ILIKE '%' || $1 || '%')
+ORDER BY c.created_at DESC
+LIMIT $3 OFFSET $2
+`
+
+type ListAllConversationsParams struct {
+	Search    string `json:"search"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+type ListAllConversationsRow struct {
+	ID            string      `json:"id"`
+	UserID        string      `json:"user_id"`
+	Title         string      `json:"title"`
+	Status        string      `json:"status"`
+	OpportunityID pgtype.UUID `json:"opportunity_id"`
+	CreatedAt     time.Time   `json:"created_at"`
+	UpdatedAt     time.Time   `json:"updated_at"`
+	UserEmail     string      `json:"user_email"`
+	UserName      string      `json:"user_name"`
+}
+
+func (q *Queries) ListAllConversations(ctx context.Context, arg ListAllConversationsParams) ([]ListAllConversationsRow, error) {
+	rows, err := q.db.Query(ctx, listAllConversations, arg.Search, arg.RowOffset, arg.RowLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllConversationsRow
+	for rows.Next() {
+		var i ListAllConversationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.Status,
+			&i.OpportunityID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.UserEmail,
+			&i.UserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllCreditTransactions = `-- name: ListAllCreditTransactions :many
+SELECT t.id, t.account_id, t.type, t.amount, t.operation, t.status, t.reference, t.metadata, t.created_at, u.email AS user_email
+FROM credit_transactions t
+JOIN credit_accounts a ON a.id = t.account_id
+JOIN users u ON u.id = a.user_id
+WHERE ($1::text = '' OR t.type = $1::text)
+  AND ($2::text = '' OR t.operation ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
+ORDER BY t.created_at DESC
+LIMIT $4 OFFSET $3
+`
+
+type ListAllCreditTransactionsParams struct {
+	Type      string `json:"type"`
+	Search    string `json:"search"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+type ListAllCreditTransactionsRow struct {
+	ID        string    `json:"id"`
+	AccountID string    `json:"account_id"`
+	Type      string    `json:"type"`
+	Amount    int32     `json:"amount"`
+	Operation string    `json:"operation"`
+	Status    string    `json:"status"`
+	Reference *string   `json:"reference"`
+	Metadata  []byte    `json:"metadata"`
+	CreatedAt time.Time `json:"created_at"`
+	UserEmail string    `json:"user_email"`
+}
+
+func (q *Queries) ListAllCreditTransactions(ctx context.Context, arg ListAllCreditTransactionsParams) ([]ListAllCreditTransactionsRow, error) {
+	rows, err := q.db.Query(ctx, listAllCreditTransactions,
+		arg.Type,
+		arg.Search,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllCreditTransactionsRow
+	for rows.Next() {
+		var i ListAllCreditTransactionsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.Type,
+			&i.Amount,
+			&i.Operation,
+			&i.Status,
+			&i.Reference,
+			&i.Metadata,
+			&i.CreatedAt,
+			&i.UserEmail,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllJobs = `-- name: ListAllJobs :many
+SELECT j.id, j.user_id, j.project_id, j.opportunity_id, j.kind, j.status, j.error, j.cost, j.result, j.created_at, j.updated_at, j.completed_at, j.research_id, j.idea_id, j.params, u.email AS user_email, u.full_name AS user_name
+FROM generation_jobs j
+JOIN users u ON u.id = j.user_id
+WHERE ($1::text = '' OR j.status = $1::text)
+  AND ($2::text = '' OR j.kind ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
+ORDER BY j.created_at DESC
+LIMIT $4 OFFSET $3
+`
+
+type ListAllJobsParams struct {
+	Status    string `json:"status"`
+	Search    string `json:"search"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+type ListAllJobsRow struct {
+	ID            string             `json:"id"`
+	UserID        string             `json:"user_id"`
+	ProjectID     pgtype.UUID        `json:"project_id"`
+	OpportunityID pgtype.UUID        `json:"opportunity_id"`
+	Kind          string             `json:"kind"`
+	Status        string             `json:"status"`
+	Error         *string            `json:"error"`
+	Cost          int32              `json:"cost"`
+	Result        []byte             `json:"result"`
+	CreatedAt     time.Time          `json:"created_at"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	CompletedAt   pgtype.Timestamptz `json:"completed_at"`
+	ResearchID    pgtype.UUID        `json:"research_id"`
+	IdeaID        pgtype.UUID        `json:"idea_id"`
+	Params        []byte             `json:"params"`
+	UserEmail     string             `json:"user_email"`
+	UserName      string             `json:"user_name"`
+}
+
+func (q *Queries) ListAllJobs(ctx context.Context, arg ListAllJobsParams) ([]ListAllJobsRow, error) {
+	rows, err := q.db.Query(ctx, listAllJobs,
+		arg.Status,
+		arg.Search,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllJobsRow
+	for rows.Next() {
+		var i ListAllJobsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ProjectID,
+			&i.OpportunityID,
+			&i.Kind,
+			&i.Status,
+			&i.Error,
+			&i.Cost,
+			&i.Result,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.ResearchID,
+			&i.IdeaID,
+			&i.Params,
+			&i.UserEmail,
+			&i.UserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllProjects = `-- name: ListAllProjects :many
+SELECT p.id, p.user_id, p.opportunity_id, p.idea_id, p.title, p.status, p.credits_consumed, p.created_at, p.updated_at, p.config, u.email AS user_email, u.full_name AS user_name
+FROM projects p
+JOIN users u ON u.id = p.user_id
+WHERE ($1::text = '' OR p.status = $1::text)
+  AND ($2::text = '' OR p.title ILIKE '%' || $2 || '%' OR u.email ILIKE '%' || $2 || '%')
+ORDER BY p.created_at DESC
+LIMIT $4 OFFSET $3
+`
+
+type ListAllProjectsParams struct {
+	Status    string `json:"status"`
+	Search    string `json:"search"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+type ListAllProjectsRow struct {
+	ID              string      `json:"id"`
+	UserID          string      `json:"user_id"`
+	OpportunityID   pgtype.UUID `json:"opportunity_id"`
+	IdeaID          pgtype.UUID `json:"idea_id"`
+	Title           string      `json:"title"`
+	Status          string      `json:"status"`
+	CreditsConsumed int32       `json:"credits_consumed"`
+	CreatedAt       time.Time   `json:"created_at"`
+	UpdatedAt       time.Time   `json:"updated_at"`
+	Config          []byte      `json:"config"`
+	UserEmail       string      `json:"user_email"`
+	UserName        string      `json:"user_name"`
+}
+
+func (q *Queries) ListAllProjects(ctx context.Context, arg ListAllProjectsParams) ([]ListAllProjectsRow, error) {
+	rows, err := q.db.Query(ctx, listAllProjects,
+		arg.Status,
+		arg.Search,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllProjectsRow
+	for rows.Next() {
+		var i ListAllProjectsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.OpportunityID,
+			&i.IdeaID,
+			&i.Title,
+			&i.Status,
+			&i.CreditsConsumed,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Config,
+			&i.UserEmail,
+			&i.UserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsers = `-- name: ListUsers :many
 
 SELECT id, email, password_hash, full_name, created_at, updated_at, deleted_at, organization_id, avatar_url, email_verified_at, role FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2
@@ -106,6 +549,59 @@ type ListUsersParams struct {
 // Suivi global superadmin.
 func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
 	rows, err := q.db.Query(ctx, listUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Email,
+			&i.PasswordHash,
+			&i.FullName,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.OrganizationID,
+			&i.AvatarUrl,
+			&i.EmailVerifiedAt,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersFiltered = `-- name: ListUsersFiltered :many
+SELECT id, email, password_hash, full_name, created_at, updated_at, deleted_at, organization_id, avatar_url, email_verified_at, role FROM users
+WHERE deleted_at IS NULL
+  AND ($1::text = '' OR email ILIKE '%' || $1 || '%' OR full_name ILIKE '%' || $1 || '%')
+  AND ($2::text = '' OR role = $2::text)
+ORDER BY created_at DESC
+LIMIT $4 OFFSET $3
+`
+
+type ListUsersFilteredParams struct {
+	Search    string `json:"search"`
+	Role      string `json:"role"`
+	RowOffset int32  `json:"row_offset"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+func (q *Queries) ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]User, error) {
+	rows, err := q.db.Query(ctx, listUsersFiltered,
+		arg.Search,
+		arg.Role,
+		arg.RowOffset,
+		arg.RowLimit,
+	)
 	if err != nil {
 		return nil, err
 	}

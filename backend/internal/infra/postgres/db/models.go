@@ -257,6 +257,15 @@ type SupportTicket struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+type SupportTicketMessage struct {
+	ID        string    `json:"id"`
+	TicketID  string    `json:"ticket_id"`
+	AuthorID  string    `json:"author_id"`
+	Content   string    `json:"content"`
+	IsAdmin   bool      `json:"is_admin"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type User struct {
 	ID              string             `json:"id"`
 	Email           string             `json:"email"`

@@ -1,6 +1,6 @@
 import { Link } from "react-router"
 import { useTranslation } from "react-i18next"
-import { Coins, LifeBuoy, Settings as SettingsIcon, User as UserIcon } from "lucide-react"
+import { Coins, Headset, Settings as SettingsIcon, User as UserIcon } from "lucide-react"
 
 import { useAuth } from "@/features/auth/auth-provider"
 import { useMe } from "@/features/auth/hooks"
@@ -135,7 +135,7 @@ export default function SettingsPage() {
             to="/support"
             className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
-            <LifeBuoy className="h-4 w-4" />
+            <Headset className="h-4 w-4" />
             {t("settings:needHelp")}
           </Link>
         </CardContent>

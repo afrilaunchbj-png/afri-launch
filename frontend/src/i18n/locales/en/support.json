@@ -10,6 +10,13 @@
   "created": "Your request has been sent.",
   "history": "My requests",
   "empty": "No request yet.",
+  "back": "Back to support",
+  "discussion": "Discussion",
+  "supportTeam": "Support",
+  "you": "You",
+  "replyPlaceholder": "Write your reply…",
+  "sendReply": "Reply",
+  "replySent": "Your reply has been sent.",
   "status": {
     "open": "Open",
     "resolved": "Resolved"

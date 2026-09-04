@@ -34,6 +34,7 @@ type Deps struct {
 	Preferences   *handler.PreferenceHandler
 	Support       *handler.SupportHandler
 	Admin         *handler.AdminHandler
+	Dashboard     *handler.DashboardHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -84,6 +85,11 @@ func NewRouter(d Deps) http.Handler {
 			// Support utilisateur.
 			r.Post("/support/tickets", d.Support.Create)
 			r.Get("/support/tickets", d.Support.ListMine)
+			r.Get("/support/tickets/{id}", d.Support.GetTicket)
+			r.Post("/support/tickets/{id}/messages", d.Support.Reply)
+
+			// Tableau de bord personnel : statistiques et courbes.
+			r.Get("/dashboard/stats", d.Dashboard.Stats)
 
 			// Suivi global superadmin.
 			r.Route("/admin", func(r chi.Router) {
@@ -91,7 +97,15 @@ func NewRouter(d Deps) http.Handler {
 				r.Get("/stats", d.Admin.Stats)
 				r.Get("/users", d.Admin.Users)
 				r.Get("/tickets", d.Admin.Tickets)
+				r.Get("/tickets/{id}", d.Admin.TicketDetail)
 				r.Post("/tickets/{id}/resolve", d.Admin.ResolveTicket)
+				r.Post("/tickets/{id}/messages", d.Admin.ReplyTicket)
+				r.Get("/projects", d.Admin.Projects)
+				r.Get("/conversations", d.Admin.Conversations)
+				r.Get("/assets", d.Admin.Assets)
+				r.Get("/jobs", d.Admin.Jobs)
+				r.Get("/credit-transactions", d.Admin.CreditTransactions)
+				r.Get("/audit-logs", d.Admin.AuditLogs)
 			})
 
 			r.Get("/credits", d.Credits.Summary)

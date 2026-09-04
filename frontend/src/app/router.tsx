@@ -5,7 +5,16 @@ import RootProviders from "@/app/root-providers"
 import AppLayout from "@/components/layout/app-layout"
 import AuthLayout from "@/components/layout/auth-layout"
 import { ProtectedRoute } from "@/features/auth"
+import AdminAssetsPage from "@/pages/admin-assets"
+import AdminAuditLogsPage from "@/pages/admin-audit-logs"
+import AdminConversationsPage from "@/pages/admin-conversations"
+import AdminJobsPage from "@/pages/admin-jobs"
 import AdminPage from "@/pages/admin"
+import AdminProjectsPage from "@/pages/admin-projects"
+import AdminTicketDetailPage from "@/pages/admin-ticket-detail"
+import AdminTicketsPage from "@/pages/admin-tickets"
+import AdminTransactionsPage from "@/pages/admin-transactions"
+import AdminUsersPage from "@/pages/admin-users"
 import AuthViewPage from "@/pages/auth-view"
 import CreditsPage from "@/pages/credits"
 import DashboardPage from "@/pages/dashboard"
@@ -18,6 +27,7 @@ import ProjectsPage from "@/pages/projects"
 import RegisterPage from "@/pages/register"
 import SettingsPage from "@/pages/settings"
 import SupportPage from "@/pages/support"
+import SupportTicketPage from "@/pages/support-ticket"
 
 export const router = createBrowserRouter([
   {
@@ -53,8 +63,18 @@ export const router = createBrowserRouter([
           { path: "projects/:id", element: <ProjectPage /> },
           { path: "credits", element: <CreditsPage /> },
           { path: "support", element: <SupportPage /> },
+          { path: "support/:id", element: <SupportTicketPage /> },
           { path: "settings", element: <SettingsPage /> },
           { path: "admin", element: <AdminPage /> },
+          { path: "admin/users", element: <AdminUsersPage /> },
+          { path: "admin/tickets", element: <AdminTicketsPage /> },
+          { path: "admin/tickets/:id", element: <AdminTicketDetailPage /> },
+          { path: "admin/projects", element: <AdminProjectsPage /> },
+          { path: "admin/conversations", element: <AdminConversationsPage /> },
+          { path: "admin/assets", element: <AdminAssetsPage /> },
+          { path: "admin/jobs", element: <AdminJobsPage /> },
+          { path: "admin/transactions", element: <AdminTransactionsPage /> },
+          { path: "admin/audit-logs", element: <AdminAuditLogsPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

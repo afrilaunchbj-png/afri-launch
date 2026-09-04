@@ -1,6 +1,7 @@
 {
   "title": "Global monitoring",
   "subtitle": "Platform overview (superadmin).",
+  "navOverview": "Overview",
   "statUsers": "Users",
   "statConversations": "Conversations",
   "statProjects": "Projects",
@@ -10,8 +11,19 @@
   "statOpenTickets": "Open tickets",
   "ticketsTitle": "Support tickets",
   "usersTitle": "Users",
+  "jobsTitle": "Generation jobs",
+  "transactionsTitle": "Credit transactions",
+  "auditTitle": "Activity log",
+  "auditSubtitle": "Traceability of sensitive platform operations.",
+  "ticketsOverviewDesc": "Review and answer user requests.",
+  "auditOverviewDesc": "Review the history of sensitive operations.",
+  "viewAll": "View all",
+  "filterOpenTickets": "Open tickets",
+  "auditOpen": "Open log",
   "noTickets": "No tickets.",
   "noUsers": "No users.",
+  "noItems": "No items.",
+  "noAuditEntries": "No entries in the log.",
   "name": "Name",
   "email": "Email",
   "role": "Role",
@@ -21,5 +33,67 @@
   "status": "Status",
   "date": "Date",
   "resolve": "Resolve",
-  "ticketResolved": "Ticket resolved."
+  "ticketResolved": "Ticket resolved.",
+  "openTicket": "Open",
+  "searchPlaceholder": "Search…",
+  "filterAllStatuses": "All statuses",
+  "filterAllRoles": "All roles",
+  "filterAllTypes": "All types",
+  "titleColumn": "Title",
+  "projectColumn": "Project",
+  "creditsUsed": "Credits used",
+  "filename": "File",
+  "assetKind": "Kind",
+  "size": "Size",
+  "jobKind": "Operation",
+  "jobStatus": {
+    "pending": "Pending",
+    "processing": "Processing",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "projectStatus": {
+    "draft": "Draft",
+    "idea_selected": "Idea selected",
+    "generating": "Generating",
+    "content_ready": "Content ready",
+    "completed": "Completed",
+    "failed": "Failed"
+  },
+  "conversationStatus": {
+    "active": "Active",
+    "archived": "Archived"
+  },
+  "operation": "Operation",
+  "type": "Type",
+  "amount": "Amount",
+  "cost": "Cost",
+  "transactionType": {
+    "credit": "Credit",
+    "debit": "Debit"
+  },
+  "auditAction": "Action",
+  "auditEntity": "Entity",
+  "auditUser": "User",
+  "auditDetails": "Details",
+  "auditAllActions": "All actions",
+  "auditAllEntities": "All entities",
+  "auditActions": {
+    "user.register": "Registration",
+    "user.role_promoted": "Admin promotion",
+    "ticket.create": "Ticket created",
+    "ticket.reply": "User reply",
+    "ticket.admin_reply": "Support reply",
+    "ticket.resolve": "Ticket resolved"
+  },
+  "auditEntities": {
+    "user": "User",
+    "support_ticket": "Support ticket"
+  },
+  "back": "Back",
+  "discussion": "Discussion",
+  "supportTeam": "Support",
+  "replyPlaceholder": "Write your reply to the user…",
+  "sendReply": "Reply",
+  "replySent": "Reply sent."
 }

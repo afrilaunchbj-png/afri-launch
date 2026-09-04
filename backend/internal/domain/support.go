@@ -20,6 +20,23 @@ type AdminTicket struct {
 	UserName  string
 }
 
+// TicketMessage est un message du fil de discussion d'un ticket.
+type TicketMessage struct {
+	ID        string
+	TicketID  string
+	AuthorID  string
+	Content   string
+	IsAdmin   bool
+	CreatedAt time.Time
+}
+
+// TicketMessageView est un message enrichi des informations de l'auteur.
+type TicketMessageView struct {
+	TicketMessage
+	AuthorEmail string
+	AuthorName  string
+}
+
 // Statuts d'un ticket de support.
 const (
 	TicketOpen     = "open"

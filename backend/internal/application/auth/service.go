@@ -8,6 +8,7 @@ import (
 	"context"
 	"strings"
 
+	"afrilaunch/backend/internal/application/audit"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
 )
@@ -17,11 +18,12 @@ type Service struct {
 	users       port.UserRepository
 	credits     port.CreditRepository
 	superadmins []string // emails promus superadmin au login
+	audit       *audit.Recorder
 }
 
 // NewService construit le service d'identité.
-func NewService(users port.UserRepository, credits port.CreditRepository, superadminEmails []string) *Service {
-	return &Service{users: users, credits: credits, superadmins: superadminEmails}
+func NewService(users port.UserRepository, credits port.CreditRepository, superadminEmails []string, auditRec *audit.Recorder) *Service {
+	return &Service{users: users, credits: credits, superadmins: superadminEmails, audit: auditRec}
 }
 
 // GetOrCreateUser crée ou met à jour le profil local à partir de l'identité
@@ -40,6 +42,7 @@ func (s *Service) GetOrCreateUser(ctx context.Context, identity port.AuthUser, w
 		if err != nil {
 			return domain.User{}, err
 		}
+		s.audit.Log(ctx, created.ID, domain.AuditUserRegister, "user", created.ID, nil)
 		if welcomeCredits > 0 {
 			if _, err := s.credits.GetOrCreateAccount(ctx, user.ID, 0); err != nil {
 				return domain.User{}, err
@@ -50,7 +53,11 @@ func (s *Service) GetOrCreateUser(ctx context.Context, identity port.AuthUser, w
 		}
 		// Promotion superadmin déclarative (SUPERADMIN_EMAILS).
 		if s.isSuperadmin(created.Email) {
-			return s.users.SetRole(ctx, created.ID, domain.RoleSuperadmin)
+			promoted, err := s.users.SetRole(ctx, created.ID, domain.RoleSuperadmin)
+			if err == nil {
+				s.audit.Log(ctx, created.ID, domain.AuditUserRolePromoted, "user", created.ID, nil)
+			}
+			return promoted, err
 		}
 		return created, nil
 	}
@@ -62,7 +69,11 @@ func (s *Service) GetOrCreateUser(ctx context.Context, identity port.AuthUser, w
 	}
 	// Promotion superadmin déclarative (SUPERADMIN_EMAILS).
 	if user.Role != domain.RoleSuperadmin && s.isSuperadmin(user.Email) {
-		return s.users.SetRole(ctx, user.ID, domain.RoleSuperadmin)
+		promoted, err := s.users.SetRole(ctx, user.ID, domain.RoleSuperadmin)
+		if err == nil {
+			s.audit.Log(ctx, user.ID, domain.AuditUserRolePromoted, "user", user.ID, nil)
+		}
+		return promoted, err
 	}
 	return user, nil
 }
