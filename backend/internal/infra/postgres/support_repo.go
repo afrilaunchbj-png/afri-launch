@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 
+	"github.com/google/uuid"
+
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
 	"afrilaunch/backend/internal/infra/postgres/db"
@@ -143,4 +145,94 @@ func toTicket(t db.SupportTicket) domain.SupportTicket {
 		ID: t.ID, UserID: t.UserID, Subject: t.Subject, Message: t.Message,
 		Status: t.Status, CreatedAt: t.CreatedAt, UpdatedAt: t.UpdatedAt,
 	}
+}
+
+func (r *supportRepo) CreateAttachment(ctx context.Context, a domain.SupportAttachment) (domain.SupportAttachment, error) {
+	row, err := r.s.q.CreateSupportAttachment(ctx, db.CreateSupportAttachmentParams{
+		UserID:      a.UserID,
+		Filename:    a.Filename,
+		StorageKey:  a.StorageKey,
+		ContentType: a.ContentType,
+		SizeBytes:   a.SizeBytes,
+	})
+	if err != nil {
+		return domain.SupportAttachment{}, err
+	}
+	return toAttachment(row), nil
+}
+
+func (r *supportRepo) BindAttachments(ctx context.Context, userID string, attachmentIDs []string, ticketID, messageID string) error {
+	if len(attachmentIDs) == 0 {
+		return nil
+	}
+	return r.s.q.BindSupportAttachments(ctx, db.BindSupportAttachmentsParams{
+		UserID:   userID,
+		Column2:  attachmentIDs,
+		TicketID: toUUIDPtr(&ticketID),
+		Column4:  messageID,
+	})
+}
+
+func (r *supportRepo) GetAttachment(ctx context.Context, userID, id string) (domain.SupportAttachment, error) {
+	row, err := r.s.q.GetSupportAttachment(ctx, db.GetSupportAttachmentParams{ID: id, UserID: userID})
+	if err != nil {
+		if isNoRows(err) {
+			return domain.SupportAttachment{}, domain.ErrNotFound
+		}
+		return domain.SupportAttachment{}, err
+	}
+	return toAttachment(row), nil
+}
+
+func (r *supportRepo) ListAttachmentsByTicket(ctx context.Context, ticketID string) ([]domain.SupportAttachment, error) {
+	rows, err := r.s.q.ListSupportAttachmentsByTicket(ctx, toUUIDPtr(&ticketID))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.SupportAttachment, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toAttachment(row))
+	}
+	return out, nil
+}
+
+func (r *supportRepo) ListAttachmentsByMessages(ctx context.Context, messageIDs []string) ([]domain.SupportAttachment, error) {
+	if len(messageIDs) == 0 {
+		return nil, nil
+	}
+	rows, err := r.s.q.ListSupportAttachmentsByMessages(ctx, messageIDs)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.SupportAttachment, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toAttachment(row))
+	}
+	return out, nil
+}
+
+func toAttachment(row db.SupportAttachment) domain.SupportAttachment {
+	ticketID, messageID := "", ""
+	if row.TicketID.Valid {
+		ticketID = uuid.UUID(row.TicketID.Bytes).String()
+	}
+	if row.MessageID.Valid {
+		messageID = uuid.UUID(row.MessageID.Bytes).String()
+	}
+	return domain.SupportAttachment{
+		ID: row.ID, UserID: row.UserID, TicketID: ticketID, MessageID: messageID,
+		Filename: row.Filename, StorageKey: row.StorageKey,
+		ContentType: row.ContentType, SizeBytes: row.SizeBytes, CreatedAt: row.CreatedAt,
+	}
+}
+
+func (r *supportRepo) GetAttachmentByID(ctx context.Context, id string) (domain.SupportAttachment, error) {
+	row, err := r.s.q.GetSupportAttachmentByID(ctx, id)
+	if err != nil {
+		if isNoRows(err) {
+			return domain.SupportAttachment{}, domain.ErrNotFound
+		}
+		return domain.SupportAttachment{}, err
+	}
+	return toAttachment(row), nil
 }

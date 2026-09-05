@@ -3,9 +3,8 @@ import { useTranslation } from "react-i18next"
 import { Coins, LogOut, Rocket } from "lucide-react"
 
 import { LanguageToggle } from "@/components/language-toggle"
-import { buildMainNav, buildMobileNav, futureNav } from "@/components/layout/nav-items"
+import { buildMainNav, buildMobileNav } from "@/components/layout/nav-items"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/features/auth/auth-provider"
@@ -98,24 +97,6 @@ function SidebarNav() {
             {t(item.labelKey)}
           </NavLink>
         ))}
-
-        <div className="pt-3">
-          <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("nav.comingSoon")}
-          </p>
-          {futureNav.map((item) => (
-            <div
-              key={item.labelKey}
-              className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground/60"
-            >
-              <item.icon className="h-4 w-4" />
-              {t(item.labelKey)}
-              <Badge variant="outline" className="ml-auto text-[10px]">
-                {t("nav.soon")}
-              </Badge>
-            </div>
-          ))}
-        </div>
       </nav>
 
       <div className="space-y-1 border-t px-4 py-4">

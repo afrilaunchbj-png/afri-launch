@@ -1,6 +1,7 @@
 import { useForm } from "react-hook-form"
 import { Link } from "react-router"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { z } from "zod"
 import { Headset } from "lucide-react"
@@ -17,6 +18,8 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { AttachmentPicker } from "@/features/support/attachment-picker"
+import { AttachmentList } from "@/features/support/attachment-list"
 import { useCreateTicket, useMyTickets } from "@/features/support/hooks"
 
 const ticketSchema = z.object({
@@ -30,6 +33,7 @@ export default function SupportPage() {
   const { t } = useTranslation()
   const { data: tickets, isLoading } = useMyTickets()
   const create = useCreateTicket()
+  const [files, setFiles] = useState<File[]>([])
 
   const form = useForm<TicketForm>({
     resolver: zodResolver(ticketSchema),
@@ -37,9 +41,15 @@ export default function SupportPage() {
   })
 
   const onSubmit = (values: TicketForm) => {
-    create.mutate(values, {
-      onSuccess: () => form.reset(),
-    })
+    create.mutate(
+      { ...values, files },
+      {
+        onSuccess: () => {
+          form.reset()
+          setFiles([])
+        },
+      },
+    )
   }
 
   return (
@@ -89,6 +99,7 @@ export default function SupportPage() {
                   </FormItem>
                 )}
               />
+              <AttachmentPicker files={files} onChange={setFiles} disabled={create.isPending} />
               <Button type="submit" size="touch" loading={create.isPending}>
                 {t("support:send")}
               </Button>
@@ -116,6 +127,7 @@ export default function SupportPage() {
                       </Badge>
                     </div>
                     <p className="whitespace-pre-wrap text-sm text-muted-foreground">{ticket.message}</p>
+                    <AttachmentList attachments={ticket.attachments} />
                     <p className="text-xs text-muted-foreground">
                       {new Date(ticket.created_at).toLocaleString()}
                     </p>

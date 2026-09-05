@@ -86,6 +86,28 @@ async function requestBlob(path: string): Promise<Blob> {
   return response.blob()
 }
 
+/** upload POSTe un FormData (multipart) — laisse le navigateur fixer le Content-Type. */
+async function requestUpload<T>(path: string, formData: FormData): Promise<T> {
+  let response: Response
+  try {
+    const token = await getAccessToken()
+    response = await fetch(`${API_URL}${path}`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    })
+  } catch {
+    throw new AppError("network", 0, "Impossible de contacter le serveur.")
+  }
+  if (!response.ok) {
+    throw await toAppError(response)
+  }
+  return (await response.json()) as T
+}
+
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
@@ -95,6 +117,7 @@ export const api = {
   patch: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "PATCH", body: body === undefined ? undefined : JSON.stringify(body) }),
   delete: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  upload: <T>(path: string, formData: FormData) => requestUpload<T>(path, formData),
   download: (path: string) => requestBlob(path),
 }
 

@@ -169,3 +169,18 @@ func strClaim(v any) string {
 	s, _ := v.(string)
 	return s
 }
+
+// DenyVerifier implémente port.TokenVerifier en refusant systématiquement
+// les tokens. Utilisé quand Neon Auth n'est pas configuré : l'application
+// démarre (healthz OK), mais toutes les routes protégées renvoient 401 —
+// une variable d'environnement manquante ne doit jamais rendre le backend
+// inaccessible.
+type DenyVerifier struct{}
+
+// NewDenyVerifier construit le vérificateur qui refuse tout.
+func NewDenyVerifier() *DenyVerifier { return &DenyVerifier{} }
+
+// Verify rejette tout token avec une erreur explicite.
+func (d *DenyVerifier) Verify(_ context.Context, _ string) (port.AuthUser, error) {
+	return port.AuthUser{}, errNoBaseURL
+}

@@ -253,6 +253,7 @@ func newTestService(t *testing.T) (*advapp.Service, *fakeProvider, *fakeStore, *
 		campaigns, noopRepo{}, noopInsights{}, noopOps{},
 		nil, nil, nil,
 		advapp.SafetyPolicy{MaxDailySpendMinor: 100_000, MaxCampaigns: 5},
+		nil,
 	)
 	return svc, provider, states, conns, campaigns
 }

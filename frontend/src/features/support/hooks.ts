@@ -4,7 +4,13 @@ import { toast } from "sonner"
 
 import { isAppError } from "@/lib/errors"
 
-import { createTicket, fetchMyTickets, fetchTicketDetail, replyTicket } from "./api"
+import {
+  createTicket,
+  fetchMyTickets,
+  fetchTicketDetail,
+  replyTicket,
+  uploadAttachments,
+} from "./api"
 
 export const supportKeys = {
   all: ["support"] as const,
@@ -24,8 +30,10 @@ export function useCreateTicket() {
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   return useMutation({
-    mutationFn: ({ subject, message }: { subject: string; message: string }) =>
-      createTicket(subject, message),
+    mutationFn: async ({ subject, message, files }: { subject: string; message: string; files: File[] }) => {
+      const attachmentIds = await uploadAttachments(files)
+      return createTicket(subject, message, attachmentIds)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supportKeys.mine() })
       toast.success(t("support:created"))
@@ -38,7 +46,10 @@ export function useReplyTicket(id: string) {
   const queryClient = useQueryClient()
   const { t } = useTranslation()
   return useMutation({
-    mutationFn: (content: string) => replyTicket(id, content),
+    mutationFn: async ({ content, files }: { content: string; files: File[] }) => {
+      const attachmentIds = await uploadAttachments(files)
+      return replyTicket(id, content, attachmentIds)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: supportKeys.ticket(id) })
       queryClient.invalidateQueries({ queryKey: supportKeys.mine() })

@@ -9,11 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"afrilaunch/backend/internal/application/ai"
+	"afrilaunch/backend/internal/application/audit"
 	"afrilaunch/backend/internal/application/document"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/application/videoad"
@@ -44,11 +46,15 @@ type Worker struct {
 	video          *videoad.Service
 	renderer       port.VideoRenderer
 	heygenDefaults videoad.ProviderDefaults
+
+	// Journal d'activités (best effort, optionnel).
+	audit *audit.Recorder
 }
 
 // NewWorker construit le worker et démarre un pool de goroutines.
 // events est optionnel (nil = pas de notifications temps réel).
 // video/renderer sont optionnels (nil = kind video_ad indisponible).
+// auditRec est optionnel (nil = pas de journal).
 func NewWorker(
 	jobs port.JobRepository,
 	credits port.CreditRepository,
@@ -64,6 +70,7 @@ func NewWorker(
 	video *videoad.Service,
 	renderer port.VideoRenderer,
 	heygenDefaults videoad.ProviderDefaults,
+	auditRec *audit.Recorder,
 ) *Worker {
 	w := &Worker{
 		tasks:          make(chan task, 64),
@@ -81,6 +88,7 @@ func NewWorker(
 		video:          video,
 		renderer:       renderer,
 		heygenDefaults: heygenDefaults,
+		audit:          auditRec,
 	}
 	for i := 0; i < 3; i++ {
 		go w.run()
@@ -120,6 +128,15 @@ func (w *Worker) Dispatch(ctx context.Context, p DispatchParams) (domain.Generat
 		return domain.GenerationJob{}, err
 	}
 
+	// Journal : génération lancée (coût, kind, contexte).
+	if w.audit != nil {
+		md := map[string]any{"kind": p.Kind, "cost": cost.Credits, "operation": op}
+		if p.ProjectID != nil {
+			md["project_id"] = *p.ProjectID
+		}
+		w.audit.Log(ctx, p.UserID, domain.AuditGenerationDispatched, "generation_job", job.ID, md)
+	}
+
 	w.tasks <- task{userID: p.UserID, jobID: job.ID}
 	return job, nil
 }
@@ -145,6 +162,10 @@ func (w *Worker) process(t task) {
 	if err != nil {
 		_ = w.credits.Release(ctx, job.UserID, "job:"+job.ID)
 		_, _ = w.jobs.Fail(ctx, job.ID, err.Error())
+		if w.audit != nil {
+			w.audit.Log(ctx, job.UserID, domain.AuditGenerationFailed, "generation_job", job.ID,
+				map[string]any{"kind": job.Kind, "error": err.Error()})
+		}
 		if job.ProjectID != nil {
 			_, _ = w.projects.UpdateStatus(ctx, job.UserID, *job.ProjectID, domain.ProjectFailed)
 		}
@@ -157,7 +178,18 @@ func (w *Worker) process(t task) {
 
 	_, _ = w.credits.Consume(ctx, job.UserID, "job:"+job.ID)
 	_, _ = w.jobs.Complete(ctx, job.ID, result, job.Cost)
+	if w.audit != nil {
+		w.audit.Log(ctx, job.UserID, domain.AuditGenerationCompleted, "generation_job", job.ID,
+			map[string]any{"kind": job.Kind, "cost": job.Cost})
+	}
 	w.publishEvent(job, domain.JobCompleted, "")
+
+	// Comptabilise les crédits consommés sur le projet (affichage FE).
+	if job.ProjectID != nil && job.Cost > 0 {
+		if _, err := w.projects.AddCredits(ctx, *job.ProjectID, job.Cost); err != nil {
+			slog.Warn("cannot add credits to project", "project", *job.ProjectID, "err", err)
+		}
+	}
 
 	if job.ProjectID != nil {
 		switch job.Kind {

@@ -259,21 +259,30 @@ func (h *AdminHandler) CreditTransactions(w http.ResponseWriter, r *http.Request
 
 // TicketDetail gère GET /admin/tickets/{id} : détail + fil de discussion.
 func (h *AdminHandler) TicketDetail(w http.ResponseWriter, r *http.Request) {
-	ticket, messages, err := h.svc.TicketDetail(r.Context(), chi.URLParam(r, "id"))
+	ticketID := chi.URLParam(r, "id")
+	ticket, messages, err := h.svc.TicketDetail(r.Context(), ticketID)
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	ticketFiles, messageFiles, err := h.svc.TicketAttachments(r.Context(), ticketID)
 	if err != nil {
 		writeAPIError(w, r, err)
 		return
 	}
 	out := make([]ticketMessageDTO, 0, len(messages))
 	for _, m := range messages {
-		out = append(out, toTicketMessageDTO(m))
+		dto := toTicketMessageDTO(m)
+		dto.Attachments = toAttachmentDTOs(messageFiles[m.ID])
+		out = append(out, dto)
 	}
 	writeData(w, http.StatusOK, map[string]any{
 		"ticket": adminTicketDTO{
 			ID: ticket.ID, UserEmail: ticket.UserEmail, UserName: ticket.UserName,
 			Subject: ticket.Subject, Message: ticket.Message, Status: ticket.Status, CreatedAt: ticket.CreatedAt,
 		},
-		"messages": out,
+		"messages":    out,
+		"attachments": toAttachmentDTOs(ticketFiles),
 	})
 }
 

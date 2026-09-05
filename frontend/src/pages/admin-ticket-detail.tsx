@@ -5,6 +5,7 @@ import { ArrowLeft, CheckCircle2, Send } from "lucide-react"
 
 import { AdminNav } from "@/features/admin/admin-nav"
 import { useAdminReplyTicket, useAdminResolveTicket, useAdminTicketDetail } from "@/features/admin/hooks"
+import { AttachmentList } from "@/features/support/attachment-list"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -88,6 +89,7 @@ export default function AdminTicketDetailPage() {
               <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-3 text-sm">
                 <p className="whitespace-pre-wrap">{ticket.message}</p>
               </div>
+              <AttachmentList attachments={data.attachments} />
               <p className="text-[11px] text-muted-foreground">{new Date(ticket.created_at).toLocaleString()}</p>
             </div>
           </div>
@@ -106,6 +108,7 @@ export default function AdminTicketDetailPage() {
                 >
                   <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
+                <AttachmentList attachments={m.attachments} />
                 <p className={cn("text-[11px] text-muted-foreground", m.is_admin && "text-right")}>
                   {new Date(m.created_at).toLocaleString()}
                 </p>

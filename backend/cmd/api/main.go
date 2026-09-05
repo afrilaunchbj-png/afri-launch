@@ -76,21 +76,28 @@ func main() {
 	researchRepo := postgres.NewResearchRepository(store)
 
 	// Stockage objet : S3-compatible (Neon) si configuré, sinon disque local (dev).
+	// Une configuration S3 invalide dégrade en stockage local (warning), elle
+	// ne doit jamais empêcher le backend de démarrer.
 	var objStorage port.Storage = storage.NewLocalStorage(cfg.StorageDir)
 	if cfg.S3Bucket != "" {
 		s3Store, err := storage.NewS3(ctx, cfg.S3Endpoint, cfg.S3Region, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3Bucket, cfg.S3PathStyle)
 		if err != nil {
-			slog.Error("cannot configure s3 storage", "err", err)
-			os.Exit(1)
+			slog.Warn("cannot configure s3 storage — fallback sur le stockage local", "err", err)
+		} else {
+			objStorage = s3Store
+			slog.Info("object storage", "provider", "s3", "bucket", cfg.S3Bucket)
 		}
-		objStorage = s3Store
-		slog.Info("object storage", "provider", "s3", "bucket", cfg.S3Bucket)
 	}
 
-	verifier, err := authinfra.NewNeonVerifier(cfg.NeonAuthBaseURL, cfg.NeonAuthJWKSURL)
-	if err != nil {
-		slog.Error("cannot configure auth verifier", "err", err)
-		os.Exit(1)
+	// Vérifieur JWT : si Neon Auth n'est pas configuré, on démarre quand même
+	// (healthz OK) avec un vérificateur qui refuse tout — les routes
+	// protégées renvoient 401 au lieu de rendre le backend inaccessible.
+	var verifier port.TokenVerifier
+	if v, err := authinfra.NewNeonVerifier(cfg.NeonAuthBaseURL, cfg.NeonAuthJWKSURL); err != nil {
+		slog.Warn("Neon Auth non configuré — routes protégées indisponibles (401)", "err", err)
+		verifier = authinfra.NewDenyVerifier()
+	} else {
+		verifier = v
 	}
 
 	// Recorder d'audit (journal des opérations sensibles).
@@ -121,29 +128,30 @@ func main() {
 
 	// Worker asynchrone de génération (idées, ebook, assets, recherche, vidéos).
 	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc, eventBus,
-		videoadSvc, videoRenderer, videoadapp.ProviderDefaults{AvatarID: cfg.HeyGenDefaultAvatarID, VoiceID: cfg.HeyGenDefaultVoiceID})
+		videoadSvc, videoRenderer, videoadapp.ProviderDefaults{AvatarID: cfg.HeyGenDefaultAvatarID, VoiceID: cfg.HeyGenDefaultVoiceID}, auditRec)
 
 	// Services applicatifs.
 	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo, creditRepo, aiSvc)
-	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo, assetRepo)
+	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo, assetRepo, auditRec)
 	assetSvc := assetsapp.NewService(assetRepo, objStorage)
 	researchSvc := researchapp.NewService(worker, researchRepo)
 	prefRepo := postgres.NewPreferenceRepository(store)
 	prefSvc := preferencesapp.NewService(prefRepo)
 	supportRepo := postgres.NewSupportRepository(store)
-	supportSvc := supportapp.NewService(supportRepo, auditRec)
+	supportSvc := supportapp.NewService(supportRepo, auditRec, objStorage)
 	adminRepo := postgres.NewAdminRepository(store)
 	adminSvc := adminapp.NewService(adminRepo, supportRepo, auditRec)
 	dashSvc := dashboardapp.NewService(postgres.NewDashboardRepository(store))
 	chatRepo := postgres.NewConversationRepository(store)
 	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, prefRepo, aiSvc, eventBus)
 
-	// Intégrations publicitaires (ADR-017) : Meta au MVP, providers additionnels
-	// par simple enregistrement dans la registry.
+	// Intégrations publicitaires (ADR-017) : providers activés par env —
+	// une clé manquante dégrade le module (erreurs explicites) sans bloquer
+	// le démarrage du backend.
 	encryptor, err := cryptoinfra.NewEncryptor(cfg.EncryptionKey, cfg.EncryptionKeyVersion)
 	if err != nil {
-		slog.Error("cannot configure encryption", "err", err)
-		os.Exit(1)
+		slog.Warn("ENCRYPTION_KEY manquante ou trop courte — intégrations publicitaires désactivées", "err", err)
+		encryptor = cryptoinfra.NewDisabled()
 	}
 	providers := advapp.ProviderRegistry{}
 	if cfg.MetaAppID != "" && cfg.MetaAppSecret != "" {
@@ -180,6 +188,7 @@ func main() {
 		objStorage,
 		adSigner,
 		advapp.DefaultSafetyPolicy(),
+		auditRec,
 	)
 
 	// Handlers HTTP.

@@ -20,5 +20,9 @@
   "status": {
     "open": "Open",
     "resolved": "Resolved"
-  }
+  },
+  "attachFiles": "Attach screenshots or files",
+  "attachmentTooLarge": "{{name}}: file too large (max 5 MB)",
+  "removeAttachment": "Remove attachment",
+  "downloadAttachment": "Download attachment"
 }

@@ -8,7 +8,33 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
+
+const bindSupportAttachments = `-- name: BindSupportAttachments :exec
+UPDATE support_attachments
+SET ticket_id = $3,
+    message_id = NULLIF($4, '')::uuid
+WHERE id = ANY($2::uuid[]) AND user_id = $1 AND ticket_id IS NULL AND message_id IS NULL
+`
+
+type BindSupportAttachmentsParams struct {
+	UserID   string      `json:"user_id"`
+	Column2  []string    `json:"column_2"`
+	TicketID pgtype.UUID `json:"ticket_id"`
+	Column4  interface{} `json:"column_4"`
+}
+
+func (q *Queries) BindSupportAttachments(ctx context.Context, arg BindSupportAttachmentsParams) error {
+	_, err := q.db.Exec(ctx, bindSupportAttachments,
+		arg.UserID,
+		arg.Column2,
+		arg.TicketID,
+		arg.Column4,
+	)
+	return err
+}
 
 const countAllTickets = `-- name: CountAllTickets :one
 SELECT count(*) FROM support_tickets t
@@ -27,6 +53,43 @@ func (q *Queries) CountAllTickets(ctx context.Context, arg CountAllTicketsParams
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const createSupportAttachment = `-- name: CreateSupportAttachment :one
+INSERT INTO support_attachments (user_id, filename, storage_key, content_type, size_bytes)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, user_id, ticket_id, message_id, filename, storage_key, content_type, size_bytes, created_at
+`
+
+type CreateSupportAttachmentParams struct {
+	UserID      string `json:"user_id"`
+	Filename    string `json:"filename"`
+	StorageKey  string `json:"storage_key"`
+	ContentType string `json:"content_type"`
+	SizeBytes   int64  `json:"size_bytes"`
+}
+
+func (q *Queries) CreateSupportAttachment(ctx context.Context, arg CreateSupportAttachmentParams) (SupportAttachment, error) {
+	row := q.db.QueryRow(ctx, createSupportAttachment,
+		arg.UserID,
+		arg.Filename,
+		arg.StorageKey,
+		arg.ContentType,
+		arg.SizeBytes,
+	)
+	var i SupportAttachment
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TicketID,
+		&i.MessageID,
+		&i.Filename,
+		&i.StorageKey,
+		&i.ContentType,
+		&i.SizeBytes,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const createTicket = `-- name: CreateTicket :one
@@ -52,6 +115,53 @@ func (q *Queries) CreateTicket(ctx context.Context, arg CreateTicketParams) (Sup
 		&i.Status,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getSupportAttachment = `-- name: GetSupportAttachment :one
+SELECT id, user_id, ticket_id, message_id, filename, storage_key, content_type, size_bytes, created_at FROM support_attachments WHERE id = $1 AND user_id = $2
+`
+
+type GetSupportAttachmentParams struct {
+	ID     string `json:"id"`
+	UserID string `json:"user_id"`
+}
+
+func (q *Queries) GetSupportAttachment(ctx context.Context, arg GetSupportAttachmentParams) (SupportAttachment, error) {
+	row := q.db.QueryRow(ctx, getSupportAttachment, arg.ID, arg.UserID)
+	var i SupportAttachment
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TicketID,
+		&i.MessageID,
+		&i.Filename,
+		&i.StorageKey,
+		&i.ContentType,
+		&i.SizeBytes,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getSupportAttachmentByID = `-- name: GetSupportAttachmentByID :one
+SELECT id, user_id, ticket_id, message_id, filename, storage_key, content_type, size_bytes, created_at FROM support_attachments WHERE id = $1
+`
+
+func (q *Queries) GetSupportAttachmentByID(ctx context.Context, id string) (SupportAttachment, error) {
+	row := q.db.QueryRow(ctx, getSupportAttachmentByID, id)
+	var i SupportAttachment
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TicketID,
+		&i.MessageID,
+		&i.Filename,
+		&i.StorageKey,
+		&i.ContentType,
+		&i.SizeBytes,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -214,6 +324,76 @@ func (q *Queries) ListAllTickets(ctx context.Context, arg ListAllTicketsParams) 
 			&i.UpdatedAt,
 			&i.UserEmail,
 			&i.UserName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSupportAttachmentsByMessages = `-- name: ListSupportAttachmentsByMessages :many
+SELECT id, user_id, ticket_id, message_id, filename, storage_key, content_type, size_bytes, created_at FROM support_attachments
+WHERE message_id = ANY($1::uuid[])
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListSupportAttachmentsByMessages(ctx context.Context, dollar_1 []string) ([]SupportAttachment, error) {
+	rows, err := q.db.Query(ctx, listSupportAttachmentsByMessages, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SupportAttachment
+	for rows.Next() {
+		var i SupportAttachment
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TicketID,
+			&i.MessageID,
+			&i.Filename,
+			&i.StorageKey,
+			&i.ContentType,
+			&i.SizeBytes,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSupportAttachmentsByTicket = `-- name: ListSupportAttachmentsByTicket :many
+SELECT id, user_id, ticket_id, message_id, filename, storage_key, content_type, size_bytes, created_at FROM support_attachments WHERE ticket_id = $1 ORDER BY created_at ASC
+`
+
+func (q *Queries) ListSupportAttachmentsByTicket(ctx context.Context, ticketID pgtype.UUID) ([]SupportAttachment, error) {
+	rows, err := q.db.Query(ctx, listSupportAttachmentsByTicket, ticketID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []SupportAttachment
+	for rows.Next() {
+		var i SupportAttachment
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.TicketID,
+			&i.MessageID,
+			&i.Filename,
+			&i.StorageKey,
+			&i.ContentType,
+			&i.SizeBytes,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}

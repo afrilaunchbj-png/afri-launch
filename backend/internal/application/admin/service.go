@@ -121,3 +121,29 @@ func (s *Service) ResolveTicket(ctx context.Context, adminID, ticketID string) (
 func (s *Service) ListAuditLogs(ctx context.Context, f port.AuditFilter, limit, offset int) ([]domain.AuditLog, int64, error) {
 	return s.repo.ListAuditLogs(ctx, f, normalize(limit), offset)
 }
+
+// TicketAttachments renvoie les pièces jointes d'un ticket : celles du
+// message initial (ticket) et celles indexées par message du fil.
+func (s *Service) TicketAttachments(ctx context.Context, ticketID string) (ticketFiles []domain.SupportAttachment, messageFiles map[string][]domain.SupportAttachment, err error) {
+	ticketFiles, err = s.tickets.ListAttachmentsByTicket(ctx, ticketID)
+	if err != nil {
+		return nil, nil, err
+	}
+	messages, err := s.tickets.ListMessages(ctx, ticketID)
+	if err != nil {
+		return nil, nil, err
+	}
+	ids := make([]string, 0, len(messages))
+	for _, m := range messages {
+		ids = append(ids, m.ID)
+	}
+	all, err := s.tickets.ListAttachmentsByMessages(ctx, ids)
+	if err != nil {
+		return nil, nil, err
+	}
+	messageFiles = make(map[string][]domain.SupportAttachment)
+	for _, a := range all {
+		messageFiles[a.MessageID] = append(messageFiles[a.MessageID], a)
+	}
+	return ticketFiles, messageFiles, nil
+}

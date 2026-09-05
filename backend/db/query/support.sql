@@ -49,3 +49,28 @@ JOIN users u ON u.id = m.author_id;
 
 -- name: SetTicketStatus :one
 UPDATE support_tickets SET status = $2, updated_at = now() WHERE id = $1 RETURNING *;
+
+-- name: CreateSupportAttachment :one
+INSERT INTO support_attachments (user_id, filename, storage_key, content_type, size_bytes)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING *;
+
+-- name: BindSupportAttachments :exec
+UPDATE support_attachments
+SET ticket_id = $3,
+    message_id = NULLIF($4, '')::uuid
+WHERE id = ANY($2::uuid[]) AND user_id = $1 AND ticket_id IS NULL AND message_id IS NULL;
+
+-- name: GetSupportAttachment :one
+SELECT * FROM support_attachments WHERE id = $1 AND user_id = $2;
+
+-- name: ListSupportAttachmentsByTicket :many
+SELECT * FROM support_attachments WHERE ticket_id = $1 ORDER BY created_at ASC;
+
+-- name: ListSupportAttachmentsByMessages :many
+SELECT * FROM support_attachments
+WHERE message_id = ANY($1::uuid[])
+ORDER BY created_at ASC;
+
+-- name: GetSupportAttachmentByID :one
+SELECT * FROM support_attachments WHERE id = $1;

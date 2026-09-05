@@ -89,6 +89,14 @@ export interface AdminAuditLog {
   created_at: string
 }
 
+export interface SupportAttachment {
+  id: string
+  filename: string
+  content_type: string
+  size_bytes: number
+  is_image: boolean
+}
+
 export interface TicketMessage {
   id: string
   author_id: string
@@ -96,11 +104,13 @@ export interface TicketMessage {
   is_admin: boolean
   content: string
   created_at: string
+  attachments?: SupportAttachment[]
 }
 
 export interface TicketDetail {
   ticket: AdminTicket
   messages: TicketMessage[]
+  attachments?: SupportAttachment[]
 }
 
 /** Paramètres de liste admin : pagination + filtres serveur. */

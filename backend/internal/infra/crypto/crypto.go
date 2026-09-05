@@ -21,6 +21,14 @@ type Encryptor struct {
 	version string
 }
 
+// NewDisabled renvoie un chiffreur inopérant : toute opération renvoie une
+// erreur explicite. Utilisé quand ENCRYPTION_KEY est absente — l'application
+// démarre quand même (les intégrations publicitaires renverront une erreur
+// claire au lieu de rendre le backend inaccessible).
+func NewDisabled() *Encryptor {
+	return &Encryptor{version: "disabled"}
+}
+
 // NewEncryptor construit un chiffreur AES-256-GCM. La clé est dérivée en
 // 32 octets via SHA-256 (accepte toute passphrase ≥ 32 caractères).
 func NewEncryptor(secret, version string) (*Encryptor, error) {
@@ -47,6 +55,9 @@ func (e *Encryptor) Encrypt(plaintext string) (string, error) {
 	if plaintext == "" {
 		return "", nil
 	}
+	if e.aead == nil {
+		return "", errors.New("crypto: chiffrement non configuré (ENCRYPTION_KEY manquante)")
+	}
 	nonce := make([]byte, e.aead.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", fmt.Errorf("crypto: nonce: %w", err)
@@ -61,6 +72,9 @@ func (e *Encryptor) Encrypt(plaintext string) (string, error) {
 func (e *Encryptor) Decrypt(value string) (string, error) {
 	if value == "" {
 		return "", nil
+	}
+	if e.aead == nil {
+		return "", errors.New("crypto: chiffrement non configuré (ENCRYPTION_KEY manquante)")
 	}
 	parts := strings.SplitN(value, ":", 3)
 	if len(parts) != 3 {

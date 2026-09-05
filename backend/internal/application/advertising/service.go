@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"afrilaunch/backend/internal/application/audit"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
 )
@@ -49,6 +50,7 @@ type Service struct {
 	signer      port.StorageSigner // optionnel (S3) : URLs signées pour les creatives
 	policy      SafetyPolicy
 	stateTTL    time.Duration
+	audit       *audit.Recorder
 }
 
 // NewService construit le service advertising.
@@ -65,13 +67,14 @@ func NewService(
 	storage port.Storage,
 	signer port.StorageSigner,
 	policy SafetyPolicy,
+	auditRec *audit.Recorder,
 ) *Service {
 	return &Service{
 		providers: providers, encryptor: encryptor, states: states,
 		connections: connections, campaigns: campaigns, creatives: creatives,
 		insights: insights, operations: operations, assets: assets,
 		storage: storage, signer: signer, policy: policy,
-		stateTTL: 10 * time.Minute,
+		stateTTL: 10 * time.Minute, audit: auditRec,
 	}
 }
 
@@ -157,6 +160,13 @@ func (s *Service) HandleCallback(ctx context.Context, provider, code, state, red
 	return s.connections.Get(ctx, st.UserID, conn.ID)
 }
 
+// logAudit enregistre une action publicitaire (best effort).
+func (s *Service) logAudit(ctx context.Context, userID, action, entity, entityID string, md map[string]any) {
+	if s.audit != nil {
+		s.audit.Log(ctx, userID, action, entity, entityID, md)
+	}
+}
+
 // ListAccounts renvoie les comptes publicitaires accessibles via la connexion.
 func (s *Service) ListAccounts(ctx context.Context, userID, provider string) ([]domain.AdAccount, error) {
 	p, conn, err := s.activeConnection(ctx, userID, provider)
@@ -203,6 +213,7 @@ func (s *Service) Disconnect(ctx context.Context, userID, provider string) error
 			slog.Warn("advertising: revoke failed", "provider", provider, "err", err)
 		}
 	}
+	s.logAudit(ctx, userID, domain.AuditConnectionDisconnected, "ad_connection", conn.ID, map[string]any{"provider": provider})
 	return s.connections.SetStatus(ctx, userID, conn.ID, domain.ConnDisconnected, "")
 }
 
@@ -298,6 +309,8 @@ func (s *Service) CreateCampaign(ctx context.Context, userID string, in CreateCa
 	if err := s.operations.Complete(ctx, op.ID, saved.ExternalCampaignID); err != nil {
 		return domain.Campaign{}, err
 	}
+	s.logAudit(ctx, userID, domain.AuditCampaignCreated, "ad_campaign", saved.ID,
+		map[string]any{"provider": in.Provider, "name": in.Name, "budget_minor": in.BudgetMinor})
 
 	// Creative optionnelle (vidéo/image de la bibliothèque d'assets).
 	if in.AssetID != "" {
@@ -356,6 +369,8 @@ func (s *Service) publishCreative(ctx context.Context, userID string, p port.AdP
 	if err := s.creatives.UpdateExternal(ctx, userID, cre.ID, externalID, "active"); err != nil {
 		return err
 	}
+	s.logAudit(ctx, userID, domain.AuditCreativePublished, "ad_creative", cre.ID,
+		map[string]any{"provider": conn.Provider, "campaign_id": campaignID, "external_id": externalID})
 	return s.operations.Complete(ctx, op.ID, externalID)
 }
 
@@ -442,6 +457,8 @@ func (s *Service) SetCampaignStatus(ctx context.Context, userID, campaignID, sta
 		return domain.Campaign{}, opErr
 	}
 	campaign.Status = status
+	s.logAudit(ctx, userID, domain.AuditCampaignStatusChanged, "ad_campaign", campaignID,
+		map[string]any{"status": status, "provider": conn.Provider})
 	return s.campaigns.Update(ctx, userID, campaignID, domain.Campaign{Status: status})
 }
 

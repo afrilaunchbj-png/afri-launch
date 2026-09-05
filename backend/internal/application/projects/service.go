@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"afrilaunch/backend/internal/application/audit"
 	"afrilaunch/backend/internal/application/jobs"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
@@ -16,11 +17,12 @@ type Service struct {
 	projects port.ProjectRepository
 	ideas    port.IdeaRepository
 	assets   port.AssetRepository
+	audit    *audit.Recorder
 }
 
 // NewService construit le service de projets.
-func NewService(jobs *jobs.Worker, projects port.ProjectRepository, ideas port.IdeaRepository, assets port.AssetRepository) *Service {
-	return &Service{jobs: jobs, projects: projects, ideas: ideas, assets: assets}
+func NewService(jobs *jobs.Worker, projects port.ProjectRepository, ideas port.IdeaRepository, assets port.AssetRepository, auditRec *audit.Recorder) *Service {
+	return &Service{jobs: jobs, projects: projects, ideas: ideas, assets: assets, audit: auditRec}
 }
 
 // Create crée un projet à partir d'une idée (et d'une opportunité).
@@ -28,13 +30,17 @@ func (s *Service) Create(ctx context.Context, userID string, opportunityID, idea
 	if title == "" {
 		title = "Projet"
 	}
-	return s.projects.Create(ctx, domain.Project{
+	project, err := s.projects.Create(ctx, domain.Project{
 		UserID:        userID,
 		OpportunityID: opportunityID,
 		IdeaID:        ideaID,
 		Title:         title,
 		Status:        domain.ProjectIdeaSelected,
 	})
+	if err == nil && s.audit != nil {
+		s.audit.Log(ctx, userID, domain.AuditProjectCreated, "project", project.ID, map[string]any{"title": project.Title})
+	}
+	return project, err
 }
 
 // Get renvoie un projet.

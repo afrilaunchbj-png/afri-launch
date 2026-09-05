@@ -92,6 +92,8 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/support/tickets", d.Support.ListMine)
 			r.Get("/support/tickets/{id}", d.Support.GetTicket)
 			r.Post("/support/tickets/{id}/messages", d.Support.Reply)
+			r.Post("/support/attachments", d.Support.UploadAttachment)
+			r.Get("/support/attachments/{id}/download", d.Support.DownloadAttachment)
 
 			// Intégrations publicitaires (ADR-017).
 			r.Get("/integrations", d.Integrations.List)
@@ -120,6 +122,7 @@ func NewRouter(d Deps) http.Handler {
 				r.Get("/tickets/{id}", d.Admin.TicketDetail)
 				r.Post("/tickets/{id}/resolve", d.Admin.ResolveTicket)
 				r.Post("/tickets/{id}/messages", d.Admin.ReplyTicket)
+				r.Get("/support/attachments/{id}/download", d.Support.AdminDownloadAttachment)
 				r.Get("/projects", d.Admin.Projects)
 				r.Get("/conversations", d.Admin.Conversations)
 				r.Get("/assets", d.Admin.Assets)

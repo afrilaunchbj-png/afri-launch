@@ -16,11 +16,6 @@ export interface NavItem {
   labelKey: string
 }
 
-export interface DisabledNavItem {
-  icon: LucideIcon
-  labelKey: string
-}
-
 /**
  * buildMainNav construit la navigation principale selon le rôle.
  * Les items Administration n'apparaissent que pour un superadmin.
@@ -48,4 +43,3 @@ export function buildMobileNav(isSuperadmin: boolean): NavItem[] {
   )
 }
 
-export const futureNav: DisabledNavItem[] = []

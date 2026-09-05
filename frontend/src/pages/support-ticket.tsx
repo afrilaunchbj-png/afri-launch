@@ -1,9 +1,11 @@
 import { useState } from "react"
 import { Link, useParams } from "react-router"
 import { useTranslation } from "react-i18next"
-import { ArrowLeft, Headset, Send } from "lucide-react"
+import { ArrowLeft, Headset } from "lucide-react"
 
 import { useReplyTicket, useTicketDetail } from "@/features/support/hooks"
+import { AttachmentList } from "@/features/support/attachment-list"
+import { AttachmentPicker } from "@/features/support/attachment-picker"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,6 +19,7 @@ export default function SupportTicketPage() {
   const { data, isLoading } = useTicketDetail(id)
   const reply = useReplyTicket(id)
   const [content, setContent] = useState("")
+  const [files, setFiles] = useState<File[]>([])
 
   if (isLoading) {
     return (
@@ -42,8 +45,16 @@ export default function SupportTicketPage() {
 
   const submitReply = () => {
     const trimmed = content.trim()
-    if (!trimmed) return
-    reply.mutate(trimmed, { onSuccess: () => setContent("") })
+    if (!trimmed && files.length === 0) return
+    reply.mutate(
+      { content: trimmed, files },
+      {
+        onSuccess: () => {
+          setContent("")
+          setFiles([])
+        },
+      },
+    )
   }
 
   return (
@@ -79,6 +90,7 @@ export default function SupportTicketPage() {
               <div className="rounded-2xl rounded-tl-sm bg-muted px-4 py-3 text-sm">
                 <p className="whitespace-pre-wrap">{ticket.message}</p>
               </div>
+              <AttachmentList attachments={ticket.attachments} />
               <p className="text-[11px] text-muted-foreground">{new Date(ticket.created_at).toLocaleString()}</p>
             </div>
           </div>
@@ -97,6 +109,7 @@ export default function SupportTicketPage() {
                 >
                   <p className="whitespace-pre-wrap">{m.content}</p>
                 </div>
+                <AttachmentList attachments={m.attachments} />
                 <p className={cn("text-[11px] text-muted-foreground", m.is_admin && "text-right")}>
                   {new Date(m.created_at).toLocaleString()}
                 </p>
@@ -114,9 +127,13 @@ export default function SupportTicketPage() {
             onChange={(e) => setContent(e.target.value)}
             placeholder={t("support:replyPlaceholder")}
           />
+          <AttachmentPicker files={files} onChange={setFiles} disabled={reply.isPending} />
           <div className="flex justify-end">
-            <Button onClick={submitReply} loading={reply.isPending} disabled={!content.trim()}>
-              <Send className="h-4 w-4" />
+            <Button
+              onClick={submitReply}
+              loading={reply.isPending}
+              disabled={!content.trim() && files.length === 0}
+            >
               {t("support:sendReply")}
             </Button>
           </div>

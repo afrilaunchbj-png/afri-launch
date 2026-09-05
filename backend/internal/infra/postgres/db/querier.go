@@ -14,6 +14,7 @@ type Querier interface {
 	AddCredits(ctx context.Context, arg AddCreditsParams) (CreditAccount, error)
 	AddProjectCredits(ctx context.Context, arg AddProjectCreditsParams) (Project, error)
 	AddReserved(ctx context.Context, arg AddReservedParams) (CreditAccount, error)
+	BindSupportAttachments(ctx context.Context, arg BindSupportAttachmentsParams) error
 	CompleteJob(ctx context.Context, arg CompleteJobParams) (GenerationJob, error)
 	CompleteProviderOperation(ctx context.Context, arg CompleteProviderOperationParams) error
 	ConsumeOAuthState(ctx context.Context, arg ConsumeOAuthStateParams) (OauthState, error)
@@ -53,6 +54,7 @@ type Querier interface {
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProviderOperation(ctx context.Context, arg CreateProviderOperationParams) (ProviderOperation, error)
 	CreateResearchRequest(ctx context.Context, arg CreateResearchRequestParams) (ResearchRequest, error)
+	CreateSupportAttachment(ctx context.Context, arg CreateSupportAttachmentParams) (SupportAttachment, error)
 	CreateTicket(ctx context.Context, arg CreateTicketParams) (SupportTicket, error)
 	FailJob(ctx context.Context, arg FailJobParams) (GenerationJob, error)
 	FailProviderOperation(ctx context.Context, arg FailProviderOperationParams) error
@@ -74,6 +76,8 @@ type Querier interface {
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetProviderOperation(ctx context.Context, arg GetProviderOperationParams) (ProviderOperation, error)
 	GetResearchRequest(ctx context.Context, arg GetResearchRequestParams) (ResearchRequest, error)
+	GetSupportAttachment(ctx context.Context, arg GetSupportAttachmentParams) (SupportAttachment, error)
+	GetSupportAttachmentByID(ctx context.Context, id string) (SupportAttachment, error)
 	GetTicket(ctx context.Context, id string) (SupportTicket, error)
 	GetTicketWithUser(ctx context.Context, id string) (GetTicketWithUserRow, error)
 	GetUserByID(ctx context.Context, id string) (User, error)
@@ -113,6 +117,8 @@ type Querier interface {
 	ListProjectsByUser(ctx context.Context, userID string) ([]Project, error)
 	ListProviderOperations(ctx context.Context, arg ListProviderOperationsParams) ([]ProviderOperation, error)
 	ListSavedOpportunityIDs(ctx context.Context, userID string) ([]string, error)
+	ListSupportAttachmentsByMessages(ctx context.Context, dollar_1 []string) ([]SupportAttachment, error)
+	ListSupportAttachmentsByTicket(ctx context.Context, ticketID pgtype.UUID) ([]SupportAttachment, error)
 	ListTicketMessages(ctx context.Context, ticketID string) ([]ListTicketMessagesRow, error)
 	ListTicketsByUser(ctx context.Context, userID string) ([]SupportTicket, error)
 	// Suivi global superadmin.

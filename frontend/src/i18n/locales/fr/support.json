@@ -20,5 +20,9 @@
   "status": {
     "open": "En cours",
     "resolved": "Résolue"
-  }
+  },
+  "attachFiles": "Joindre des captures d'écran ou des fichiers",
+  "attachmentTooLarge": "{{name}} : fichier trop volumineux (max 5 Mo)",
+  "removeAttachment": "Retirer la pièce jointe",
+  "downloadAttachment": "Télécharger la pièce jointe"
 }

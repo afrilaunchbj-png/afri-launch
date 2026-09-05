@@ -337,6 +337,18 @@ type SavedOpportunity struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
+type SupportAttachment struct {
+	ID          string      `json:"id"`
+	UserID      string      `json:"user_id"`
+	TicketID    pgtype.UUID `json:"ticket_id"`
+	MessageID   pgtype.UUID `json:"message_id"`
+	Filename    string      `json:"filename"`
+	StorageKey  string      `json:"storage_key"`
+	ContentType string      `json:"content_type"`
+	SizeBytes   int64       `json:"size_bytes"`
+	CreatedAt   time.Time   `json:"created_at"`
+}
+
 type SupportTicket struct {
 	ID        string    `json:"id"`
 	UserID    string    `json:"user_id"`
