@@ -86,6 +86,7 @@ backend/
 | POST | `/api/v1/projects/{id}/ebook` | JWT | Génère l'ebook PDF (job, 20 crédits) |
 | POST | `/api/v1/projects/{id}/cover` | JWT | Génère la couverture (job, 3 crédits) |
 | POST | `/api/v1/projects/{id}/sales-page` | JWT | Génère la page de vente (job, 5 crédits) |
+| POST | `/api/v1/projects/{id}/video-ads` | JWT | Génère une vidéo publicitaire (job `video_ad`, 15 crédits, params : durée/ratio/CTA/instructions) |
 | GET | `/api/v1/projects/{id}/assets` | JWT | Liste les assets générés |
 | GET | `/api/v1/assets/{id}/download` | JWT | Télécharge un asset (binaire) |
 | GET | `/api/v1/jobs/{id}` | JWT | Statut d'un job de génération |

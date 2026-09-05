@@ -30,11 +30,24 @@ type Config struct {
 	HeyGenAPIKey        string
 	HeyGenAPIURL        string
 
+	// Vidéos publicitaires (avatar HeyGen par défaut, configurable par projet).
+	HeyGenDefaultAvatarID string
+	HeyGenDefaultVoiceID  string
+
+	// Stockage objet (S3-compatible / Neon en prod, sinon disque local).
+	StorageDir        string
+	S3Endpoint        string
+	S3Region          string
+	S3AccessKeyID     string
+	S3SecretAccessKey string
+	S3Bucket          string
+	S3PathStyle       bool
+
 	// Rendu HTML → PDF/PPTX (chromedp / Chrome headless).
 	ChromePath string
 
-	// Stockage des fichiers générés (local au MVP ; S3 à venir).
-	StorageDir string
+	// Montage vidéo (FFmpeg) — binaire ffmpeg (ffprobe dérivé).
+	FFmpegPath string
 
 	// Métier
 	WelcomeCredits int
@@ -67,9 +80,19 @@ func Load() Config {
 		HeyGenAPIKey:        get("HEYGEN_API_KEY", ""),
 		HeyGenAPIURL:        get("HEYGEN_API_URL", "https://api.heygen.com"),
 
-		ChromePath: get("CHROME_PATH", ""),
+		HeyGenDefaultAvatarID: get("HEYGEN_DEFAULT_AVATAR_ID", ""),
+		HeyGenDefaultVoiceID:  get("HEYGEN_DEFAULT_VOICE_ID", ""),
 
-		StorageDir: get("STORAGE_DIR", "./.storage"),
+		ChromePath: get("CHROME_PATH", ""),
+		FFmpegPath: get("FFMPEG_PATH", "ffmpeg"),
+
+		StorageDir:        get("STORAGE_DIR", "./.storage"),
+		S3Endpoint:        get("S3_ENDPOINT", ""),
+		S3Region:          get("S3_REGION", "us-east-1"),
+		S3AccessKeyID:     get("S3_ACCESS_KEY_ID", ""),
+		S3SecretAccessKey: get("S3_SECRET_ACCESS_KEY", ""),
+		S3Bucket:          get("S3_BUCKET", ""),
+		S3PathStyle:       get("S3_PATH_STYLE", "true") == "true",
 
 		WelcomeCredits: getInt("WELCOME_CREDITS", 100),
 

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router"
 import { useTranslation } from "react-i18next"
 import {
   BookOpen,
+  Clapperboard,
   Download,
   Image as ImageIcon,
   Images,
@@ -28,6 +29,7 @@ import type { Job } from "@/features/generation/api"
 import type { ProjectPalette } from "@/features/projects/api"
 import { assetDownloadPath } from "@/features/projects/api"
 import { downloadAsset, useAssets, useGenerate, useGenerateCover, useProject, useUpdateProjectConfig } from "@/features/projects/hooks"
+import { useLatestVideoAsset, VideoAdsPanel, VideoPreview } from "@/features/video-ads/video-ads-panel"
 import { isAppError } from "@/lib/errors"
 
 function isActive(job?: Job) {
@@ -79,6 +81,7 @@ export default function ProjectPage() {
   const config = project?.config
   const hasCover = useMemo(() => !!assets?.some((a) => a.kind === "cover"), [assets])
   const coverAsset = useMemo(() => assets?.filter((a) => a.kind === "cover").slice(-1)[0], [assets])
+  const videoAsset = useLatestVideoAsset(assets)
 
   // Aperçu de la cover (dernière générée).
   const [coverURL, setCoverURL] = useState<string | null>(null)
@@ -215,6 +218,7 @@ export default function ProjectPage() {
     { n: 2, label: t("projects:ebook"), done: hasAsset("ebook_pdf"), locked: !hasCover },
     { n: 3, label: t("projects:posters"), done: hasAsset("poster"), locked: !hasCover },
     { n: 4, label: t("projects:salesPage"), done: hasAsset("sales_page"), locked: !hasCover },
+    { n: 5, label: t("projects:videoTitle"), done: hasAsset("video_ad"), locked: !hasCover },
   ]
 
   return (
@@ -409,6 +413,24 @@ export default function ProjectPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+
+      {/* Étape 5 : vidéo publicitaire (job video_ad, ADR-016) */}
+      <section>
+        <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-primary">
+          <Clapperboard className="h-5 w-5" />
+          {t("projects:videoSectionTitle")}
+        </h2>
+        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+          <div>
+            {videoAsset ? (
+              <VideoPreview asset={videoAsset} />
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("projects:videoNone")}</p>
+            )}
+          </div>
+          <VideoAdsPanel projectId={id} locked={!hasCover} />
         </div>
       </section>
 

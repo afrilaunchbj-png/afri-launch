@@ -16,6 +16,7 @@ import (
 	"afrilaunch/backend/internal/application/jobs"
 	"afrilaunch/backend/internal/application/port"
 	projectsapp "afrilaunch/backend/internal/application/projects"
+	videoad "afrilaunch/backend/internal/application/videoad"
 	"afrilaunch/backend/internal/domain"
 	"afrilaunch/backend/internal/infra/postgres"
 	"afrilaunch/backend/internal/infra/storage"
@@ -82,7 +83,7 @@ func TestProjectsCoverFirstGate(t *testing.T) {
 
 	aiSvc := appai.NewService(errLLM{}, errImage{}, errVideo{}, errResearch{}, appai.NewModelRouter("r", "i", "m"))
 	docSvc := document.NewService(aiSvc, nil)
-	worker := jobs.NewWorker(jobRepo, credits, ideas, projectRepo, assetRepo, opps, researchRepo, objStorage, aiSvc, docSvc, nil)
+	worker := jobs.NewWorker(jobRepo, credits, ideas, projectRepo, assetRepo, opps, researchRepo, objStorage, aiSvc, docSvc, nil, nil, nil, videoad.ProviderDefaults{})
 
 	svc := projectsapp.NewService(worker, projectRepo, ideas, assetRepo)
 

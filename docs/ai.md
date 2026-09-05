@@ -75,11 +75,12 @@ Pour éviter le « AI slop », on injecte le **vocabulaire design** du skill ope
 - **Modes** (choix selon la surface) : `Read` (ebook/guide), `Persuade` (page de vente/deck), `Operate`, `Experience`.
 - **Intégration** : le contenu du skill est **récupéré et transcris** en instructions de prompt embarquées dans le worker (pas un skill `.opencode` au runtime). Le design system existant (`DESIGN.md` « Emerald & Amber Ledger ») prime toujours sur les goûts du modèle.
 
-## 6. Vidéo (HeyGen) — async
+## 6. Vidéo publicitaire (HeyGen + FFmpeg) — async (ADR-016)
 
-- MVP : **avatar uniquement** (le speaker prédéfini lit le script).
-- Flux : `VideoProvider.Submit` → job HeyGen → **polling** (ou webhook de complétion) → récupération de l'URL vidéo → stockage.
-- Script + montage (b-roll, voix off, cuts) : **plus tard** (V2).
+- Pipeline (job `video_ad`, 15 crédits) : **analyse marketing LLM** (angle, pain points, hook, CTA) → **script + storyboard LLM** (JSON : scènes avatar/product/text, text overlays) → **vidéo avatar** (`VideoProvider` = HeyGen, poll 5 s) → **montage FFmpeg** (`port.VideoRenderer` → `infra/render/ffmpeg.go`) → assets `video_ad` (MP4) + `video_ad_thumb` (JPEG).
+- Montage : carte d'intro (mockup cover + hook) + vidéo provider (sous-titres burnés, timing recalé sur la durée ffprobe) + carte d'outro (CTA) — cartes rendues en HTML via chromedp (identité Emerald & Amber). Presets 9:16 (1080x1920), 1:1, 16:9.
+- Progression détaillée : events SSE `job.updated` avec champ `stage` (`analyzing` → `storyboarding` → `generating_avatar` → `rendering`).
+- Config : `HEYGEN_DEFAULT_AVATAR_ID` / `HEYGEN_DEFAULT_VOICE_ID` (env, overridables par génération), `FFMPEG_PATH` ; storyboard persisté dans `generation_jobs.result` (JSONB). Post-MVP : variantes multiples, B-roll (Veo/Kling → nouveau port), scoring, musique.
 
 ## 7. Observabilité & coût
 
@@ -97,6 +98,6 @@ Chaque worker est idempotent/retryable ; `GenerationJob` porte `id, status, prog
 
 ## 9. Stockage des fichiers générés
 
-- **Neon Object Storage** (S3-compatible, SDK AWS standard) : HTML source + PDF/PPTX/vidéo exportés.
-- Bucket `private` ; accès aux utilisateurs via **URLs présignées**.
-- L'adaptateur Go (`infra/storage`) est à câbler avec la feature « assets » (config `S3_ENDPOINT/ACCESS_KEY/SECRET/BUCKET` déjà prévue dans `.env.example`).
+- **Neon Object Storage** (S3-compatible, SDK AWS v2) : HTML source + PDF/PPTX/vidéos exportés.
+- `infra/storage/s3.go` (`S3Storage`) est actif dès que `S3_BUCKET` est défini (sinon fallback `LocalStorage` en dev) ; config `S3_ENDPOINT/S3_REGION/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY/S3_BUCKET/S3_PATH_STYLE`.
+- Bucket privé ; les downloads passent par le backend (`GET /assets/{id}/download`), URLs présignées envisagées plus tard.

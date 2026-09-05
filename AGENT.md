@@ -91,6 +91,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 13. **IA = OpenAI (GPT) + HeyGen** (ADR-012) : recherche/images/documents via OpenAI, vidéo avatar via HeyGen ; `ModelRouter` (`gpt-5.6-terra`, `gpt-5.6-luna`, `gpt-image-2`).
 14. **Documents = HTML → PDF/PPTX via chromedp** (ADR-013) : contenu structuré (JSON) → templates HTML (thème « Emerald & Amber Ledger » + vocabulaire [Impeccable](https://impeccable.style/)) → `chromedp` → PDF (ebook) ou PPTX image-par-slide (deck).
 15. **Découverte conversationnelle + canal SSE unique** (ADR-014) : un flux SSE par utilisateur (`GET /api/v1/events`, événements typés `chat.*`/`job.updated`), POST de message en 202, boucle agent bornée (outils `@@SEARCH` / bloc `@@IDEAS`), broker in-process (`EventBus`) → Redis pub/sub avec asynq. Chat gratuit, facturation aux actions lourdes (recherche 5 cr, idées 2 cr).
+16. **Vidéos publicitaires** (ADR-016) : job `video_ad` (15 cr) = LLM (analyse+storyboard JSONB) → HeyGen (`VideoProvider`) → FFmpeg (`port.VideoRenderer` : sous-titres burnés + cartes intro/outro avec la cover) → assets MP4+vignette ; avatars/voix par env (`HEYGEN_DEFAULT_AVATAR_ID`/`VOICE_ID`), jamais hard-codés ; progression via events `stage` ; provider-agnostic (ports, aucune logique provider dans le métier).
 
 ## Design & UI Conventions
 
@@ -119,6 +120,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Paramètres, Support et Superadmin** : migration `00015` (`users.role`, `support_tickets`) ; promotion superadmin par `SUPERADMIN_EMAILS` (au 1er login et suivants) ; `POST/GET /support/tickets` ; suivi global `GET /admin/stats|users|tickets` + `POST /admin/tickets/{id}/resolve` derrière `RequireSuperadmin` (rôle relu en DB à chaque appel admin) ; `/auth/me` renvoie le rôle ; FE : pages `/settings` (profil + préférences DB + crédits), `/support` (formulaire + historique), `/admin` (stats + users DataTable + tickets, garde client + serveur) ; nav dynamique selon rôle (sidebar + bottom nav mobile).
 - [x] **Déploiement Railway production** : `backend` + `frontend` déployés via `railway up` (auto-deploy GitHub inactif — à activer dans le dashboard) ; `.railwayignore` ajouté ; vérifié (/healthz, /readyz, nouveaux endpoints 401, bundle FE à jour).
 - [x] **Journal d'activités, discussions tickets, admin filtrable, stats dashboard** : migration `00016` (`support_ticket_messages`) ; fil de discussion des tickets (`GET/POST /support/tickets/{id}/messages` côté user, `GET /admin/tickets/{id}` + `POST /admin/tickets/{id}/messages` côté support ; un ticket résolu est rouvert quand le client répond) ; `audit_logs` (table 00006) alimentée — inscription, promotion admin, cycle de vie des tickets — et exposée via `GET /admin/audit-logs` (filtres action/entity/userId) ; listes admin filtrables côté serveur (users, tickets, projets, conversations, assets, jobs, transactions de crédits — `?search=&status=&role=`) ; `GET /dashboard/stats` (compteurs perso, solde crédits, consommation 30 j, séries journalière 30 j + hebdomadaire 12 semaines) ; FE : sous-navigation admin (`features/admin/admin-nav`) + pages `/admin/{users,tickets,tickets/:id,projects,conversations,assets,jobs,transactions,audit-logs}` (cartes cliquables → liste filtrée, filtres dans l'URL, toolbar debouncée), `/support/:id` (discussion user), dashboard avec 4 StatCards + courbes recharts (crédits 30 j, projets/semaine) ; icône support `Headset`, doublons footer sidebar supprimés ; i18n FR/EN.
+- [x] **Stockage S3 (Neon Object Storage)** (ADR-016, Remaining #1) : `infra/storage/s3.go` (SDK AWS v2, endpoint custom + path-style) ; actif dès que `S3_BUCKET` est défini, fallback `LocalStorage` en dev ; config `S3_ENDPOINT/S3_REGION/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY/S3_BUCKET/S3_PATH_STYLE`.
+- [x] **Vidéos publicitaires MVP (ADR-016)** : nouveau job kind `video_ad` (15 crédits, `generation_costs` déjà seedé) — pipeline : analyse marketing LLM (`application/videoad` : `Analyze` → angle/pain points/hook/CTA, `Story` → storyboard JSON scènes avatar/product/text) → vidéo avatar HeyGen (`VideoProvider` existant, poll 5 s avec tolérance erreurs) → téléchargement URL expirable → montage FFmpeg (`port.VideoRenderer` + `infra/render/ffmpeg.go` : carte intro cover+hook, sous-titres burnés recalés sur durée ffprobe, carte outro CTA ; presets 9:16/1:1/16:9 ; cartes HTML→PNG via chromedp) → assets `video_ad` + `video_ad_thumb` ; storyboard dans `generation_jobs.result` (pas de tables dédiées) ; progression SSE `job.updated` avec champ `stage` (analyzing/storyboarding/generating_avatar/rendering) ; endpoint `POST /projects/{id}/video-ads` (gate idée confirmée + cover) ; FE `features/video-ads` (panneau durée/format/instructions, progression multi-étapes via SSE, player + download, stepper étape 5) ; i18n FR/EN ; ffmpeg + chromedp dans le Dockerfile ; tests (storyboard/subtitles/SRT/carte HTML + intégration ffmpeg skip si binaire absent).
 
 ## Work In Progress
 
@@ -126,12 +129,12 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Remaining Work
 
-1. **Object Storage** : remplacer `LocalStorage` par un adaptateur S3 (Neon) + URLs présignées.
-2. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
-3. **Workers asynq** (Redis) : remplacer le worker in-process (`application/jobs`) par asynq + **Redis pub/sub pour le broker d'événements** (`infra/events`).
-4. **Tests** : unitaires + intégration + E2E du parcours complet.
-5. **Nettoyage legacy** : endpoints job-batch idées/recherche (`POST /opportunities/{id}/ideas`, `POST /research`) + table `idea_messages` non appelés par le FE depuis le chat (à supprimer lors d'une prochaine passe).
-6. **Liste des conversations** dans le chat (API `GET /conversations` prête, UI à ajouter).
+1. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+2. **Workers asynq** (Redis) : remplacer le worker in-process (`application/jobs`) par asynq + **Redis pub/sub pour le broker d'événements** (`infra/events`).
+3. **Tests** : unitaires + intégration + E2E du parcours complet (incl. video_ad avec vraies credentials HeyGen).
+4. **Nettoyage legacy** : endpoints job-batch idées/recherche (`POST /opportunities/{id}/ideas`, `POST /research`) + table `idea_messages` non appelés par le FE depuis le chat (à supprimer lors d'une prochaine passe).
+5. **Liste des conversations** dans le chat (API `GET /conversations` prête, UI à ajouter).
+6. **Vidéo post-MVP** : multi-variantes (1 job/angle), provider B-roll (Veo/Kling → nouveau port `BrollProvider`), scoring LLM, musique libre de droits, regénération scène par scène (tables `ad_scenes` dédiées), catalogue avatars HeyGen (`GET /avatars`).
 
 ## Known Issues
 
@@ -144,15 +147,17 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `pnpm-workspace.yaml` créé (`onlyBuiltDependencies: [core-js]`) — sinon pnpm 11 échoue sur les scripts de build ignorés.
 - **Abstractions IA codées** (`LLMProvider`, `ModelRouter`, OpenAI, HeyGen) et **pipeline documents codé** (chromedp + prompts Impeccable + PDF/PPTX) mais **pas encore consommés par des workers/endpoints** ; la génération réelle requiert `OPENAI_API_KEY` et `HEYGEN_API_KEY`.
 - Le rendu (chromedp) nécessite **Chrome/Chromium** : présent en dev (`/usr/bin/google-chrome`), installé via `chromium` dans le Dockerfile backend (`CHROME_PATH=/usr/bin/chromium`).
-- **Worker in-process** (goroutines) pour les générations — pas asynq ; les jobs sont perdus au redémarrage. **Storage local** (fichiers) — pas durable sur Railway (éphémère) ; à remplacer par S3.
-- **Broker d'événements in-process** (`infra/events`) : mono-instance uniquement — avec plusieurs replicas backend, les events du worker n'atteindraient pas la bonne connexion SSE ; Redis pub/sub requis (voir Remaining Work #3).
+- **Worker in-process** (goroutines) pour les générations — pas asynq ; les jobs sont perdus au redémarrage. ~~Storage local~~ → **S3 câblé** (actif si `S3_BUCKET` défini ; sinon local en dev, éphémère sur Railway).
+- **Broker d'événements in-process** (`infra/events`) : mono-instance uniquement — avec plusieurs replicas backend, les events du worker n'atteindraient pas la bonne connexion SSE ; Redis pub/sub requis (voir Remaining Work #2).
 - Le protocole d'outils du chat repose sur des **marqueurs texte** (`@@SEARCH`, `@@IDEAS`) — dépend de la docilité du modèle ; passer aux **function calling** OpenAI si dérives observées.
-- La génération (idées/ebook/assets) requiert `OPENAI_API_KEY` côté backend, sinon les jobs échouent (erreur 401 OpenAI).
+- La génération (idées/ebook/assets/vidéo) requiert `OPENAI_API_KEY` + (`HEYGEN_API_KEY` + `HEYGEN_DEFAULT_AVATAR_ID`/`VOICE_ID` pour les vidéos) côté backend, sinon les jobs échouent (erreur 401 OpenAI / avatar manquant).
+- **Vidéo pub MVP** : 1 variante / 1 scène avatar HeyGen parlant tout le script ; sous-titres estimés par proportion de mots puis recalés sur la durée ffprobe (approximation acceptable) ; storyboard en JSONB (regénération scène par scène nécessitera des tables dédiées) ; l'URL HeyGen est expirable → téléchargée immédiatement.
+- **ffmpeg/ffprobe requis** pour le montage vidéo : installés dans le Dockerfile backend ; absents en dev local (le test d'intégration ffmpeg est skippé) — installer via le gestionnaire de paquets pour tester localement.
 
 ## Tests & Validation
 
-- **Backend** : `go build/vet/test` OK. Tests : `TestNeonVerifier` (EdDSA/JWKS), `TestCreditLedgerLifecycle` (ledger), `TestModelRouter` + OpenAI/HeyGen (httptest), prompts Impeccable, PPTX (zip), chromedp (Chrome réel : PDF + slides→PNG + PPTX). **Chat** : `TestParseSearchLine`/`TestParseIdeasBlock`/`TestStreamAnswer*` (machine à états, marqueurs coupés multi-delta), `TestBroker*` (events, déconnexion client lent), et **tests d'intégration** `TestChatTurnIdeaFlow` + `TestChatTurnSearchFlow` (Postgres réel via `AFRILAUNCH_TEST_DB` : messages, idées liées, crédits, events, opportunités).
-- **Frontend** : `pnpm typecheck` + `pnpm build` OK. Page `/discover` (chat + panneau contexte) câblée sur les events SSE ; le flux complet Neon Auth reste à tester avec de vraies credentials.
+- **Backend** : `go build/vet/test` OK. Tests : `TestNeonVerifier` (EdDSA/JWKS), `TestCreditLedgerLifecycle` (ledger), `TestModelRouter` + OpenAI/HeyGen (httptest), prompts Impeccable, PPTX (zip), chromedp (Chrome réel : PDF + slides→PNG + PPTX). **Vidéo** : `videoad` (storyboard/subtitles/ResolveVideoRequest/normalisation durées), `render` (SRT, canvas, carte HTML échappée ; **intégration ffmpeg skip si binaire absent**). **Chat** : `TestParseSearchLine`/`TestParseIdeasBlock`/`TestStreamAnswer*` (machine à états, marqueurs coupés multi-delta), `TestBroker*` (events, déconnexion client lent), et **tests d'intégration** `TestChatTurnIdeaFlow` + `TestChatTurnSearchFlow` (Postgres réel via `AFRILAUNCH_TEST_DB` : messages, idées liées, crédits, events, opportunités).
+- **Frontend** : `pnpm typecheck` + `pnpm build` OK. Section vidéo de la page projet (`features/video-ads`) câblée sur le SSE + polling ; le flux complet (Neon Auth + HeyGen + ffmpeg) reste à tester avec de vraies credentials.
 
 ## Database & Migrations
 
@@ -192,8 +197,15 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `backend/internal/application/document/` — service de génération ebook/deck + prompts (Impeccable injecté).
 - `backend/internal/infra/ai/openai.go` — client OpenAI (chat + images) ; `openai_research.go` (Responses API + web_search).
 - `backend/internal/infra/ai/heygen.go` — client HeyGen (vidéo avatar, `/v3/videos`).
-- `backend/internal/infra/render/chromedp.go` — rendu chromedp (PDF + slides→PNG).
+- `backend/internal/infra/render/chromedp.go` — rendu chromedp (PDF + slides→PNG + HTML→PNG cartes vidéo).
 - `backend/internal/infra/pptx/pptx.go` — assemblage PPTX image-par-slide.
+- `backend/internal/application/videoad/` — **créatif vidéo pub** : `prompts.go` (analyse marketing + storyboard, langue du compte), `service.go` (`Analyze`/`Story`, `ResolveVideoRequest`, `BuildSubtitleCues`), `service_test.go`.
+- `backend/internal/infra/render/ffmpeg.go` — **montage vidéo** (port.VideoRenderer : cartes intro/outro chromedp, sous-titres SRT burnés, concat, vignette) + `ffmpeg_test.go`.
+- `backend/internal/domain/video_ad.go` — `VideoAdParams`, `Storyboard`/`Scene`, stages SSE, `ResultVideoAd`.
+- `backend/internal/application/jobs/worker.go` — `runVideoAd` (analyse → storyboard → HeyGen → montage → assets) + `awaitVideo` (poll, tolérance erreurs) + `publishStage` (events `stage`).
+- `backend/internal/infra/storage/s3.go` — stockage objet S3-compatible (Neon), actif si `S3_BUCKET` défini.
+- `frontend/src/features/video-ads/` — api/hooks (`useGenerateVideoAd`, `useVideoJob`) + `video-ads-panel.tsx` (formulaire + progression SSE + player/download).
+- `frontend/src/pages/project.tsx` — section vidéo (étape 5 du stepper) avec `VideoAdsPanel` + `VideoPreview`.
 - `backend/internal/application/jobs/worker.go` — worker asynchrone (idées/ebook/couverture/page de vente/recherche) + publication `job.updated`.
 - `backend/internal/application/port/workshop.go` — interfaces `IdeaRepository`/`ConversationRepository`/`ProjectRepository`/`AssetRepository`/`JobRepository`/`Storage`.
 - `backend/internal/infra/storage/local.go` — stockage local (S3 à venir).
@@ -210,14 +222,14 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 ## Déploiement (Railway)
 
 - **IaC** : `.railway/railway.ts` (Infrastructure as Code) définit deux services (`backend`, `frontend`) avec leurs `rootDirectory`, healthchecks et variables non-secrètes.
-- `backend` : image `backend/Dockerfile` (build + migrations goose au boot + chromium pour chromedp). Healthcheck `/healthz` (`healthcheckTimeout: 300`). Secrets à définir dans le dashboard : `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`, `ALLOWED_ORIGINS` (= URL publique du frontend), `OPENAI_API_KEY`, `HEYGEN_API_KEY`.
+- `backend` : image `backend/Dockerfile` (build + migrations goose au boot + chromium pour chromedp + **ffmpeg pour le montage vidéo**). Healthcheck `/healthz` (`healthcheckTimeout: 300`). Secrets à définir dans le dashboard : `DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_JWKS_URL`, `ALLOWED_ORIGINS` (= URL publique du frontend), `OPENAI_API_KEY`, `HEYGEN_API_KEY`, `HEYGEN_DEFAULT_AVATAR_ID`, `HEYGEN_DEFAULT_VOICE_ID`, `S3_ENDPOINT`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET` (+ optionnels `S3_REGION`, `S3_PATH_STYLE`).
 - `frontend` : image `frontend/Dockerfile` (nginx + fallback SPA). Healthcheck `/`. Variables injectées au build (ARG) : `VITE_API_URL` (= URL publique du backend), `VITE_NEON_AUTH_URL`.
 - Workflow : `npm install` (racine, installe le SDK `railway` pour le DSL `railway/iac`) puis `railway login` + `railway link` + `railway config plan` / `railway config apply`. Validé : `railway config plan --json` OK (crée `backend` + `frontend`, supprime l'ancien service `afri-launch`).
 
 ## Next Steps
 
-1. Tester le parcours complet avec vraies credentials (Neon Auth + `OPENAI_API_KEY`) : chat → `@@SEARCH` → idées → valider → projet → ebook → download.
-2. **Object Storage** : adapter S3 (Neon) + URLs présignées (remplacer `LocalStorage`).
+1. Tester le parcours complet avec vraies credentials (Neon Auth + `OPENAI_API_KEY` + `HEYGEN_API_KEY` + `HEYGEN_DEFAULT_AVATAR_ID`) : chat → idées → projet → ebook → **vidéo pub** → download ; configurer les `S3_*` (Neon) pour le stockage durable.
+2. **Flow marketing** (`prompts/marketing-flow.md`) : intégrations publicitaires multi-tenant (Meta/Google/TikTok Ads, OAuth, chiffrement des tokens, campagnes/insights) — réutilise les assets vidéo comme creatives.
 3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
 4. **Workers asynq** : remplacer le worker in-process par asynq + Redis pub/sub pour le broker d'événements.
 5. UI liste des conversations + titres auto affichés dans le chat.

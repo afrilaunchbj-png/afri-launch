@@ -27,7 +27,9 @@
     "ebook_deck": "Ebook paysage (PPT)",
     "cover": "Couverture",
     "poster": "Affiche publicitaire",
-    "sales_page": "Page de vente"
+    "sales_page": "Page de vente",
+    "video_ad": "Vidéo publicitaire",
+    "video_ad_thumb": "Vignette vidéo"
   },
   "regenerate": "Régénérer",
   "stepCover": "Couverture",
@@ -58,5 +60,25 @@
   "minPages": "Pages min",
   "maxPages": "Pages max",
   "save": "Enregistrer",
-  "saved": "Enregistré"
+  "saved": "Enregistré",
+  "videoTitle": "Vidéo publicitaire",
+  "videoSectionTitle": "Vidéo publicitaire (TikTok / Reels)",
+  "videoHint": "L'IA analyse votre produit, écrit le script, génère la vidéo avec un présentateur virtuel et ajoute sous-titres, mockup et appel à l'action.",
+  "videoDurationLabel": "Durée",
+  "videoDurationValue": "{{count}} s",
+  "videoRatioLabel": "Format",
+  "videoRatioPortrait": "Vertical (TikTok)",
+  "videoRatioSquare": "Carré (feed)",
+  "videoRatioLandscape": "Paysage (YouTube)",
+  "videoInstructionsPlaceholder": "Consignes (ex. : ton énergique, insister sur le prix…)",
+  "videoProcessing": "Génération en cours",
+  "videoStage": {
+    "analyzing": "Analyse du produit",
+    "storyboarding": "Écriture du script et du storyboard",
+    "generating_avatar": "Génération de la vidéo (présentateur)",
+    "rendering": "Montage : sous-titres et habillage"
+  },
+  "generateVideo": "Générer la vidéo",
+  "videoNone": "Aucune vidéo générée pour l'instant.",
+  "videoLoadingPreview": "Chargement de l'aperçu vidéo…"
 }

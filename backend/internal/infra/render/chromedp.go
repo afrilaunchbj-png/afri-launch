@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
+	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/cdproto/page"
 	"github.com/chromedp/chromedp"
 
@@ -108,6 +109,29 @@ func (r *ChromedpRenderer) SlidesToPPTXWithCover(ctx context.Context, html []byt
 		pngs = append([][]byte{coverPNG}, pngs...)
 	}
 	return pptx.Build(pngs, 12192000, 6858000)
+}
+
+// HTMLToPNG rend un HTML (canvas exact width×height px) en PNG — utilisé
+// pour les cartes de montage vidéo (intro/outro).
+func (r *ChromedpRenderer) HTMLToPNG(ctx context.Context, html []byte, width, height int) ([]byte, error) {
+	allocCtx, cancelAlloc := chromedp.NewExecAllocator(ctx, r.allocatorOptions()...)
+	defer cancelAlloc()
+	cctx, cancel := chromedp.NewContext(allocCtx)
+	defer cancel()
+
+	var buf []byte
+	err := chromedp.Run(cctx,
+		chromedp.Navigate(dataURL(html)),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			return emulation.SetDeviceMetricsOverride(int64(width), int64(height), 1, false).Do(ctx)
+		}),
+		chromedp.WaitVisible("body", chromedp.ByQuery),
+		chromedp.Screenshot("body", &buf, chromedp.ByQuery),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("render png: %w", err)
+	}
+	return buf, nil
 }
 
 func dataURL(html []byte) string {

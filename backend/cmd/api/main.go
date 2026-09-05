@@ -22,10 +22,12 @@ import (
 	ideasapp "afrilaunch/backend/internal/application/ideas"
 	"afrilaunch/backend/internal/application/jobs"
 	opportunitiesapp "afrilaunch/backend/internal/application/opportunities"
+	"afrilaunch/backend/internal/application/port"
 	preferencesapp "afrilaunch/backend/internal/application/preferences"
 	projectsapp "afrilaunch/backend/internal/application/projects"
 	researchapp "afrilaunch/backend/internal/application/research"
 	supportapp "afrilaunch/backend/internal/application/support"
+	videoadapp "afrilaunch/backend/internal/application/videoad"
 	"afrilaunch/backend/internal/config"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
 	authinfra "afrilaunch/backend/internal/infra/auth"
@@ -66,7 +68,18 @@ func main() {
 	assetRepo := postgres.NewAssetRepository(store)
 	jobRepo := postgres.NewJobRepository(store)
 	researchRepo := postgres.NewResearchRepository(store)
-	objStorage := storage.NewLocalStorage(cfg.StorageDir)
+
+	// Stockage objet : S3-compatible (Neon) si configuré, sinon disque local (dev).
+	var objStorage port.Storage = storage.NewLocalStorage(cfg.StorageDir)
+	if cfg.S3Bucket != "" {
+		s3Store, err := storage.NewS3(ctx, cfg.S3Endpoint, cfg.S3Region, cfg.S3AccessKeyID, cfg.S3SecretAccessKey, cfg.S3Bucket, cfg.S3PathStyle)
+		if err != nil {
+			slog.Error("cannot configure s3 storage", "err", err)
+			os.Exit(1)
+		}
+		objStorage = s3Store
+		slog.Info("object storage", "provider", "s3", "bucket", cfg.S3Bucket)
+	}
 
 	verifier, err := authinfra.NewNeonVerifier(cfg.NeonAuthBaseURL, cfg.NeonAuthJWKSURL)
 	if err != nil {
@@ -92,12 +105,17 @@ func main() {
 	renderer := renderinfra.NewChromedpRenderer(cfg.ChromePath)
 	docSvc := documentapp.NewService(aiSvc, renderer)
 
+	// Vidéos publicitaires : créatif (LLM) + montage (FFmpeg).
+	videoadSvc := videoadapp.NewService(aiSvc)
+	videoRenderer := renderinfra.NewFFmpegRenderer(renderer, cfg.FFmpegPath, "")
+
 	// Canal temps réel in-process (SSE unique) : chat + jobs.
 	// Multi-instance : à migrer sur Redis pub/sub avec asynq.
 	eventBus := eventsinfra.NewBroker()
 
-	// Worker asynchrone de génération (idées, ebook, assets, recherche).
-	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc, eventBus)
+	// Worker asynchrone de génération (idées, ebook, assets, recherche, vidéos).
+	worker := jobs.NewWorker(jobRepo, creditRepo, ideaRepo, projectRepo, assetRepo, oppRepo, researchRepo, objStorage, aiSvc, docSvc, eventBus,
+		videoadSvc, videoRenderer, videoadapp.ProviderDefaults{AvatarID: cfg.HeyGenDefaultAvatarID, VoiceID: cfg.HeyGenDefaultVoiceID})
 
 	// Services applicatifs.
 	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo, creditRepo, aiSvc)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -117,6 +118,44 @@ func (h *ProjectHandler) GeneratePosters(w http.ResponseWriter, r *http.Request)
 // GenerateSalesPage gère POST /projects/{id}/sales-page.
 func (h *ProjectHandler) GenerateSalesPage(w http.ResponseWriter, r *http.Request) {
 	h.dispatch(w, r, h.svc.GenerateSalesPage)
+}
+
+// GenerateVideoAd gère POST /projects/{id}/video-ads (paramètres vidéo
+// optionnels : angle, durée, ratio, avatar/voix, CTA, instructions).
+func (h *ProjectHandler) GenerateVideoAd(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Angle        string `json:"angle"`
+		Duration     int    `json:"duration"`
+		AspectRatio  string `json:"aspect_ratio"`
+		AvatarID     string `json:"avatar_id"`
+		VoiceID      string `json:"voice_id"`
+		CTA          string `json:"cta"`
+		Instructions string `json:"instructions"`
+	}
+	// Body optionnel : absent = génération avec les paramètres par défaut.
+	if r.ContentLength > 0 {
+		if err := decodeJSON(w, r, &in); err != nil {
+			writeAPIError(w, r, err)
+			return
+		}
+	}
+	userID := authctx.UserID(r.Context())
+	projectID := chi.URLParam(r, "id")
+
+	job, err := h.svc.GenerateVideoAd(r.Context(), userID, projectID, domain.VideoAdParams{
+		Angle:        strings.TrimSpace(in.Angle),
+		Duration:     in.Duration,
+		AspectRatio:  strings.TrimSpace(in.AspectRatio),
+		AvatarID:     strings.TrimSpace(in.AvatarID),
+		VoiceID:      strings.TrimSpace(in.VoiceID),
+		CTA:          strings.TrimSpace(in.CTA),
+		Instructions: strings.TrimSpace(in.Instructions),
+	})
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	writeData(w, http.StatusAccepted, jobDTOFrom(job))
 }
 
 // UpdateConfig gère PUT /projects/{id}/config (identité visuelle + réglages).

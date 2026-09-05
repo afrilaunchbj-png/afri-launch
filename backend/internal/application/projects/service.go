@@ -192,3 +192,21 @@ func (s *Service) GenerateSalesPage(ctx context.Context, userID, projectID strin
 	}
 	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobSalesPage})
 }
+
+// GenerateVideoAd lance la génération d'une vidéo publicitaire (job
+// video_ad). Le mockup du produit est la cover du projet (workflow
+// cover-first) ; les paramètres sont normalisés côté domaine.
+func (s *Service) GenerateVideoAd(ctx context.Context, userID, projectID string, params domain.VideoAdParams) (domain.GenerationJob, error) {
+	if err := s.requireConfirmed(ctx, userID, projectID); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	if err := s.requireCover(ctx, userID, projectID); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{
+		UserID:    userID,
+		ProjectID: &projectID,
+		Kind:      domain.JobVideoAd,
+		Params:    params.Normalized().Marshal(),
+	})
+}

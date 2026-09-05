@@ -27,7 +27,9 @@
     "ebook_deck": "Landscape ebook (PPT)",
     "cover": "Cover",
     "poster": "Ad poster",
-    "sales_page": "Sales page"
+    "sales_page": "Sales page",
+    "video_ad": "Video ad",
+    "video_ad_thumb": "Video thumbnail"
   },
   "regenerate": "Regenerate",
   "stepCover": "Cover",
@@ -58,5 +60,25 @@
   "minPages": "Min pages",
   "maxPages": "Max pages",
   "save": "Save",
-  "saved": "Saved"
+  "saved": "Saved",
+  "videoTitle": "Video ad",
+  "videoSectionTitle": "Video ad (TikTok / Reels)",
+  "videoHint": "The AI analyzes your product, writes the script, generates the video with a virtual presenter and adds subtitles, mockup and call to action.",
+  "videoDurationLabel": "Duration",
+  "videoDurationValue": "{{count}} s",
+  "videoRatioLabel": "Format",
+  "videoRatioPortrait": "Vertical (TikTok)",
+  "videoRatioSquare": "Square (feed)",
+  "videoRatioLandscape": "Landscape (YouTube)",
+  "videoInstructionsPlaceholder": "Directions (e.g. energetic tone, emphasize the price…)",
+  "videoProcessing": "Generation in progress",
+  "videoStage": {
+    "analyzing": "Analyzing the product",
+    "storyboarding": "Writing the script and storyboard",
+    "generating_avatar": "Generating the video (presenter)",
+    "rendering": "Editing: subtitles and branding"
+  },
+  "generateVideo": "Generate video",
+  "videoNone": "No video generated yet.",
+  "videoLoadingPreview": "Loading video preview…"
 }

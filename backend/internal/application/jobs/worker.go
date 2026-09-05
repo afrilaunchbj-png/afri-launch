@@ -8,12 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"afrilaunch/backend/internal/application/ai"
 	"afrilaunch/backend/internal/application/document"
 	"afrilaunch/backend/internal/application/port"
+	"afrilaunch/backend/internal/application/videoad"
 	"afrilaunch/backend/internal/domain"
 )
 
@@ -36,10 +39,16 @@ type Worker struct {
 	ai            *ai.Service
 	docs          *document.Service
 	events        port.EventPublisher
+
+	// Vidéos publicitaires (ADR-016).
+	video          *videoad.Service
+	renderer       port.VideoRenderer
+	heygenDefaults videoad.ProviderDefaults
 }
 
 // NewWorker construit le worker et démarre un pool de goroutines.
 // events est optionnel (nil = pas de notifications temps réel).
+// video/renderer sont optionnels (nil = kind video_ad indisponible).
 func NewWorker(
 	jobs port.JobRepository,
 	credits port.CreditRepository,
@@ -52,20 +61,26 @@ func NewWorker(
 	ai *ai.Service,
 	docs *document.Service,
 	events port.EventPublisher,
+	video *videoad.Service,
+	renderer port.VideoRenderer,
+	heygenDefaults videoad.ProviderDefaults,
 ) *Worker {
 	w := &Worker{
-		tasks:         make(chan task, 64),
-		jobs:          jobs,
-		credits:       credits,
-		ideas:         ideas,
-		projects:      projects,
-		assets:        assets,
-		opportunities: opportunities,
-		research:      research,
-		storage:       storage,
-		ai:            ai,
-		docs:          docs,
-		events:        events,
+		tasks:          make(chan task, 64),
+		jobs:           jobs,
+		credits:        credits,
+		ideas:          ideas,
+		projects:       projects,
+		assets:         assets,
+		opportunities:  opportunities,
+		research:       research,
+		storage:        storage,
+		ai:             ai,
+		docs:           docs,
+		events:         events,
+		video:          video,
+		renderer:       renderer,
+		heygenDefaults: heygenDefaults,
 	}
 	for i := 0; i < 3; i++ {
 		go w.run()
@@ -172,6 +187,22 @@ func (w *Worker) publishEvent(job domain.GenerationJob, status, errMsg string) {
 	w.events.Publish(job.UserID, port.AppEvent{Type: port.EventJobUpdated, Data: raw})
 }
 
+// publishStage notifie la progression détaillée d'un job vidéo
+// (status reste "processing", le champ stage porte l'étape).
+func (w *Worker) publishStage(job domain.GenerationJob, stage string) {
+	if w.events == nil {
+		return
+	}
+	raw, err := json.Marshal(map[string]any{
+		"id": job.ID, "kind": job.Kind, "status": domain.JobProcessing,
+		"project_id": job.ProjectID, "stage": stage,
+	})
+	if err != nil {
+		return
+	}
+	w.events.Publish(job.UserID, port.AppEvent{Type: port.EventJobUpdated, Data: raw})
+}
+
 func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
 	switch job.Kind {
 	case domain.JobIdeas:
@@ -186,6 +217,8 @@ func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte,
 		return w.runSalesPage(ctx, job)
 	case domain.JobResearch:
 		return w.runResearch(ctx, job)
+	case domain.JobVideoAd:
+		return w.runVideoAd(ctx, job)
 	default:
 		return nil, fmt.Errorf("unknown job kind %q", job.Kind)
 	}
@@ -480,6 +513,170 @@ func (w *Worker) runResearch(ctx context.Context, job domain.GenerationJob) ([]b
 	return json.Marshal(map[string]any{"opportunity_ids": ids})
 }
 
+// runVideoAd génère une vidéo publicitaire (ADR-016) : storyboard par LLM →
+// vidéo avatar (provider, ex. HeyGen) → montage (sous-titres burnés + cartes
+// intro/outro avec le mockup du produit).
+func (w *Worker) runVideoAd(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	if w.video == nil || w.renderer == nil {
+		return nil, errors.New("module vidéo non configuré")
+	}
+	c, err := w.context(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+
+	params := domain.VideoAdParams{Duration: domain.VideoDurationDefault, AspectRatio: domain.VideoRatioDefault}
+	if len(job.Params) > 0 {
+		if err := json.Unmarshal(job.Params, &params); err != nil {
+			return nil, fmt.Errorf("params vidéo invalides: %w", err)
+		}
+	}
+	params = params.Normalized()
+
+	// Mockup du produit (cover du projet) pour les cartes et scènes produit.
+	coverPNG, err := w.latestCoverPNG(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+	adCtx := videoad.AdContext{
+		Topic:            c.topic,
+		Audience:         c.audience,
+		Language:         c.language,
+		Country:          c.country,
+		Problem:          c.problem,
+		Promise:          c.promise,
+		Price:            c.price,
+		Format:           c.format,
+		CompetitiveAngle: c.competitiveAngle,
+		HasCover:         coverPNG != nil,
+	}
+
+	// Étape 1 : analyse marketing (LLM).
+	w.publishStage(job, domain.VideoStageAnalyzing)
+	analysis, err := w.video.Analyze(ctx, adCtx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Étape 2 : storyboard (LLM).
+	w.publishStage(job, domain.VideoStageStoryboarding)
+	sb, err := w.video.Story(ctx, adCtx, params, analysis)
+	if err != nil {
+		return nil, err
+	}
+
+	// Étape 3 : vidéo avatar via le provider.
+	w.publishStage(job, domain.VideoStageGeneratingVideo)
+	req := videoad.ResolveVideoRequest(sb, params, c.topic, w.heygenDefaults)
+	if req.AvatarID == "" {
+		return nil, errors.New("avatar non configuré (HEYGEN_DEFAULT_AVATAR_ID ou paramètre avatar_id)")
+	}
+	videoID, err := w.ai.SubmitVideo(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("provider vidéo: %w", err)
+	}
+	avatarURL, err := w.awaitVideo(ctx, videoID)
+	if err != nil {
+		return nil, err
+	}
+	avatarVideo, err := download(ctx, avatarURL)
+	if err != nil {
+		return nil, fmt.Errorf("téléchargement vidéo provider: %w", err)
+	}
+
+	// Étape 4 : montage (FFmpeg).
+	w.publishStage(job, domain.VideoStageRendering)
+	render, err := w.renderer.RenderAvatarAd(ctx, port.AvatarAdRenderInput{
+		AvatarVideo: avatarVideo,
+		CoverPNG:    coverPNG,
+		HookText:    sb.Hook,
+		CTAText:     sb.CTA,
+		// Sous-titres estimés sur la durée cible ; le renderer les redimensionne
+		// sur la durée réelle mesurée.
+		SubtitleCues: videoad.BuildSubtitleCues(sb, float64(params.Duration)),
+		AspectRatio:  params.AspectRatio,
+		BrandTitle:   c.topic,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("montage: %w", err)
+	}
+
+	videoAsset, err := w.storeAsset(ctx, job, domain.AssetVideoAd, fmt.Sprintf("video-ad-%s.mp4", job.ID[:8]), "video/mp4", render.Video)
+	if err != nil {
+		return nil, err
+	}
+	thumbAsset, err := w.storeAsset(ctx, job, domain.AssetVideoAdThumb, fmt.Sprintf("video-ad-%s.jpg", job.ID[:8]), "image/jpeg", render.Thumb)
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(domain.ResultVideoAd{
+		AssetID:         videoAsset.ID,
+		ThumbAssetID:    thumbAsset.ID,
+		Storyboard:      sb,
+		ProviderVideoID: videoID,
+		ProviderName:    "heygen",
+		Duration:        render.Duration,
+	})
+}
+
+// awaitVideo interroge le provider jusqu'à complétion (poll 5 s, tolérance
+// à 5 erreurs transécutives ; timeout porté par le contexte du job).
+func (w *Worker) awaitVideo(ctx context.Context, videoID string) (string, error) {
+	const pollInterval = 5 * time.Second
+	const maxConsecutiveErrors = 5
+	consecutive := 0
+	for {
+		select {
+		case <-ctx.Done():
+			return "", fmt.Errorf("attente vidéo: %w", ctx.Err())
+		case <-time.After(pollInterval):
+		}
+		res, err := w.ai.VideoStatus(ctx, videoID)
+		if err != nil {
+			consecutive++
+			if consecutive >= maxConsecutiveErrors {
+				return "", fmt.Errorf("provider vidéo: %w", err)
+			}
+			continue
+		}
+		consecutive = 0
+		switch res.Status {
+		case port.VideoCompleted:
+			if res.URL == "" {
+				return "", errors.New("provider vidéo: complété sans URL")
+			}
+			return res.URL, nil
+		case port.VideoFailed:
+			if res.Error != "" {
+				return "", fmt.Errorf("provider vidéo: %s", res.Error)
+			}
+			return "", errors.New("provider vidéo: génération échouée")
+		case port.VideoPending, port.VideoProcessing:
+		default:
+			return "", fmt.Errorf("provider vidéo: statut inconnu %q", res.Status)
+		}
+	}
+}
+
+// download récupère une ressource HTTP (vidéo provider, URL expirable).
+func download(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	client := &http.Client{Timeout: 2 * time.Minute}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("status %d", resp.StatusCode)
+	}
+	return io.ReadAll(io.LimitReader(resp.Body, 512<<20)) // garde-fou 512 Mo
+}
+
 func stripFences(s string) string {
 	s = strings.TrimSpace(s)
 	s = strings.TrimPrefix(s, "```json")
@@ -518,15 +715,17 @@ func clamp(n, lo, hi int) int {
 
 // genContext regroupe les infos du projet/idée/opportunité pour les prompts.
 type genContext struct {
-	topic    string
-	audience string
-	language string
-	country  string
-	format   string
-	promise  string
-	price    string
-	config   domain.ProjectConfig   // identité visuelle + réglages
-	palette  *domain.ProjectPalette // nil = l'IA la proposera
+	topic            string
+	audience         string
+	language         string
+	country          string
+	format           string
+	promise          string
+	price            string
+	problem          string
+	competitiveAngle string
+	config           domain.ProjectConfig   // identité visuelle + réglages
+	palette          *domain.ProjectPalette // nil = l'IA la proposera
 }
 
 func (w *Worker) context(ctx context.Context, job domain.GenerationJob) (genContext, error) {
@@ -545,6 +744,8 @@ func (w *Worker) context(ctx context.Context, job domain.GenerationJob) (genCont
 			c.audience = idea.Audience
 			c.format = idea.Format
 			c.promise = idea.Promise
+			c.problem = idea.Problem
+			c.competitiveAngle = idea.CompetitiveAngle
 			if idea.Title != "" {
 				c.topic = idea.Title
 			}
@@ -597,6 +798,8 @@ func operationFor(kind string) string {
 		return domain.OperationSalesPage
 	case domain.JobResearch:
 		return domain.OperationNicheResearch
+	case domain.JobVideoAd:
+		return domain.OperationVideoGen
 	default:
 		return ""
 	}

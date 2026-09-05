@@ -134,6 +134,7 @@ func NewRouter(d Deps) http.Handler {
 			r.Post("/projects/{id}/cover", d.Projects.GenerateCover)
 			r.Post("/projects/{id}/posters", d.Projects.GeneratePosters)
 			r.Post("/projects/{id}/sales-page", d.Projects.GenerateSalesPage)
+			r.Post("/projects/{id}/video-ads", d.Projects.GenerateVideoAd)
 			r.Get("/projects/{id}/assets", d.Assets.List)
 
 			r.Get("/assets/{id}/download", d.Assets.Download)

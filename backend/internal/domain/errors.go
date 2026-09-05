@@ -16,4 +16,7 @@ var (
 	ErrInvalidToken  = errors.New("invalid or expired token")
 	ErrNotConfirmed  = errors.New("idea not confirmed")
 	ErrCoverRequired = errors.New("cover required before generating assets")
+	// Vidéos publicitaires.
+	ErrVideoStoryboardInvalid = errors.New("storyboard vidéo invalide")
+	ErrVideoRenderUnavailable = errors.New("montage vidéo indisponible (ffmpeg requis)")
 )
