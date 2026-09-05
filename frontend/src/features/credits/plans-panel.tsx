@@ -73,7 +73,7 @@ export function PlansPanel() {
   }
 
   return (
-    <section>
+    <section id="plans" className="scroll-mt-24">
       <div className="mb-3 flex items-center gap-2">
         <h2 className="font-display text-lg font-semibold text-primary">{t("credits:plansTitle")}</h2>
         <Badge variant="outline" className="text-[10px] uppercase">

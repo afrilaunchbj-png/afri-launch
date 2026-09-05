@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useCreditsSummary, useTransactions } from "@/features/credits/hooks"
+import { useCreditsSummary, usePlans, useTransactions } from "@/features/credits/hooks"
 import type { CreditTransaction } from "@/features/credits/types"
 import { cn } from "@/lib/utils"
 
@@ -106,6 +106,7 @@ export default function CreditsPage() {
   const [page, setPage] = useState(1)
 
   const { data: summary, isLoading: summaryLoading } = useCreditsSummary()
+  const { data: plans } = usePlans()
   const { data, isLoading, isError, refetch } = useTransactions({
     type,
     operation: "",
@@ -145,9 +146,11 @@ export default function CreditsPage() {
                 <span className="text-muted-foreground">{t("credits:label")}</span>
               </div>
             )}
-            <Button size="touch" className="mt-6 w-full" disabled>
-              {t("credits:recharge")}
-            </Button>
+            {plans?.enabled ? (
+              <Button asChild size="touch" className="mt-6 w-full">
+                <a href="#plans">{t("credits:recharge")}</a>
+              </Button>
+            ) : null}
           </CardContent>
         </Card>
 

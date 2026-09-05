@@ -17,6 +17,19 @@ type SupportRepository interface {
 	AddMessage(ctx context.Context, ticketID string, msg domain.TicketMessage) (domain.TicketMessageView, error)
 	SetStatus(ctx context.Context, id, status string) (domain.SupportTicket, error)
 	CountOpen(ctx context.Context) (int64, error)
+
+	// Pièces jointes (captures d'écran, PDF).
+	CreateAttachment(ctx context.Context, a domain.SupportAttachment) (domain.SupportAttachment, error)
+	// BindAttachments rattache des pièces jointes fraîchement uploadées
+	// (appartenant à userID, sans ticket/message) au ticket/message donnés.
+	BindAttachments(ctx context.Context, userID string, attachmentIDs []string, ticketID, messageID string) error
+	// GetAttachment renvoie la pièce jointe si l'utilisateur en est le propriétaire.
+	GetAttachment(ctx context.Context, userID, id string) (domain.SupportAttachment, error)
+	// GetAttachmentByID renvoie une pièce jointe sans contrainte
+	// d'appartenance (route superadmin uniquement).
+	GetAttachmentByID(ctx context.Context, id string) (domain.SupportAttachment, error)
+	ListAttachmentsByTicket(ctx context.Context, ticketID string) ([]domain.SupportAttachment, error)
+	ListAttachmentsByMessages(ctx context.Context, messageIDs []string) ([]domain.SupportAttachment, error)
 }
 
 // AdminListFilter filtre les listes du suivi global (chaîne vide = pas de filtre).

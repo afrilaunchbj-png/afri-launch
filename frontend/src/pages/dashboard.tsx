@@ -20,6 +20,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/features/auth"
 import { useCreditsSummary } from "@/features/credits/hooks"
+import { TopUpButton } from "@/features/credits/top-up-button"
 
 function StatCard({ icon: Icon, label, value }: { icon: typeof FolderOpen; label: string; value: number }) {
   return (
@@ -197,7 +198,8 @@ export default function DashboardPage() {
               <CardTitle>{t("credits:title")}</CardTitle>
               <CardDescription>{t("dashboard:creditsDesc")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-wrap gap-2">
+              <TopUpButton size="touch" className="w-full sm:w-auto" />
               <Button asChild size="touch" variant="outline" className="w-full sm:w-auto">
                 <Link to="/credits">{t("credits:viewHistory")}</Link>
               </Button>

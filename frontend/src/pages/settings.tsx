@@ -5,6 +5,7 @@ import { Coins, Headset, Settings as SettingsIcon, User as UserIcon } from "luci
 import { useAuth } from "@/features/auth/auth-provider"
 import { useMe } from "@/features/auth/hooks"
 import { useCreditsSummary } from "@/features/credits/hooks"
+import { TopUpButton } from "@/features/credits/top-up-button"
 import type { Language, ThemePreference } from "@/features/preferences/api"
 import { usePreferences, useUpdatePreferences } from "@/features/preferences/hooks"
 
@@ -124,20 +125,23 @@ export default function SettingsPage() {
             {t("settings:account")}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-between gap-4">
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-display text-xl font-bold text-warning">
               {credits?.summary.available ?? 0} {t("credits:label")}
             </p>
             <p className="text-xs text-muted-foreground">{t("settings:balanceHint")}</p>
           </div>
-          <Link
-            to="/support"
-            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-          >
-            <Headset className="h-4 w-4" />
-            {t("settings:needHelp")}
-          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <TopUpButton variant="outline" size="sm" />
+            <Link
+              to="/support"
+              className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+            >
+              <Headset className="h-4 w-4" />
+              {t("settings:needHelp")}
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAuth } from "@/features/auth/auth-provider"
 import { useMe, useSignOut } from "@/features/auth/hooks"
 import { useCreditsSummary } from "@/features/credits/hooks"
+import { TopUpButton } from "@/features/credits/top-up-button"
 import { PreferencesSync } from "@/features/preferences/preferences-sync"
 import { cn } from "@/lib/utils"
 
@@ -70,12 +71,15 @@ function SidebarNav() {
       </div>
 
       <div className="px-4">
-        <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
-          <UserAvatar name={user?.name ?? ""} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium">{user?.name}</p>
-            <CreditsBalance />
+        <div className="space-y-2 rounded-lg border bg-card p-3">
+          <div className="flex items-center gap-3">
+            <UserAvatar name={user?.name ?? ""} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{user?.name}</p>
+              <CreditsBalance />
+            </div>
           </div>
+          <TopUpButton variant="outline" size="sm" className="w-full" />
         </div>
       </div>
 

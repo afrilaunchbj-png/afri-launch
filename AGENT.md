@@ -132,6 +132,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Compat PgBouncer/Neon pooler (SQLSTATE 08P01)** : le mode pgx par défaut prépare des statements nommés qui entrent en collision sur le pooler → `QueryExecModeCacheDescribe` dans `pool.go` (statement sans nom, OIDs en cache — jsonb []byte OK, validé par les tests d'intégration chat).
 - [x] **En-têtes de pages harmonisés** : `/discover` et `/admin` ont désormais un header h1 + description comme les autres pages (admin : header avant `AdminNav`).
 - [x] **Checkout paiements (ADR-018)** : port `PaymentProvider` (`CreateCheckout`/`VerifyStatus`/`HandleWebhook`) + adapters REST `infra/payments/{pawapay,fedapay,paydunya}` ; provider actif via `PAYMENT_PROVIDER` (vide = désactivé) ; migration `00019` (`payments.checkout_url` + seed 3 packs : 50 cr/5 000 XOF, 120 cr/10 000, 350 cr/25 000) ; service `application/payments` (checkout 202, webhook public reconfirmé par API, octroi crédits idempotent `payment:<id>`, sync FE) ; endpoints `/payments/*` ; FE page crédits : `PlansPanel` (packs + redirection provider) + resync au retour `?payment=` ; i18n FR/EN ; tests (httptest des 3 providers + intégration Postgres du cycle complet avec idempotence).
+- [x] **Audit de sécurité + CTA rechargement FE** : rapport OWASP dans `docs/security-audit.md` (aucune vulnérabilité critique ; principaux écarts : rate limiting jamais branché, en-têtes de sécurité absents, `GET /projects/{id}/assets` non scopé, pas de garde rôle admin FE ni d'interceptor 401/403, JWT sans vérification d'audience, timeouts serveur partiels) ; FE : composant réutilisable `TopUpButton` (masqué sans provider actif) posé dans la sidebar (carte utilisateur), sur `/settings` (carte compte) et `/dashboard` (carte crédits), bouton « Recharger » de la page `/credits` rendu fonctionnel (ancre `#plans` sur le `PlansPanel`) ; typecheck + build OK.
 
 ## Work In Progress
 
@@ -139,7 +140,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Remaining Work
 
-1. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+1. **Correctifs sécurité (voir `docs/security-audit.md`)** : brancher le rate limiting + IP fiable (Redis si multi-replicas), en-têtes de sécurité backend + nginx, scoper `GET /projects/{id}/assets` à l'utilisateur, timeouts serveur, interceptor FE 401/403 + garde de rôle admin, vérification d'audience JWT, signature des webhooks paiement.
 2. **Workers asynq** (Redis) : remplacer le worker in-process (`application/jobs`) par asynq + **Redis pub/sub pour le broker d'événements** (`infra/events`).
 3. **Tests** : unitaires + intégration + E2E du parcours complet (incl. video_ad avec vraies credentials HeyGen).
 4. **Nettoyage legacy** : endpoints job-batch idées/recherche (`POST /opportunities/{id}/ideas`, `POST /research`) + table `idea_messages` non appelés par le FE depuis le chat (à supprimer lors d'une prochaine passe).
@@ -254,7 +255,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 1. Tester les parcours complets avec vraies credentials : vidéo (Neon Auth + `OPENAI_API_KEY` + `HEYGEN_*` + `S3_*`) et Meta Ads (app Meta en mode dev, `META_APP_ID/SECRET`, `META_OAUTH_REDIRECT_URI`, `ENCRYPTION_KEY`).
 2. **Intégrations publicitaires suite (ADR-017)** : Google Ads + TikTok Ads — créatives (ad groups/ads Google, upload vidéo + adgroup/ad TikTok), insights UI (courbes), worker async (asynq) pour les opérations provider, attachement page_id via UI (Meta).
-3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
+3. **Correctifs sécurité** : appliquer les recommandations de `docs/security-audit.md` (voir Remaining Work #1).
 4. **Workers asynq** : remplacer le worker in-process par asynq + Redis pub/sub pour le broker d'événements.
 5. UI liste des conversations + titres auto affichés dans le chat.
 

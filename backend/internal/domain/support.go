@@ -37,6 +37,37 @@ type TicketMessageView struct {
 	AuthorName  string
 }
 
+// SupportAttachment est un fichier joint (capture d'écran, PDF) rattaché à
+// un ticket (message initial) ou à un message du fil.
+type SupportAttachment struct {
+	ID          string
+	UserID      string
+	TicketID    string
+	MessageID   string
+	Filename    string
+	StorageKey  string
+	ContentType string
+	SizeBytes   int64
+	CreatedAt   time.Time
+}
+
+// Pièces jointes : limites de validation.
+const (
+	AttachmentMaxSize      = 5 << 20 // 5 Mo par fichier
+	AttachmentMaxPerSubmit = 4
+)
+
+// AttachmentAllowedContentType indique si le type MIME est accepté
+// (captures d'écran et PDF).
+func AttachmentAllowedContentType(ct string) bool {
+	switch ct {
+	case "image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf":
+		return true
+	default:
+		return false
+	}
+}
+
 // Statuts d'un ticket de support.
 const (
 	TicketOpen     = "open"

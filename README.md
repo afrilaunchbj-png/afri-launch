@@ -35,6 +35,7 @@ pnpm dev                                 # SPA sur :5173
 - [docs/conventions.md](docs/conventions.md) — conventions (i18n, dark mode, formulaires, listes, erreurs, sécurité)
 - [docs/decisions.md](docs/decisions.md) — ADR
 - [docs/glossary.md](docs/glossary.md) — terminologie
+- [docs/security-audit.md](docs/security-audit.md) — audit de sécurité (OWASP)
 - [AGENT.md](AGENT.md) — mémoire agent
 
 ## Structure
