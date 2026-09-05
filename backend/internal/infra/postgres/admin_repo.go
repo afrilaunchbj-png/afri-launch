@@ -179,7 +179,7 @@ func (r *adminRepo) ListCreditTransactions(ctx context.Context, f port.AdminList
 
 func (r *adminRepo) ListAuditLogs(ctx context.Context, f port.AuditFilter, limit, offset int) ([]domain.AuditLog, int64, error) {
 	params := db.ListAuditLogsParams{
-		UserID:    f.UserID,
+		UserID:    optionalUUID(f.UserID),
 		Action:    f.Action,
 		Entity:    f.Entity,
 		RowLimit:  int32(limit),
@@ -189,7 +189,7 @@ func (r *adminRepo) ListAuditLogs(ctx context.Context, f port.AuditFilter, limit
 	if err != nil {
 		return nil, 0, err
 	}
-	total, err := r.s.q.CountAuditLogs(ctx, db.CountAuditLogsParams{UserID: f.UserID, Action: f.Action, Entity: f.Entity})
+	total, err := r.s.q.CountAuditLogs(ctx, db.CountAuditLogsParams{UserID: optionalUUID(f.UserID), Action: f.Action, Entity: f.Entity})
 	if err != nil {
 		return nil, 0, err
 	}

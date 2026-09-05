@@ -569,3 +569,16 @@ func fromTimestamptz(t pgtype.Timestamptz) *time.Time {
 	}
 	return &t.Time
 }
+
+// optionalUUID convertit un filtre texte (peut être vide) en UUID nullable —
+// une chaîne vide ne doit jamais produire d'erreur de cast côté Postgres.
+func optionalUUID(s string) pgtype.UUID {
+	if s == "" {
+		return pgtype.UUID{}
+	}
+	u, err := uuid.Parse(s)
+	if err != nil {
+		return pgtype.UUID{}
+	}
+	return pgtype.UUID{Bytes: u, Valid: true}
+}

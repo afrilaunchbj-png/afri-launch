@@ -19,9 +19,9 @@ WHERE ($1::uuid IS NULL OR user_id = $1::uuid)
 `
 
 type CountAuditLogsParams struct {
-	UserID string `json:"user_id"`
-	Action string `json:"action"`
-	Entity string `json:"entity"`
+	UserID pgtype.UUID `json:"user_id"`
+	Action string      `json:"action"`
+	Entity string      `json:"entity"`
 }
 
 func (q *Queries) CountAuditLogs(ctx context.Context, arg CountAuditLogsParams) (int64, error) {
@@ -65,11 +65,11 @@ LIMIT $5 OFFSET $4
 `
 
 type ListAuditLogsParams struct {
-	UserID    string `json:"user_id"`
-	Action    string `json:"action"`
-	Entity    string `json:"entity"`
-	RowOffset int32  `json:"row_offset"`
-	RowLimit  int32  `json:"row_limit"`
+	UserID    pgtype.UUID `json:"user_id"`
+	Action    string      `json:"action"`
+	Entity    string      `json:"entity"`
+	RowOffset int32       `json:"row_offset"`
+	RowLimit  int32       `json:"row_limit"`
 }
 
 func (q *Queries) ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error) {
