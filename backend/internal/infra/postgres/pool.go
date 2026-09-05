@@ -6,6 +6,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -19,6 +20,16 @@ func Open(ctx context.Context, url string) (*pgxpool.Pool, error) {
 	cfg.MinConns = 1
 	cfg.MaxConnLifetime = time.Hour
 	cfg.MaxConnIdleTime = 30 * time.Minute
+
+	// Compatibilité PgBouncer (endpoint "pooler" de Neon, mode transaction) :
+	// le mode par défaut de pgx prépare des statements nommés
+	// (stmtcache_1, stmtcache_2…) qui entrent en collision entre connexions
+	// clients multiplexées sur la même connexion serveur →
+	// "prepared statement name is already in use" (SQLSTATE 08P01).
+	// CacheDescribe exécute via le statement SANS NOM (invisible pour
+	// PgBouncer) tout en gardant les OIDs de paramètres en cache — les
+	// colonnes jsonb ([]byte) continuent de fonctionner.
+	cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeCacheDescribe
 
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
