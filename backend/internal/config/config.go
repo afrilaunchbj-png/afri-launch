@@ -34,6 +34,16 @@ type Config struct {
 	HeyGenDefaultAvatarID string
 	HeyGenDefaultVoiceID  string
 
+	// Intégrations publicitaires (ADR-017) — tokens clients chiffrés en DB.
+	AppURL               string // URL publique du frontend (redirections OAuth)
+	EncryptionKey        string
+	EncryptionKeyVersion string
+	MetaAppID            string
+	MetaAppSecret        string
+	MetaGraphVersion     string
+	MetaOAuthRedirectURI string
+	MetaOAuthScopes      string
+
 	// Stockage objet (S3-compatible / Neon en prod, sinon disque local).
 	StorageDir        string
 	S3Endpoint        string
@@ -82,6 +92,15 @@ func Load() Config {
 
 		HeyGenDefaultAvatarID: get("HEYGEN_DEFAULT_AVATAR_ID", ""),
 		HeyGenDefaultVoiceID:  get("HEYGEN_DEFAULT_VOICE_ID", ""),
+
+		AppURL:               get("APP_URL", "http://localhost:5173"),
+		EncryptionKey:        get("ENCRYPTION_KEY", ""),
+		EncryptionKeyVersion: get("ENCRYPTION_KEY_VERSION", "v1"),
+		MetaAppID:            get("META_APP_ID", ""),
+		MetaAppSecret:        get("META_APP_SECRET", ""),
+		MetaGraphVersion:     get("META_GRAPH_API_VERSION", "v23.0"),
+		MetaOAuthRedirectURI: get("META_OAUTH_REDIRECT_URI", ""),
+		MetaOAuthScopes:      get("META_OAUTH_SCOPES", ""),
 
 		ChromePath: get("CHROME_PATH", ""),
 		FFmpegPath: get("FFMPEG_PATH", "ffmpeg"),

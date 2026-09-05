@@ -7,6 +7,7 @@ import chatEn from "./locales/en/chat.json"
 import commonEn from "./locales/en/common.json"
 import creditsEn from "./locales/en/credits.json"
 import dashboardEn from "./locales/en/dashboard.json"
+import integrationsEn from "./locales/en/integrations.json"
 import projectsEn from "./locales/en/projects.json"
 import settingsEn from "./locales/en/settings.json"
 import supportEn from "./locales/en/support.json"
@@ -16,6 +17,7 @@ import chatFr from "./locales/fr/chat.json"
 import commonFr from "./locales/fr/common.json"
 import creditsFr from "./locales/fr/credits.json"
 import dashboardFr from "./locales/fr/dashboard.json"
+import integrationsFr from "./locales/fr/integrations.json"
 import projectsFr from "./locales/fr/projects.json"
 import settingsFr from "./locales/fr/settings.json"
 import supportFr from "./locales/fr/support.json"
@@ -28,6 +30,7 @@ export const resources = {
     dashboard: dashboardFr,
     chat: chatFr,
     projects: projectsFr,
+    integrations: integrationsFr,
     settings: settingsFr,
     support: supportFr,
     admin: adminFr,
@@ -39,6 +42,7 @@ export const resources = {
     dashboard: dashboardEn,
     chat: chatEn,
     projects: projectsEn,
+    integrations: integrationsEn,
     settings: settingsEn,
     support: supportEn,
     admin: adminEn,

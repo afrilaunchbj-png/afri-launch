@@ -30,6 +30,7 @@ export function buildMainNav(isSuperadmin: boolean): NavItem[] {
     { to: "/dashboard", icon: LayoutDashboard, labelKey: "nav.dashboard" },
     { to: "/discover", icon: MessageCircle, labelKey: "nav.discover" },
     { to: "/projects", icon: FolderOpen, labelKey: "nav.projects" },
+    { to: "/integrations", icon: Megaphone, labelKey: "nav.integrations" },
     { to: "/credits", icon: Coins, labelKey: "nav.credits" },
     { to: "/support", icon: Headset, labelKey: "nav.support" },
     { to: "/settings", icon: Settings, labelKey: "nav.settings" },
@@ -47,6 +48,4 @@ export function buildMobileNav(isSuperadmin: boolean): NavItem[] {
   )
 }
 
-export const futureNav: DisabledNavItem[] = [
-  { icon: Megaphone, labelKey: "nav.marketing" },
-]
+export const futureNav: DisabledNavItem[] = []

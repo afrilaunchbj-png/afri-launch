@@ -1,0 +1,49 @@
+{
+  "title": "Advertising integrations",
+  "subtitle": "Connect your advertising accounts to launch campaigns with your videos and track performance.",
+  "provider": {
+    "meta": "Meta Ads",
+    "google_ads": "Google Ads",
+    "tiktok_ads": "TikTok Ads"
+  },
+  "status": {
+    "none": "Not connected",
+    "pending": "Awaiting account",
+    "active": "Connected",
+    "expired": "Expired — reconnect",
+    "revoked": "Access revoked",
+    "error": "Error",
+    "disconnected": "Disconnected"
+  },
+  "connect": "Connect {{provider}}",
+  "disconnect": "Disconnect",
+  "manageAccount": "Manage account",
+  "chooseAccount": "Choose account",
+  "chooseAccountTitle": "Select the advertising account to use",
+  "accountLabel": "Account",
+  "accountSelected": "Account selected",
+  "noAccounts": "No advertising account accessible with this connection.",
+  "pendingHint": "Connection established: now select your advertising account.",
+  "cancel": "Cancel",
+  "confirmAccount": "Confirm",
+  "connectSuccess": "{{provider}} connected",
+  "connectError": "Failed to connect {{provider}}",
+  "campaignsTitle": "Ad campaigns",
+  "noCampaigns": "No synchronized campaign yet.",
+  "syncCampaigns": "Sync",
+  "createCampaign": "Create campaign",
+  "createCampaignTitle": "New ad campaign",
+  "campaignName": "Name",
+  "campaignObjective": "Objective",
+  "campaignBudget": "Daily budget",
+  "campaignBudgetHint": "Amount in the account currency units. The campaign is created paused: publish it when you are ready.",
+  "campaignCreated": "Campaign created (paused)",
+  "campaignStatus": {
+    "draft": "Draft",
+    "active": "Active",
+    "paused": "Paused",
+    "deleted": "Deleted"
+  },
+  "pause": "Pause",
+  "resume": "Resume"
+}

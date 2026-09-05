@@ -92,6 +92,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 14. **Documents = HTML → PDF/PPTX via chromedp** (ADR-013) : contenu structuré (JSON) → templates HTML (thème « Emerald & Amber Ledger » + vocabulaire [Impeccable](https://impeccable.style/)) → `chromedp` → PDF (ebook) ou PPTX image-par-slide (deck).
 15. **Découverte conversationnelle + canal SSE unique** (ADR-014) : un flux SSE par utilisateur (`GET /api/v1/events`, événements typés `chat.*`/`job.updated`), POST de message en 202, boucle agent bornée (outils `@@SEARCH` / bloc `@@IDEAS`), broker in-process (`EventBus`) → Redis pub/sub avec asynq. Chat gratuit, facturation aux actions lourdes (recherche 5 cr, idées 2 cr).
 16. **Vidéos publicitaires** (ADR-016) : job `video_ad` (15 cr) = LLM (analyse+storyboard JSONB) → HeyGen (`VideoProvider`) → FFmpeg (`port.VideoRenderer` : sous-titres burnés + cartes intro/outro avec la cover) → assets MP4+vignette ; avatars/voix par env (`HEYGEN_DEFAULT_AVATAR_ID`/`VOICE_ID`), jamais hard-codés ; progression via events `stage` ; provider-agnostic (ports, aucune logique provider dans le métier).
+17. **Intégrations publicitaires** (ADR-017) : port `AdPlatformProvider` (+`Capabilities`) implémenté par plateforme (`infra/ads/*`), service générique, tokens OAuth chiffrés AES-256-GCM au repos (`ENCRYPTION_KEY`), états CSRF usage unique en DB, callback public sans JWT (utilisateur identifié par l'état), campagnes créées en pause (garde-fous budget), montants en unités mineures entières, mapping UUID interne ↔ ID externe, opérations tracées (`provider_operations`). Meta au MVP ; Google/TikTok = nouveaux providers dans la registry.
 
 ## Design & UI Conventions
 
@@ -122,6 +123,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - [x] **Journal d'activités, discussions tickets, admin filtrable, stats dashboard** : migration `00016` (`support_ticket_messages`) ; fil de discussion des tickets (`GET/POST /support/tickets/{id}/messages` côté user, `GET /admin/tickets/{id}` + `POST /admin/tickets/{id}/messages` côté support ; un ticket résolu est rouvert quand le client répond) ; `audit_logs` (table 00006) alimentée — inscription, promotion admin, cycle de vie des tickets — et exposée via `GET /admin/audit-logs` (filtres action/entity/userId) ; listes admin filtrables côté serveur (users, tickets, projets, conversations, assets, jobs, transactions de crédits — `?search=&status=&role=`) ; `GET /dashboard/stats` (compteurs perso, solde crédits, consommation 30 j, séries journalière 30 j + hebdomadaire 12 semaines) ; FE : sous-navigation admin (`features/admin/admin-nav`) + pages `/admin/{users,tickets,tickets/:id,projects,conversations,assets,jobs,transactions,audit-logs}` (cartes cliquables → liste filtrée, filtres dans l'URL, toolbar debouncée), `/support/:id` (discussion user), dashboard avec 4 StatCards + courbes recharts (crédits 30 j, projets/semaine) ; icône support `Headset`, doublons footer sidebar supprimés ; i18n FR/EN.
 - [x] **Stockage S3 (Neon Object Storage)** (ADR-016, Remaining #1) : `infra/storage/s3.go` (SDK AWS v2, endpoint custom + path-style) ; actif dès que `S3_BUCKET` est défini, fallback `LocalStorage` en dev ; config `S3_ENDPOINT/S3_REGION/S3_ACCESS_KEY_ID/S3_SECRET_ACCESS_KEY/S3_BUCKET/S3_PATH_STYLE`.
 - [x] **Vidéos publicitaires MVP (ADR-016)** : nouveau job kind `video_ad` (15 crédits, `generation_costs` déjà seedé) — pipeline : analyse marketing LLM (`application/videoad` : `Analyze` → angle/pain points/hook/CTA, `Story` → storyboard JSON scènes avatar/product/text) → vidéo avatar HeyGen (`VideoProvider` existant, poll 5 s avec tolérance erreurs) → téléchargement URL expirable → montage FFmpeg (`port.VideoRenderer` + `infra/render/ffmpeg.go` : carte intro cover+hook, sous-titres burnés recalés sur durée ffprobe, carte outro CTA ; presets 9:16/1:1/16:9 ; cartes HTML→PNG via chromedp) → assets `video_ad` + `video_ad_thumb` ; storyboard dans `generation_jobs.result` (pas de tables dédiées) ; progression SSE `job.updated` avec champ `stage` (analyzing/storyboarding/generating_avatar/rendering) ; endpoint `POST /projects/{id}/video-ads` (gate idée confirmée + cover) ; FE `features/video-ads` (panneau durée/format/instructions, progression multi-étapes via SSE, player + download, stepper étape 5) ; i18n FR/EN ; ffmpeg + chromedp dans le Dockerfile ; tests (storyboard/subtitles/SRT/carte HTML + intégration ffmpeg skip si binaire absent).
+- [x] **Intégrations publicitaires — socle + Meta Ads (ADR-017)** : migration `00017` (`ad_platform_connections`, `oauth_states`, `ad_campaigns`, `ad_creatives`, `ad_insights`, `provider_operations`) + sqlc + repos (tokens chiffrés au repos via `infra/crypto` AES-256-GCM) ; port `AdPlatformProvider` + `Capabilities` ; service `application/advertising` (registry de providers, flux OAuth avec état CSRF usage unique en DB, discovery + sélection de compte re-vérifiée, sync campagnes, création **toujours en pause** avec garde-fous budget, creatives vidéo via URLs signées S3, insights normalisés, refresh token auto → statut expired) ; provider `infra/ads/meta` (OAuth prolongation longue durée, adaccounts, campaigns, advideos+adcreatives, insights time_increment=1 j, erreurs Graph typées `Transient()`) ; endpoints `/integrations/*` (callback **public** sans JWT, redirige vers FE) + `/ad-campaigns*` ; FE page `/integrations` (cartes providers, connect/disconnect, sélection compte, campagnes pause/resume + création en pause) + `features/integrations` + nav ; `.env.example` (ENCRYPTION_KEY, META_*, APP_URL) ; docs `docs/integrations/advertising.md` ; tests (service fakes : état CSRF/replay, vérif compte, garde-fou budget ; httptest Meta : OAuth, discovery, mapping campagnes, insights, erreurs ; intégration Postgres : isolation tenant, upserts idempotents).
 
 ## Work In Progress
 
@@ -153,6 +155,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - La génération (idées/ebook/assets/vidéo) requiert `OPENAI_API_KEY` + (`HEYGEN_API_KEY` + `HEYGEN_DEFAULT_AVATAR_ID`/`VOICE_ID` pour les vidéos) côté backend, sinon les jobs échouent (erreur 401 OpenAI / avatar manquant).
 - **Vidéo pub MVP** : 1 variante / 1 scène avatar HeyGen parlant tout le script ; sous-titres estimés par proportion de mots puis recalés sur la durée ffprobe (approximation acceptable) ; storyboard en JSONB (regénération scène par scène nécessitera des tables dédiées) ; l'URL HeyGen est expirable → téléchargée immédiatement.
 - **ffmpeg/ffprobe requis** pour le montage vidéo : installés dans le Dockerfile backend ; absents en dev local (le test d'intégration ffmpeg est skippé) — installer via le gestionnaire de paquets pour tester localement.
+- **Intégrations publicitaires** : sans `META_APP_ID/SECRET`, aucun provider n'est enregistré (connect → 422) ; le callback OAuth est public (sans JWT) et identifie l'utilisateur via l'état consommé — ne jamais ajouter de RequireAuth sur cette route ; l'upload de creatives requiert S3 (URLs présignées, indisponible en local) et une page Facebook (`page_id` dans les métadonnées de connexion) ; les campagnes sont créées en pause par garde-fou (§32) ; tokens déchiffrés uniquement en mémoire — ne jamais les logger.
 
 ## Tests & Validation
 
@@ -161,7 +164,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Database & Migrations
 
-- Schéma v16 (Neon production + local). `db/migrations/` 00001..00016.
+- Schéma v17 (Neon production + local). `db/migrations/` 00001..00017.
+- `00017_advertising.sql` : `ad_platform_connections` (tokens chiffrés), `oauth_states` (usage unique), `ad_campaigns`, `ad_creatives`, `ad_insights`, `provider_operations`.
 - `00011_conversations.sql` : `conversations`, `conversation_messages` (payload JSONB), `product_ideas.conversation_id`.
 - `00012_user_preferences.sql` : `user_preferences` (language, theme) — clée par `user_id`.
 - `00013_project_config.sql` : `projects.config` (palette/style/pages) + `generation_jobs.params`.
@@ -206,6 +210,14 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 - `backend/internal/infra/storage/s3.go` — stockage objet S3-compatible (Neon), actif si `S3_BUCKET` défini.
 - `frontend/src/features/video-ads/` — api/hooks (`useGenerateVideoAd`, `useVideoJob`) + `video-ads-panel.tsx` (formulaire + progression SSE + player/download).
 - `frontend/src/pages/project.tsx` — section vidéo (étape 5 du stepper) avec `VideoAdsPanel` + `VideoPreview`.
+- `backend/internal/application/port/advertising.go` — `AdPlatformProvider`/`Capabilities`, `SecretEncryptor`, `OAuthStateStore`, repos advertising, `StorageSigner`.
+- `backend/internal/application/advertising/service.go` — orchestration générique (registry providers, OAuth, comptes, campagnes, creatives, insights, garde-fous).
+- `backend/internal/infra/ads/meta/meta.go` — provider Meta complet (OAuth, discovery, campagnes, creatives, insights, erreurs Graph).
+- `backend/internal/infra/crypto/crypto.go` — chiffrement AES-256-GCM des tokens (format `v1:nonce:ct`).
+- `backend/internal/infra/postgres/ad_repo.go` — repos connexions/campagnes/creatives/insights/opérations + store d'états OAuth.
+- `backend/internal/server/handler/integrations.go` — endpoints intégrations (callback public → redirection FE).
+- `backend/db/migrations/00017_advertising.sql` — tables advertising (cf. ADR-017).
+- `frontend/src/features/integrations/` + `frontend/src/pages/integrations.tsx` — page Publicité (providers, comptes, campagnes).
 - `backend/internal/application/jobs/worker.go` — worker asynchrone (idées/ebook/couverture/page de vente/recherche) + publication `job.updated`.
 - `backend/internal/application/port/workshop.go` — interfaces `IdeaRepository`/`ConversationRepository`/`ProjectRepository`/`AssetRepository`/`JobRepository`/`Storage`.
 - `backend/internal/infra/storage/local.go` — stockage local (S3 à venir).
@@ -228,8 +240,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Next Steps
 
-1. Tester le parcours complet avec vraies credentials (Neon Auth + `OPENAI_API_KEY` + `HEYGEN_API_KEY` + `HEYGEN_DEFAULT_AVATAR_ID`) : chat → idées → projet → ebook → **vidéo pub** → download ; configurer les `S3_*` (Neon) pour le stockage durable.
-2. **Flow marketing** (`prompts/marketing-flow.md`) : intégrations publicitaires multi-tenant (Meta/Google/TikTok Ads, OAuth, chiffrement des tokens, campagnes/insights) — réutilise les assets vidéo comme creatives.
+1. Tester les parcours complets avec vraies credentials : vidéo (Neon Auth + `OPENAI_API_KEY` + `HEYGEN_*` + `S3_*`) et Meta Ads (app Meta en mode dev, `META_APP_ID/SECRET`, `META_OAUTH_REDIRECT_URI`, `ENCRYPTION_KEY`).
+2. **Intégrations publicitaires suite (ADR-017)** : attachement des vidéos d'un projet comme creatives depuis la page projet, Google Ads + TikTok Ads (mêmes endpoints), insights UI (courbes), worker async (asynq) pour les opérations provider.
 3. **Paiements Mobile Money** (`PaymentProvider`) + recharges de crédits.
 4. **Workers asynq** : remplacer le worker in-process par asynq + Redis pub/sub pour le broker d'événements.
 5. UI liste des conversations + titres auto affichés dans le chat.

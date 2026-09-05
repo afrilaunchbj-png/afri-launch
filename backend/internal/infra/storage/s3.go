@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -16,8 +17,9 @@ import (
 // S3 stocke les objets dans un stockage objet compatible S3 (Neon Object
 // Storage en production). Remplace LocalStorage (disque éphémère sur Railway).
 type S3 struct {
-	client *s3.Client
-	bucket string
+	client  *s3.Client
+	presign *s3.PresignClient
+	bucket  string
 }
 
 // NewS3 construit un stockage S3-compatible. endpoint vide = AWS S3 ;
@@ -52,7 +54,7 @@ func NewS3(ctx context.Context, endpoint, region, accessKeyID, secretAccessKey, 
 		clientOpts = append(clientOpts, func(o *s3.Options) { o.UsePathStyle = true })
 	}
 
-	return &S3{client: s3.NewFromConfig(awsCfg, clientOpts...), bucket: bucket}, nil
+	return &S3{client: s3.NewFromConfig(awsCfg, clientOpts...), presign: s3.NewPresignClient(s3.NewFromConfig(awsCfg, clientOpts...)), bucket: bucket}, nil
 }
 
 // Put écrit data sous la clé donnée.
@@ -84,4 +86,17 @@ func (s *S3) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, fmt.Errorf("storage s3 read %q: %w", key, err)
 	}
 	return data, nil
+}
+
+// SignedURL produit une URL présignée temporairement publique (GET) —
+// utilisée pour fournir les creatives aux plateformes publicitaires.
+func (s *S3) SignedURL(ctx context.Context, key string, ttl time.Duration) (string, error) {
+	req, err := s.presign.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(strings.TrimPrefix(key, "/")),
+	}, s3.WithPresignExpires(ttl))
+	if err != nil {
+		return "", fmt.Errorf("storage s3 presign %q: %w", key, err)
+	}
+	return req.URL, nil
 }

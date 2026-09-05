@@ -11,6 +11,7 @@ import (
 	"time"
 
 	adminapp "afrilaunch/backend/internal/application/admin"
+	advapp "afrilaunch/backend/internal/application/advertising"
 	appai "afrilaunch/backend/internal/application/ai"
 	assetsapp "afrilaunch/backend/internal/application/assets"
 	auditapp "afrilaunch/backend/internal/application/audit"
@@ -29,8 +30,11 @@ import (
 	supportapp "afrilaunch/backend/internal/application/support"
 	videoadapp "afrilaunch/backend/internal/application/videoad"
 	"afrilaunch/backend/internal/config"
+	"afrilaunch/backend/internal/domain"
+	adsmeta "afrilaunch/backend/internal/infra/ads/meta"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
 	authinfra "afrilaunch/backend/internal/infra/auth"
+	cryptoinfra "afrilaunch/backend/internal/infra/crypto"
 	eventsinfra "afrilaunch/backend/internal/infra/events"
 	"afrilaunch/backend/internal/infra/postgres"
 	renderinfra "afrilaunch/backend/internal/infra/render"
@@ -132,6 +136,39 @@ func main() {
 	chatRepo := postgres.NewConversationRepository(store)
 	chatSvc := chatapp.NewService(chatRepo, ideaRepo, oppRepo, creditRepo, prefRepo, aiSvc, eventBus)
 
+	// Intégrations publicitaires (ADR-017) : Meta au MVP, providers additionnels
+	// par simple enregistrement dans la registry.
+	encryptor, err := cryptoinfra.NewEncryptor(cfg.EncryptionKey, cfg.EncryptionKeyVersion)
+	if err != nil {
+		slog.Error("cannot configure encryption", "err", err)
+		os.Exit(1)
+	}
+	providers := advapp.ProviderRegistry{}
+	if cfg.MetaAppID != "" && cfg.MetaAppSecret != "" {
+		providers[domain.AdPlatformMeta] = adsmeta.New(
+			cfg.MetaAppID, cfg.MetaAppSecret, cfg.MetaGraphVersion,
+			cfg.MetaOAuthRedirectURI, cfg.MetaOAuthScopes,
+		)
+	}
+	var adSigner port.StorageSigner
+	if s3Store, ok := objStorage.(*storage.S3); ok {
+		adSigner = s3Store
+	}
+	advSvc := advapp.NewService(
+		providers,
+		encryptor,
+		postgres.NewOAuthStateStore(store),
+		postgres.NewAdConnectionRepository(store, encryptor),
+		postgres.NewAdCampaignRepository(store),
+		postgres.NewAdCreativeRepository(store),
+		postgres.NewAdInsightRepository(store),
+		postgres.NewProviderOperationRepository(store),
+		assetRepo,
+		objStorage,
+		adSigner,
+		advapp.DefaultSafetyPolicy(),
+	)
+
 	// Handlers HTTP.
 	authH := handler.NewAuthHandler(authSvc, int64(cfg.WelcomeCredits))
 	creditH := handler.NewCreditHandler(creditSvc)
@@ -146,6 +183,9 @@ func main() {
 	eventsH := handler.NewEventHandler(eventBus)
 	prefH := handler.NewPreferenceHandler(prefSvc)
 	supportH := handler.NewSupportHandler(supportSvc)
+	integrationsH := handler.NewIntegrationHandler(advSvc, cfg.AppURL, map[string]string{
+		domain.AdPlatformMeta: cfg.MetaOAuthRedirectURI,
+	})
 	adminH := handler.NewAdminHandler(adminSvc)
 	dashboardH := handler.NewDashboardHandler(dashSvc)
 	healthH := handler.NewHealth(store)
@@ -168,6 +208,7 @@ func main() {
 		Events:        eventsH,
 		Preferences:   prefH,
 		Support:       supportH,
+		Integrations:  integrationsH,
 		Admin:         adminH,
 		Dashboard:     dashboardH,
 		AI:            aiSvc,

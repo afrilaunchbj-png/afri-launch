@@ -15,6 +15,8 @@ type Querier interface {
 	AddProjectCredits(ctx context.Context, arg AddProjectCreditsParams) (Project, error)
 	AddReserved(ctx context.Context, arg AddReservedParams) (CreditAccount, error)
 	CompleteJob(ctx context.Context, arg CompleteJobParams) (GenerationJob, error)
+	CompleteProviderOperation(ctx context.Context, arg CompleteProviderOperationParams) error
+	ConsumeOAuthState(ctx context.Context, arg ConsumeOAuthStateParams) (OauthState, error)
 	CountAllAssets(ctx context.Context, search string) (int64, error)
 	CountAllConversations(ctx context.Context, search string) (int64, error)
 	CountAllCreditTransactions(ctx context.Context, arg CountAllCreditTransactionsParams) (int64, error)
@@ -35,6 +37,8 @@ type Querier interface {
 	CountUserProjects(ctx context.Context, userID string) (int64, error)
 	CountUsers(ctx context.Context) (int64, error)
 	CountUsersFiltered(ctx context.Context, arg CountUsersFilteredParams) (int64, error)
+	CreateAdConnection(ctx context.Context, arg CreateAdConnectionParams) (AdPlatformConnection, error)
+	CreateAdCreative(ctx context.Context, arg CreateAdCreativeParams) (AdCreative, error)
 	CreateAsset(ctx context.Context, arg CreateAssetParams) (Asset, error)
 	CreateConversation(ctx context.Context, userID string) (Conversation, error)
 	CreateConversationMessage(ctx context.Context, arg CreateConversationMessageParams) (ConversationMessage, error)
@@ -44,11 +48,18 @@ type Querier interface {
 	CreateIdea(ctx context.Context, arg CreateIdeaParams) (ProductIdea, error)
 	CreateIdeaMessage(ctx context.Context, arg CreateIdeaMessageParams) (IdeaMessage, error)
 	CreateJob(ctx context.Context, arg CreateJobParams) (GenerationJob, error)
+	CreateOAuthState(ctx context.Context, arg CreateOAuthStateParams) error
 	CreateOpportunity(ctx context.Context, arg CreateOpportunityParams) (Opportunity, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
+	CreateProviderOperation(ctx context.Context, arg CreateProviderOperationParams) (ProviderOperation, error)
 	CreateResearchRequest(ctx context.Context, arg CreateResearchRequestParams) (ResearchRequest, error)
 	CreateTicket(ctx context.Context, arg CreateTicketParams) (SupportTicket, error)
 	FailJob(ctx context.Context, arg FailJobParams) (GenerationJob, error)
+	FailProviderOperation(ctx context.Context, arg FailProviderOperationParams) error
+	GetAdCampaign(ctx context.Context, arg GetAdCampaignParams) (AdCampaign, error)
+	GetAdConnection(ctx context.Context, arg GetAdConnectionParams) (AdPlatformConnection, error)
+	GetAdConnectionByProvider(ctx context.Context, arg GetAdConnectionByProviderParams) (AdPlatformConnection, error)
+	GetAdCreative(ctx context.Context, arg GetAdCreativeParams) (AdCreative, error)
 	GetAsset(ctx context.Context, arg GetAssetParams) (Asset, error)
 	GetConversation(ctx context.Context, arg GetConversationParams) (Conversation, error)
 	GetCreditAccountByID(ctx context.Context, id string) (CreditAccount, error)
@@ -61,6 +72,7 @@ type Querier interface {
 	GetJob(ctx context.Context, arg GetJobParams) (GenerationJob, error)
 	GetOpportunity(ctx context.Context, id string) (Opportunity, error)
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
+	GetProviderOperation(ctx context.Context, arg GetProviderOperationParams) (ProviderOperation, error)
 	GetResearchRequest(ctx context.Context, arg GetResearchRequestParams) (ResearchRequest, error)
 	GetTicket(ctx context.Context, id string) (SupportTicket, error)
 	GetTicketWithUser(ctx context.Context, id string) (GetTicketWithUserRow, error)
@@ -70,6 +82,12 @@ type Querier interface {
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertTicketMessage(ctx context.Context, arg InsertTicketMessageParams) (InsertTicketMessageRow, error)
 	InsertUserPreferences(ctx context.Context, arg InsertUserPreferencesParams) (UserPreference, error)
+	ListAdCampaigns(ctx context.Context, userID string) ([]AdCampaign, error)
+	ListAdCampaignsByConnection(ctx context.Context, connectionID string) ([]AdCampaign, error)
+	ListAdConnections(ctx context.Context, userID string) ([]AdPlatformConnection, error)
+	ListAdConnectionsByProvider(ctx context.Context, provider string) ([]AdPlatformConnection, error)
+	ListAdCreatives(ctx context.Context, userID string) ([]AdCreative, error)
+	ListAdInsights(ctx context.Context, arg ListAdInsightsParams) ([]AdInsight, error)
 	ListAllAssets(ctx context.Context, arg ListAllAssetsParams) ([]ListAllAssetsRow, error)
 	ListAllConversations(ctx context.Context, arg ListAllConversationsParams) ([]ListAllConversationsRow, error)
 	ListAllCreditTransactions(ctx context.Context, arg ListAllCreditTransactionsParams) ([]ListAllCreditTransactionsRow, error)
@@ -93,14 +111,20 @@ type Querier interface {
 	ListOpportunities(ctx context.Context, arg ListOpportunitiesParams) ([]Opportunity, error)
 	ListPlans(ctx context.Context) ([]Plan, error)
 	ListProjectsByUser(ctx context.Context, userID string) ([]Project, error)
+	ListProviderOperations(ctx context.Context, arg ListProviderOperationsParams) ([]ProviderOperation, error)
 	ListSavedOpportunityIDs(ctx context.Context, userID string) ([]string, error)
 	ListTicketMessages(ctx context.Context, ticketID string) ([]ListTicketMessagesRow, error)
 	ListTicketsByUser(ctx context.Context, userID string) ([]SupportTicket, error)
 	// Suivi global superadmin.
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]User, error)
+	MarkProviderOperationProcessing(ctx context.Context, id string) error
+	PruneOAuthStates(ctx context.Context) error
 	SaveOpportunity(ctx context.Context, arg SaveOpportunityParams) error
+	SelectAdAccount(ctx context.Context, arg SelectAdAccountParams) (AdPlatformConnection, error)
 	SelectIdea(ctx context.Context, arg SelectIdeaParams) (ProductIdea, error)
+	SetAdConnectionStatus(ctx context.Context, arg SetAdConnectionStatusParams) (AdPlatformConnection, error)
+	SetAdConnectionSynced(ctx context.Context, arg SetAdConnectionSyncedParams) (AdPlatformConnection, error)
 	SetConversationOpportunity(ctx context.Context, arg SetConversationOpportunityParams) (Conversation, error)
 	SetConversationTitle(ctx context.Context, arg SetConversationTitleParams) (Conversation, error)
 	SetIdeaStatus(ctx context.Context, arg SetIdeaStatusParams) (ProductIdea, error)
@@ -114,6 +138,9 @@ type Querier interface {
 	TouchConversation(ctx context.Context, id string) (Conversation, error)
 	UnsaveOpportunity(ctx context.Context, arg UnsaveOpportunityParams) error
 	UnselectIdea(ctx context.Context, arg UnselectIdeaParams) error
+	UpdateAdCampaign(ctx context.Context, arg UpdateAdCampaignParams) (AdCampaign, error)
+	UpdateAdConnectionTokens(ctx context.Context, arg UpdateAdConnectionTokensParams) (AdPlatformConnection, error)
+	UpdateAdCreativeExternal(ctx context.Context, arg UpdateAdCreativeExternalParams) (AdCreative, error)
 	UpdateCreditReservationStatus(ctx context.Context, arg UpdateCreditReservationStatusParams) (CreditReservation, error)
 	UpdateIdeaContent(ctx context.Context, arg UpdateIdeaContentParams) (ProductIdea, error)
 	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (GenerationJob, error)
@@ -121,6 +148,8 @@ type Querier interface {
 	UpdateProjectStatus(ctx context.Context, arg UpdateProjectStatusParams) (Project, error)
 	UpdateResearchRequestStatus(ctx context.Context, arg UpdateResearchRequestStatusParams) (ResearchRequest, error)
 	UpdateUserPreferences(ctx context.Context, arg UpdateUserPreferencesParams) (UserPreference, error)
+	UpsertAdCampaign(ctx context.Context, arg UpsertAdCampaignParams) (AdCampaign, error)
+	UpsertAdInsight(ctx context.Context, arg UpsertAdInsightParams) error
 	UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error)
 	UserCreditsPerDay(ctx context.Context, arg UserCreditsPerDayParams) ([]UserCreditsPerDayRow, error)
 	UserProjectsPerWeek(ctx context.Context, arg UserProjectsPerWeekParams) ([]UserProjectsPerWeekRow, error)

@@ -1,0 +1,49 @@
+{
+  "title": "Intégrations publicitaires",
+  "subtitle": "Connectez vos comptes publicitaires pour lancer des campagnes avec vos vidéos et suivre leurs performances.",
+  "provider": {
+    "meta": "Meta Ads",
+    "google_ads": "Google Ads",
+    "tiktok_ads": "TikTok Ads"
+  },
+  "status": {
+    "none": "Non connecté",
+    "pending": "En attente de compte",
+    "active": "Connecté",
+    "expired": "Expirée — reconnectez-vous",
+    "revoked": "Accès révoqué",
+    "error": "Erreur",
+    "disconnected": "Déconnectée"
+  },
+  "connect": "Connecter {{provider}}",
+  "disconnect": "Déconnecter",
+  "manageAccount": "Gérer le compte",
+  "chooseAccount": "Choisir un compte",
+  "chooseAccountTitle": "Choisissez le compte publicitaire à utiliser",
+  "accountLabel": "Compte",
+  "accountSelected": "Compte sélectionné",
+  "noAccounts": "Aucun compte publicitaire accessible avec cette connexion.",
+  "pendingHint": "Connexion établie : sélectionnez maintenant votre compte publicitaire.",
+  "cancel": "Annuler",
+  "confirmAccount": "Confirmer",
+  "connectSuccess": "Connexion {{provider}} réussie",
+  "connectError": "Échec de la connexion {{provider}}",
+  "campaignsTitle": "Campagnes publicitaires",
+  "noCampaigns": "Aucune campagne synchronisée pour l'instant.",
+  "syncCampaigns": "Synchroniser",
+  "createCampaign": "Créer une campagne",
+  "createCampaignTitle": "Nouvelle campagne publicitaire",
+  "campaignName": "Nom",
+  "campaignObjective": "Objectif",
+  "campaignBudget": "Budget journalier",
+  "campaignBudgetHint": "Montant en unités de la devise du compte. La campagne est créée en pause : publiez-la quand vous êtes prêt.",
+  "campaignCreated": "Campagne créée (en pause)",
+  "campaignStatus": {
+    "draft": "Brouillon",
+    "active": "Active",
+    "paused": "En pause",
+    "deleted": "Supprimée"
+  },
+  "pause": "Mettre en pause",
+  "resume": "Réactiver"
+}

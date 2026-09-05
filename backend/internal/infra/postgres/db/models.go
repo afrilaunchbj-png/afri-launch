@@ -10,6 +10,71 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AdCampaign struct {
+	ID                 string    `json:"id"`
+	UserID             string    `json:"user_id"`
+	ConnectionID       string    `json:"connection_id"`
+	ExternalCampaignID string    `json:"external_campaign_id"`
+	Name               string    `json:"name"`
+	Objective          string    `json:"objective"`
+	Status             string    `json:"status"`
+	BudgetMinor        int64     `json:"budget_minor"`
+	Currency           string    `json:"currency"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+}
+
+type AdCreative struct {
+	ID                 string      `json:"id"`
+	UserID             string      `json:"user_id"`
+	ConnectionID       string      `json:"connection_id"`
+	CampaignID         pgtype.UUID `json:"campaign_id"`
+	Type               string      `json:"type"`
+	AssetID            pgtype.UUID `json:"asset_id"`
+	ExternalCreativeID string      `json:"external_creative_id"`
+	Headline           string      `json:"headline"`
+	PrimaryText        string      `json:"primary_text"`
+	Cta                string      `json:"cta"`
+	Status             string      `json:"status"`
+	Metadata           []byte      `json:"metadata"`
+	CreatedAt          time.Time   `json:"created_at"`
+	UpdatedAt          time.Time   `json:"updated_at"`
+}
+
+type AdInsight struct {
+	ID          string      `json:"id"`
+	CampaignID  string      `json:"campaign_id"`
+	UserID      string      `json:"user_id"`
+	Date        pgtype.Date `json:"date"`
+	Impressions int64       `json:"impressions"`
+	Reach       int64       `json:"reach"`
+	Clicks      int64       `json:"clicks"`
+	SpendMinor  int64       `json:"spend_minor"`
+	Conversions float64     `json:"conversions"`
+	Currency    string      `json:"currency"`
+	Metadata    []byte      `json:"metadata"`
+}
+
+type AdPlatformConnection struct {
+	ID                   string             `json:"id"`
+	UserID               string             `json:"user_id"`
+	Provider             string             `json:"provider"`
+	Status               string             `json:"status"`
+	ExternalUserID       string             `json:"external_user_id"`
+	ExternalAccountID    string             `json:"external_account_id"`
+	ExternalAccountName  string             `json:"external_account_name"`
+	AccessTokenEnc       string             `json:"access_token_enc"`
+	RefreshTokenEnc      string             `json:"refresh_token_enc"`
+	AccessTokenExpiresAt pgtype.Timestamptz `json:"access_token_expires_at"`
+	Scopes               []string           `json:"scopes"`
+	Metadata             []byte             `json:"metadata"`
+	LastError            string             `json:"last_error"`
+	LastErrorAt          pgtype.Timestamptz `json:"last_error_at"`
+	LastSyncAt           pgtype.Timestamptz `json:"last_sync_at"`
+	CreatedAt            time.Time          `json:"created_at"`
+	UpdatedAt            time.Time          `json:"updated_at"`
+}
+
 type Asset struct {
 	ID          string    `json:"id"`
 	UserID      string    `json:"user_id"`
@@ -130,6 +195,14 @@ type Market struct {
 	IsActive bool   `json:"is_active"`
 }
 
+type OauthState struct {
+	State     string             `json:"state"`
+	UserID    string             `json:"user_id"`
+	Provider  string             `json:"provider"`
+	ExpiresAt time.Time          `json:"expires_at"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+}
+
 type Opportunity struct {
 	ID         string      `json:"id"`
 	Title      string      `json:"title"`
@@ -216,6 +289,23 @@ type Project struct {
 	CreatedAt       time.Time   `json:"created_at"`
 	UpdatedAt       time.Time   `json:"updated_at"`
 	Config          []byte      `json:"config"`
+}
+
+type ProviderOperation struct {
+	ID                 string             `json:"id"`
+	UserID             string             `json:"user_id"`
+	ConnectionID       pgtype.UUID        `json:"connection_id"`
+	Provider           string             `json:"provider"`
+	OperationType      string             `json:"operation_type"`
+	Status             string             `json:"status"`
+	Attempts           int32              `json:"attempts"`
+	InternalResourceID string             `json:"internal_resource_id"`
+	ExternalResourceID string             `json:"external_resource_id"`
+	ErrorCode          string             `json:"error_code"`
+	ErrorMessage       string             `json:"error_message"`
+	CreatedAt          time.Time          `json:"created_at"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	CompletedAt        pgtype.Timestamptz `json:"completed_at"`
 }
 
 type RefreshToken struct {

@@ -20,6 +20,7 @@ import CreditsPage from "@/pages/credits"
 import DashboardPage from "@/pages/dashboard"
 import DiscoverPage from "@/pages/discover"
 import HomePage from "@/pages/home"
+import IntegrationsPage from "@/pages/integrations"
 import LoginPage from "@/pages/login"
 import NotFoundPage from "@/pages/not-found"
 import ProjectPage from "@/pages/project"
@@ -61,6 +62,7 @@ export const router = createBrowserRouter([
           { path: "ideas", element: <Navigate to="/discover" replace /> },
           { path: "projects", element: <ProjectsPage /> },
           { path: "projects/:id", element: <ProjectPage /> },
+          { path: "integrations", element: <IntegrationsPage /> },
           { path: "credits", element: <CreditsPage /> },
           { path: "support", element: <SupportPage /> },
           { path: "support/:id", element: <SupportTicketPage /> },

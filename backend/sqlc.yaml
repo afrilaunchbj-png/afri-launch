@@ -24,3 +24,6 @@ sql:
           - db_type: "jsonb"
             go_type:
               type: "[]byte"
+          - db_type: "pg_catalog.numeric"
+            go_type:
+              type: "float64"

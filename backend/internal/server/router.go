@@ -33,6 +33,7 @@ type Deps struct {
 	Events        *handler.EventHandler
 	Preferences   *handler.PreferenceHandler
 	Support       *handler.SupportHandler
+	Integrations  *handler.IntegrationHandler
 	Admin         *handler.AdminHandler
 	Dashboard     *handler.DashboardHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
@@ -63,6 +64,10 @@ func NewRouter(d Deps) http.Handler {
 		// Référentiel des marchés (public).
 		r.Get("/markets", d.Markets.List)
 
+		// Callbacks OAuth des plateformes publicitaires : arrivent sans JWT
+		// (navigation navigateur) — l'utilisateur est résolu via l'état CSRF.
+		r.Get("/integrations/{provider}/callback", d.Integrations.Callback)
+
 		// Routes protégées (JWT Neon Auth).
 		r.Group(func(r chi.Router) {
 			r.Use(RequireAuth(d.Tokens))
@@ -87,6 +92,19 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/support/tickets", d.Support.ListMine)
 			r.Get("/support/tickets/{id}", d.Support.GetTicket)
 			r.Post("/support/tickets/{id}/messages", d.Support.Reply)
+
+			// Intégrations publicitaires (ADR-017).
+			r.Get("/integrations", d.Integrations.List)
+			r.Get("/integrations/{provider}/connect", d.Integrations.Connect)
+			r.Get("/integrations/{provider}/accounts", d.Integrations.ListAccounts)
+			r.Post("/integrations/{provider}/accounts/select", d.Integrations.SelectAccount)
+			r.Post("/integrations/{provider}/campaigns/sync", d.Integrations.SyncCampaigns)
+			r.Delete("/integrations/{provider}", d.Integrations.Disconnect)
+			r.Get("/ad-campaigns", d.Integrations.ListCampaigns)
+			r.Post("/ad-campaigns", d.Integrations.CreateCampaign)
+			r.Post("/ad-campaigns/{id}/pause", d.Integrations.PauseCampaign)
+			r.Post("/ad-campaigns/{id}/resume", d.Integrations.ResumeCampaign)
+			r.Get("/ad-campaigns/{id}/insights", d.Integrations.CampaignInsights)
 
 			// Tableau de bord personnel : statistiques et courbes.
 			r.Get("/dashboard/stats", d.Dashboard.Stats)
