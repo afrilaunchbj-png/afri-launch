@@ -21,4 +21,19 @@ const (
 	AuditTicketReply      = "ticket.reply"
 	AuditTicketAdminReply = "ticket.admin_reply"
 	AuditTicketResolve    = "ticket.resolve"
+
+	// Générations (jobs) et intégrations publicitaires.
+	AuditGenerationDispatched   = "generation.dispatched"
+	AuditGenerationCompleted    = "generation.completed"
+	AuditGenerationFailed       = "generation.failed"
+	AuditProjectCreated         = "project.created"
+	AuditCampaignCreated        = "campaign.created"
+	AuditCampaignStatusChanged  = "campaign.status_changed"
+	AuditCreativePublished      = "creative.published"
+	AuditConnectionDisconnected = "connection.disconnected"
+
+	// Paiements (recharges de crédits).
+	AuditPaymentCheckout  = "payment.checkout"
+	AuditPaymentSucceeded = "payment.succeeded"
+	AuditPaymentFailed    = "payment.failed"
 )

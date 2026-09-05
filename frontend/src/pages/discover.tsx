@@ -148,7 +148,12 @@ export default function DiscoverPage() {
   )
 
   return (
-    <div className="flex h-[calc(100dvh-13rem)] min-h-[420px] gap-4 md:h-[calc(100dvh-9rem)]">
+    <div className="space-y-4">
+      <header>
+        <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("chat:pageTitle")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("chat:pageDescription")}</p>
+      </header>
+      <div className="flex h-[calc(100dvh-16rem)] min-h-[380px] gap-4 md:h-[calc(100dvh-12.5rem)]">
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
         <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
           <div className="min-w-0">
@@ -213,6 +218,7 @@ export default function DiscoverPage() {
       <aside className="hidden w-80 shrink-0 lg:block xl:w-96">
         {panel}
       </aside>
+      </div>
     </div>
   )
 }

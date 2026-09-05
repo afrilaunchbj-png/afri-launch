@@ -4,6 +4,7 @@ import type { TFunction } from "i18next"
 import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowDownCircle, ArrowUpCircle, Coins, Receipt } from "lucide-react"
 
+import { PlansPanel } from "@/features/credits/plans-panel"
 import { DataTable } from "@/components/data-table/data-table"
 import { EmptyState } from "@/components/states/empty-state"
 import { ErrorState } from "@/components/states/error-state"
@@ -120,6 +121,8 @@ export default function CreditsPage() {
         <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("credits:title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("credits:subtitle")}</p>
       </header>
+
+      <PlansPanel />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="relative overflow-hidden">

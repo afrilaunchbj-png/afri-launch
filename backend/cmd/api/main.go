@@ -23,6 +23,7 @@ import (
 	ideasapp "afrilaunch/backend/internal/application/ideas"
 	"afrilaunch/backend/internal/application/jobs"
 	opportunitiesapp "afrilaunch/backend/internal/application/opportunities"
+	paymentsapp "afrilaunch/backend/internal/application/payments"
 	"afrilaunch/backend/internal/application/port"
 	preferencesapp "afrilaunch/backend/internal/application/preferences"
 	projectsapp "afrilaunch/backend/internal/application/projects"
@@ -38,6 +39,9 @@ import (
 	authinfra "afrilaunch/backend/internal/infra/auth"
 	cryptoinfra "afrilaunch/backend/internal/infra/crypto"
 	eventsinfra "afrilaunch/backend/internal/infra/events"
+	payinfra "afrilaunch/backend/internal/infra/payments/fedapay"
+	paypawa "afrilaunch/backend/internal/infra/payments/pawapay"
+	paydunya "afrilaunch/backend/internal/infra/payments/paydunya"
 	"afrilaunch/backend/internal/infra/postgres"
 	renderinfra "afrilaunch/backend/internal/infra/render"
 	"afrilaunch/backend/internal/infra/storage"
@@ -191,6 +195,38 @@ func main() {
 		auditRec,
 	)
 
+	// Paiements (ADR-018) : provider activé par PAYMENT_PROVIDER ; sans clé,
+	// le module est désactivé et l'application continue de fonctionner.
+	paymentProviders := paymentsapp.ProviderRegistry{}
+	switch cfg.PaymentProvider {
+	case domain.PaymentProviderPawaPay:
+		if cfg.PawaPayAPIToken != "" {
+			paymentProviders[domain.PaymentProviderPawaPay] = paypawa.New(cfg.PawaPayAPIToken, cfg.PawaPayAPIURL, cfg.PawaPayCountry)
+		}
+	case domain.PaymentProviderFedaPay:
+		if cfg.FedaPaySecretKey != "" {
+			paymentProviders[domain.PaymentProviderFedaPay] = payinfra.New(cfg.FedaPaySecretKey, cfg.FedaPayAPIURL, "AfriLaunch")
+		}
+	case domain.PaymentProviderPayDunya:
+		if cfg.PayDunyaMasterKey != "" && cfg.PayDunyaPrivate != "" && cfg.PayDunyaToken != "" {
+			paymentProviders[domain.PaymentProviderPayDunya] = paydunya.New(cfg.PayDunyaMasterKey, cfg.PayDunyaPrivate, cfg.PayDunyaToken, cfg.PayDunyaMode, "AfriLaunch")
+		}
+	case "":
+		// Désactivé : /payments/plans répondra enabled=false.
+	default:
+		slog.Warn("PAYMENT_PROVIDER inconnu — paiements désactivés", "provider", cfg.PaymentProvider)
+	}
+	paymentSvc := paymentsapp.NewService(
+		paymentProviders,
+		postgres.NewPlanRepository(store),
+		postgres.NewPaymentRepository(store),
+		creditRepo,
+		auditRec,
+		"AfriLaunch",
+		cfg.AppURL+"/credits",
+		cfg.PaymentWebhookURL,
+	)
+
 	// Handlers HTTP.
 	authH := handler.NewAuthHandler(authSvc, int64(cfg.WelcomeCredits))
 	creditH := handler.NewCreditHandler(creditSvc)
@@ -205,6 +241,7 @@ func main() {
 	eventsH := handler.NewEventHandler(eventBus)
 	prefH := handler.NewPreferenceHandler(prefSvc)
 	supportH := handler.NewSupportHandler(supportSvc)
+	paymentH := handler.NewPaymentHandler(paymentSvc)
 	integrationsH := handler.NewIntegrationHandler(advSvc, cfg.AppURL, map[string]string{
 		domain.AdPlatformMeta:      cfg.MetaOAuthRedirectURI,
 		domain.AdPlatformGoogleAds: cfg.GoogleAdsRedirectURI,
@@ -233,6 +270,7 @@ func main() {
 		Preferences:   prefH,
 		Support:       supportH,
 		Integrations:  integrationsH,
+		Payments:      paymentH,
 		Admin:         adminH,
 		Dashboard:     dashboardH,
 		AI:            aiSvc,

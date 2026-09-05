@@ -34,6 +34,7 @@ type Deps struct {
 	Preferences   *handler.PreferenceHandler
 	Support       *handler.SupportHandler
 	Integrations  *handler.IntegrationHandler
+	Payments      *handler.PaymentHandler
 	Admin         *handler.AdminHandler
 	Dashboard     *handler.DashboardHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
@@ -67,6 +68,10 @@ func NewRouter(d Deps) http.Handler {
 		// Callbacks OAuth des plateformes publicitaires : arrivent sans JWT
 		// (navigation navigateur) — l'utilisateur est résolu via l'état CSRF.
 		r.Get("/integrations/{provider}/callback", d.Integrations.Callback)
+
+		// Webhooks des providers de paiement : notifications serveur-à-serveur
+		// (sans JWT ; chaque statut est reconfirmé par API avant octroi).
+		r.Post("/payments/webhook/{provider}", d.Payments.Webhook)
 
 		// Routes protégées (JWT Neon Auth).
 		r.Group(func(r chi.Router) {
@@ -134,6 +139,13 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/credits", d.Credits.Summary)
 			r.Get("/credits/transactions", d.Credits.Transactions)
 			r.Post("/credits/reserve", d.Credits.Reserve)
+
+			// Achat de crédits (checkout paiements, ADR-018).
+			r.Get("/payments/plans", d.Payments.Plans)
+			r.Post("/payments/checkout", d.Payments.Checkout)
+			r.Get("/payments", d.Payments.ListMine)
+			r.Get("/payments/{id}", d.Payments.Get)
+			r.Post("/payments/{id}/sync", d.Payments.Sync)
 
 			r.Get("/opportunities", d.Opportunities.List)
 			r.Get("/opportunities/filters", d.Opportunities.Filters)

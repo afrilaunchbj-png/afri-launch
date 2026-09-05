@@ -241,6 +241,7 @@ type Payment struct {
 	ProviderReference *string     `json:"provider_reference"`
 	CreatedAt         time.Time   `json:"created_at"`
 	UpdatedAt         time.Time   `json:"updated_at"`
+	CheckoutUrl       *string     `json:"checkout_url"`
 }
 
 type Plan struct {

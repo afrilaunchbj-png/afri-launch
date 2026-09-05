@@ -46,11 +46,11 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <AdminNav />
       <header>
         <h1 className="font-display text-2xl font-bold text-primary md:text-3xl">{t("admin:title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("admin:subtitle")}</p>
       </header>
+      <AdminNav />
 
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={Users} label={t("admin:statUsers")} value={stats?.users ?? 0} to="/admin/users" />

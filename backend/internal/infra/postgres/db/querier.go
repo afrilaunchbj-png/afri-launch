@@ -51,6 +51,7 @@ type Querier interface {
 	CreateJob(ctx context.Context, arg CreateJobParams) (GenerationJob, error)
 	CreateOAuthState(ctx context.Context, arg CreateOAuthStateParams) error
 	CreateOpportunity(ctx context.Context, arg CreateOpportunityParams) (Opportunity, error)
+	CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateProviderOperation(ctx context.Context, arg CreateProviderOperationParams) (ProviderOperation, error)
 	CreateResearchRequest(ctx context.Context, arg CreateResearchRequestParams) (ResearchRequest, error)
@@ -73,6 +74,9 @@ type Querier interface {
 	GetIdea(ctx context.Context, arg GetIdeaParams) (ProductIdea, error)
 	GetJob(ctx context.Context, arg GetJobParams) (GenerationJob, error)
 	GetOpportunity(ctx context.Context, id string) (Opportunity, error)
+	GetPayment(ctx context.Context, arg GetPaymentParams) (Payment, error)
+	GetPaymentByProviderReference(ctx context.Context, providerReference *string) (Payment, error)
+	GetPlan(ctx context.Context, id string) (Plan, error)
 	GetProject(ctx context.Context, arg GetProjectParams) (Project, error)
 	GetProviderOperation(ctx context.Context, arg GetProviderOperationParams) (ProviderOperation, error)
 	GetResearchRequest(ctx context.Context, arg GetResearchRequestParams) (ResearchRequest, error)
@@ -86,6 +90,7 @@ type Querier interface {
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
 	InsertTicketMessage(ctx context.Context, arg InsertTicketMessageParams) (InsertTicketMessageRow, error)
 	InsertUserPreferences(ctx context.Context, arg InsertUserPreferencesParams) (UserPreference, error)
+	ListActivePlans(ctx context.Context) ([]Plan, error)
 	ListAdCampaigns(ctx context.Context, userID string) ([]AdCampaign, error)
 	ListAdCampaignsByConnection(ctx context.Context, connectionID string) ([]AdCampaign, error)
 	ListAdConnections(ctx context.Context, userID string) ([]AdPlatformConnection, error)
@@ -113,6 +118,7 @@ type Querier interface {
 	ListJobsByProject(ctx context.Context, projectID pgtype.UUID) ([]GenerationJob, error)
 	ListMarkets(ctx context.Context) ([]Market, error)
 	ListOpportunities(ctx context.Context, arg ListOpportunitiesParams) ([]Opportunity, error)
+	ListPaymentsByUser(ctx context.Context, arg ListPaymentsByUserParams) ([]Payment, error)
 	ListPlans(ctx context.Context) ([]Plan, error)
 	ListProjectsByUser(ctx context.Context, userID string) ([]Project, error)
 	ListProviderOperations(ctx context.Context, arg ListProviderOperationsParams) ([]ProviderOperation, error)
@@ -124,6 +130,7 @@ type Querier interface {
 	// Suivi global superadmin.
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	ListUsersFiltered(ctx context.Context, arg ListUsersFilteredParams) ([]User, error)
+	MarkPaymentStatus(ctx context.Context, arg MarkPaymentStatusParams) (Payment, error)
 	MarkProviderOperationProcessing(ctx context.Context, id string) error
 	PruneOAuthStates(ctx context.Context) error
 	SaveOpportunity(ctx context.Context, arg SaveOpportunityParams) error
@@ -150,6 +157,7 @@ type Querier interface {
 	UpdateCreditReservationStatus(ctx context.Context, arg UpdateCreditReservationStatusParams) (CreditReservation, error)
 	UpdateIdeaContent(ctx context.Context, arg UpdateIdeaContentParams) (ProductIdea, error)
 	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (GenerationJob, error)
+	UpdatePaymentCheckout(ctx context.Context, arg UpdatePaymentCheckoutParams) error
 	UpdateProjectConfig(ctx context.Context, arg UpdateProjectConfigParams) (Project, error)
 	UpdateProjectStatus(ctx context.Context, arg UpdateProjectStatusParams) (Project, error)
 	UpdateResearchRequestStatus(ctx context.Context, arg UpdateResearchRequestStatusParams) (ResearchRequest, error)

@@ -22,5 +22,7 @@
   "ideaDraft": "Brouillon",
   "ideaConfirmed": "Validée",
   "confirmIdea": "Valider cette idée",
-  "createProject": "Transformer en projet"
+  "createProject": "Transformer en projet",
+  "pageTitle": "Découvrir",
+  "pageDescription": "Explorez un marché et façonnez votre idée de produit avec le copilote."
 }

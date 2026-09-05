@@ -32,3 +32,49 @@ export function fetchTransactions(filters: TransactionFilters) {
 
   return api.get<ApiList<CreditTransaction>>(`/api/v1/credits/transactions?${qs.toString()}`)
 }
+
+// ---------- Paiements (checkout, ADR-018) ----------
+
+export interface CreditPlan {
+  id: string
+  name: string
+  credits: number
+  price_minor: number
+  currency: string
+}
+
+export interface PlansResponse {
+  plans: CreditPlan[]
+  provider: string
+  enabled: boolean
+}
+
+export interface Payment {
+  id: string
+  plan_id?: string
+  amount_minor: number
+  currency: string
+  provider: string
+  status: "pending" | "succeeded" | "failed" | "refunded"
+  checkout_url?: string
+}
+
+export function fetchPlans() {
+  return api.get<ApiSingle<PlansResponse>>("/api/v1/payments/plans").then((r) => r.data)
+}
+
+export function createCheckout(planId: string) {
+  return api
+    .post<ApiSingle<{ payment: Payment; redirect_url: string }>>("/api/v1/payments/checkout", {
+      plan_id: planId,
+    })
+    .then((r) => r.data)
+}
+
+export function fetchPayment(id: string) {
+  return api.get<ApiSingle<Payment>>(`/api/v1/payments/${id}`).then((r) => r.data)
+}
+
+export function syncPayment(id: string) {
+  return api.post<ApiSingle<Payment>>(`/api/v1/payments/${id}/sync`).then((r) => r.data)
+}

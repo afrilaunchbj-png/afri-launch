@@ -53,6 +53,20 @@ type Config struct {
 	TikTokAppSecret       string
 	TikTokRedirectURI     string
 
+	// Paiements (ADR-018) : provider choisi par PAYMENT_PROVIDER
+	// (pawapay | fedapay | paydunya, vide = désactivé).
+	PaymentProvider   string
+	PaymentWebhookURL string
+	PawaPayAPIToken   string
+	PawaPayAPIURL     string
+	PawaPayCountry    string
+	FedaPaySecretKey  string
+	FedaPayAPIURL     string
+	PayDunyaMasterKey string
+	PayDunyaPrivate   string
+	PayDunyaToken     string
+	PayDunyaMode      string
+
 	// Stockage objet (S3-compatible / Neon en prod, sinon disque local).
 	StorageDir        string
 	S3Endpoint        string
@@ -121,6 +135,18 @@ func Load() Config {
 		TikTokAppID:       get("TIKTOK_APP_ID", ""),
 		TikTokAppSecret:   get("TIKTOK_APP_SECRET", ""),
 		TikTokRedirectURI: get("TIKTOK_OAUTH_REDIRECT_URI", ""),
+
+		PaymentProvider:   get("PAYMENT_PROVIDER", ""),
+		PaymentWebhookURL: get("PAYMENT_WEBHOOK_URL", ""),
+		PawaPayAPIToken:   get("PAWAPAY_API_TOKEN", ""),
+		PawaPayAPIURL:     get("PAWAPAY_API_URL", "https://api.pawapay.io"),
+		PawaPayCountry:    get("PAWAPAY_COUNTRY", "BEN"),
+		FedaPaySecretKey:  get("FEDAPAY_SECRET_KEY", ""),
+		FedaPayAPIURL:     get("FEDAPAY_API_URL", "https://api.fedapay.com/v1"),
+		PayDunyaMasterKey: get("PAYDUNYA_MASTER_KEY", ""),
+		PayDunyaPrivate:   get("PAYDUNYA_PRIVATE_KEY", ""),
+		PayDunyaToken:     get("PAYDUNYA_TOKEN", ""),
+		PayDunyaMode:      get("PAYDUNYA_MODE", "test"),
 
 		ChromePath: get("CHROME_PATH", ""),
 		FFmpegPath: get("FFMPEG_PATH", "ffmpeg"),

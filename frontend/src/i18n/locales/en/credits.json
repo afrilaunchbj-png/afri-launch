@@ -34,5 +34,13 @@
     "image_generation": "Image generation",
     "video_generation": "Video generation",
     "sales_page": "Sales page"
-  }
+  },
+  "plansTitle": "Top up credits",
+  "paymentProvider": "via {{provider}}",
+  "planCredits": "{{count}} credits",
+  "buy": "Buy",
+  "paymentHint": "Secure Mobile Money payment. Credits are added once the payment is confirmed.",
+  "paymentSucceeded": "Payment confirmed — credits added!",
+  "paymentFailed": "Payment failed or cancelled.",
+  "paymentPending": "Payment being confirmed — credits will be added once validated."
 }

@@ -22,5 +22,7 @@
   "ideaDraft": "Draft",
   "ideaConfirmed": "Validated",
   "confirmIdea": "Validate this idea",
-  "createProject": "Turn into project"
+  "createProject": "Turn into project",
+  "pageTitle": "Discover",
+  "pageDescription": "Explore a market and shape your product idea with the copilot."
 }

@@ -34,5 +34,13 @@
     "image_generation": "Génération d'image",
     "video_generation": "Génération de vidéo",
     "sales_page": "Page de vente"
-  }
+  },
+  "plansTitle": "Recharger des crédits",
+  "paymentProvider": "via {{provider}}",
+  "planCredits": "{{count}} crédits",
+  "buy": "Acheter",
+  "paymentHint": "Paiement sécurisé par Mobile Money. Les crédits sont ajoutés après confirmation du paiement.",
+  "paymentSucceeded": "Paiement confirmé — crédits ajoutés !",
+  "paymentFailed": "Paiement échoué ou annulé.",
+  "paymentPending": "Paiement en cours de confirmation — les crédits seront ajoutés dès validation."
 }
