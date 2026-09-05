@@ -207,6 +207,66 @@ func (h *IntegrationHandler) CreateCampaign(w http.ResponseWriter, r *http.Reque
 	writeData(w, http.StatusCreated, toCampaignDTO(campaign))
 }
 
+// creativeDTO sérialise une créative.
+type creativeDTO struct {
+	ID                 string `json:"id"`
+	CampaignID         string `json:"campaign_id,omitempty"`
+	Type               string `json:"type"`
+	AssetID            string `json:"asset_id,omitempty"`
+	ExternalCreativeID string `json:"external_creative_id,omitempty"`
+	Headline           string `json:"headline,omitempty"`
+	PrimaryText        string `json:"primary_text,omitempty"`
+	Status             string `json:"status"`
+}
+
+func toCreativeDTO(c domain.Creative) creativeDTO {
+	var campaignID, assetID string
+	if c.CampaignID != nil {
+		campaignID = *c.CampaignID
+	}
+	if c.AssetID != nil {
+		assetID = *c.AssetID
+	}
+	return creativeDTO{
+		ID: c.ID, CampaignID: campaignID, Type: c.Type, AssetID: assetID,
+		ExternalCreativeID: c.ExternalCreativeID, Headline: c.Headline,
+		PrimaryText: c.PrimaryText, Status: c.Status,
+	}
+}
+
+// ListCreatives gère GET /ad-creatives.
+func (h *IntegrationHandler) ListCreatives(w http.ResponseWriter, r *http.Request) {
+	userID := authctx.UserID(r.Context())
+	creatives, err := h.svc.ListCreatives(r.Context(), userID)
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	out := make([]creativeDTO, 0, len(creatives))
+	for _, c := range creatives {
+		out = append(out, toCreativeDTO(c))
+	}
+	writeData(w, http.StatusOK, out)
+}
+
+// PublishCreative gère POST /ad-campaigns/{id}/creatives : publie un asset
+// interne (ex. vidéo d'un projet) comme créative sur la campagne.
+func (h *IntegrationHandler) PublishCreative(w http.ResponseWriter, r *http.Request) {
+	userID := authctx.UserID(r.Context())
+	campaignID := chi.URLParam(r, "id")
+	var in advapp.PublishCreativeInput
+	if err := decodeJSON(w, r, &in); err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	creative, err := h.svc.PublishCreative(r.Context(), userID, campaignID, in)
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	writeData(w, http.StatusCreated, toCreativeDTO(creative))
+}
+
 // PauseCampaign gère POST /ad-campaigns/{id}/pause.
 func (h *IntegrationHandler) PauseCampaign(w http.ResponseWriter, r *http.Request) {
 	h.setCampaignStatus(w, r, domain.CampaignPaused)

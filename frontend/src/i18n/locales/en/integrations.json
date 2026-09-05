@@ -45,5 +45,23 @@
     "deleted": "Deleted"
   },
   "pause": "Pause",
-  "resume": "Resume"
+  "resume": "Resume",
+  "campaignProvider": "Platform",
+  "publishCreative": "Publish as ad creative",
+  "publishCreativeTitle": "Publish this video as a creative",
+  "publishCreativeHint": "The video is uploaded to the platform and attached to the selected campaign (kept paused until you publish).",
+  "creativePublished": "Creative published",
+  "noCampaignForCreative": "No campaign available: connect your account and sync campaigns from the Advertising page.",
+  "creativeCampaign": "Campaign",
+  "creativeCampaignPlaceholder": "Choose a campaign",
+  "creativeHeadline": "Creative headline",
+  "creativeHeadlinePlaceholder": "e.g. Launch your business in 7 days",
+  "creativePrimaryText": "Primary text",
+  "creativeCTA": "Call-to-action button",
+  "cta": {
+    "LEARN_MORE": "Learn more",
+    "SHOP_NOW": "Shop now",
+    "SIGN_UP": "Sign up",
+    "DOWNLOAD": "Download"
+  }
 }

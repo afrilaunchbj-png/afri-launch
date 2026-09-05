@@ -27,13 +27,29 @@ import { Textarea } from "@/components/ui/textarea"
 import { useJob } from "@/features/generation/hooks"
 import type { Job } from "@/features/generation/api"
 import type { ProjectPalette } from "@/features/projects/api"
-import { assetDownloadPath } from "@/features/projects/api"
+import { assetDownloadPath, type Asset } from "@/features/projects/api"
 import { downloadAsset, useAssets, useGenerate, useGenerateCover, useProject, useUpdateProjectConfig } from "@/features/projects/hooks"
+import { PublishCreativeDialog } from "@/features/integrations/publish-creative-dialog"
 import { useLatestVideoAsset, VideoAdsPanel, VideoPreview } from "@/features/video-ads/video-ads-panel"
 import { isAppError } from "@/lib/errors"
 
 function isActive(job?: Job) {
   return job?.status === "pending" || job?.status === "processing"
+}
+
+/** PublishCreativeButton ouvre le dialog de publication sur une campagne. */
+function PublishCreativeButton({ asset }: { asset: Asset }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
+        <Megaphone className="h-4 w-4" />
+        {t("integrations:publishCreative")}
+      </Button>
+      {open ? <PublishCreativeDialog open onClose={() => setOpen(false)} asset={asset} /> : null}
+    </>
+  )
 }
 
 const PALETTE_FIELDS = ["primary", "secondary", "accent", "background", "text"] as const
@@ -425,7 +441,10 @@ export default function ProjectPage() {
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           <div>
             {videoAsset ? (
-              <VideoPreview asset={videoAsset} />
+              <div className="space-y-2">
+                <VideoPreview asset={videoAsset} />
+                <PublishCreativeButton asset={videoAsset} />
+              </div>
             ) : (
               <p className="text-sm text-muted-foreground">{t("projects:videoNone")}</p>
             )}

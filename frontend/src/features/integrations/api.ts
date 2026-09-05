@@ -96,3 +96,31 @@ export function pauseCampaign(id: string) {
 export function resumeCampaign(id: string) {
   return api.post<ApiSingle<AdCampaign>>(`/api/v1/ad-campaigns/${id}/resume`).then((r) => r.data)
 }
+
+export interface AdCreative {
+  id: string
+  campaign_id?: string
+  type: "video" | "image" | "carousel" | "text"
+  asset_id?: string
+  external_creative_id?: string
+  headline?: string
+  primary_text?: string
+  status: string
+}
+
+export interface PublishCreativeInput {
+  asset_id: string
+  headline: string
+  primary_text: string
+  cta: string
+}
+
+export function publishCreative(campaignId: string, input: PublishCreativeInput) {
+  return api
+    .post<ApiSingle<AdCreative>>(`/api/v1/ad-campaigns/${campaignId}/creatives`, input)
+    .then((r) => r.data)
+}
+
+export function fetchCreatives() {
+  return api.get<ApiSingle<AdCreative[]>>("/api/v1/ad-creatives").then((r) => r.data)
+}

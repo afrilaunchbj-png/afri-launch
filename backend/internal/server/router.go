@@ -104,7 +104,9 @@ func NewRouter(d Deps) http.Handler {
 			r.Post("/ad-campaigns", d.Integrations.CreateCampaign)
 			r.Post("/ad-campaigns/{id}/pause", d.Integrations.PauseCampaign)
 			r.Post("/ad-campaigns/{id}/resume", d.Integrations.ResumeCampaign)
+			r.Post("/ad-campaigns/{id}/creatives", d.Integrations.PublishCreative)
 			r.Get("/ad-campaigns/{id}/insights", d.Integrations.CampaignInsights)
+			r.Get("/ad-creatives", d.Integrations.ListCreatives)
 
 			// Tableau de bord personnel : statistiques et courbes.
 			r.Get("/dashboard/stats", d.Dashboard.Stats)

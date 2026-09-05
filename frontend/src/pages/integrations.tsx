@@ -249,6 +249,7 @@ function AccountPicker({ provider, onClose }: { provider: AdProvider; onClose: (
 function CampaignsSection() {
   const { t } = useTranslation()
   const { data: campaigns, isLoading } = useCampaigns()
+  const { data: integrations } = useIntegrations()
   const sync = useSyncCampaigns()
   const setStatus = usePauseResumeCampaign()
   const create = useCreateCampaign()
@@ -256,21 +257,25 @@ function CampaignsSection() {
 
   const onError = (e: unknown) => toast.error(isAppError(e) ? e.message : t("common.genericError"))
 
-  const activeProvider: AdProvider | null = PROVIDERS[0].id // meta au MVP
+  const activeProviders = (integrations?.connections ?? [])
+    .filter((c) => c.status === "active")
+    .map((c) => c.provider)
+  const defaultProvider: AdProvider | null = activeProviders[0] ?? null
 
   return (
     <section>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="font-display text-lg font-semibold text-primary">{t("integrations:campaignsTitle")}</h2>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => setCreating(true)}>
+          <Button size="sm" variant="outline" onClick={() => setCreating(true)} disabled={!defaultProvider}>
             {t("integrations:createCampaign")}
           </Button>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => activeProvider && sync.mutate(activeProvider, { onError })}
+            onClick={() => defaultProvider && sync.mutate(defaultProvider, { onError })}
             loading={sync.isPending}
+            disabled={!defaultProvider}
           >
             <RefreshCw className="h-4 w-4" />
             {t("integrations:syncCampaigns")}
@@ -321,7 +326,12 @@ function CampaignsSection() {
         </div>
       )}
 
-      <CreateCampaignDialog open={creating} onClose={() => setCreating(false)} onCreate={create} />
+      <CreateCampaignDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreate={create}
+        providers={activeProviders}
+      />
     </section>
   )
 }
@@ -330,12 +340,15 @@ function CreateCampaignDialog({
   open,
   onClose,
   onCreate,
+  providers,
 }: {
   open: boolean
   onClose: () => void
   onCreate: ReturnType<typeof useCreateCampaign>
+  providers: AdProvider[]
 }) {
   const { t } = useTranslation()
+  const [provider, setProvider] = useState<AdProvider>(providers[0] ?? "meta")
   const [name, setName] = useState("")
   const [objective, setObjective] = useState(OBJECTIVES[0])
   const [budget, setBudget] = useState("")
@@ -344,7 +357,7 @@ function CreateCampaignDialog({
     if (!name.trim() || !budget) return
     onCreate.mutate(
       {
-        provider: "meta",
+        provider,
         name: name.trim(),
         objective,
         budget_minor: Math.round(Number(budget) * 100),
@@ -368,6 +381,21 @@ function CreateCampaignDialog({
           <DialogTitle>{t("integrations:createCampaignTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="camp-provider">{t("integrations:campaignProvider")}</Label>
+            <Select value={provider} onValueChange={(v) => setProvider(v as AdProvider)}>
+              <SelectTrigger id="camp-provider">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {providers.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {t(`integrations:provider.${p}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="camp-name">{t("integrations:campaignName")}</Label>
             <Input id="camp-name" value={name} onChange={(e) => setName(e.target.value)} />

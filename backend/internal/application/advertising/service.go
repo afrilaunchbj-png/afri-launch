@@ -359,6 +359,57 @@ func (s *Service) publishCreative(ctx context.Context, userID string, p port.AdP
 	return s.operations.Complete(ctx, op.ID, externalID)
 }
 
+// PublishCreativeInput décrit la publication d'une créative sur une campagne.
+type PublishCreativeInput struct {
+	AssetID     string `json:"asset_id"`
+	Headline    string `json:"headline"`
+	PrimaryText string `json:"primary_text"`
+	CTA         string `json:"cta"`
+}
+
+// PublishCreative publie un asset interne (ex. vidéo d'un projet) comme
+// créative sur une campagne existante : résolution asset → URL signée →
+// upload provider → mapping externe persisté. Opération tracée et auditable.
+func (s *Service) PublishCreative(ctx context.Context, userID, campaignID string, in PublishCreativeInput) (domain.Creative, error) {
+	campaign, err := s.campaigns.Get(ctx, userID, campaignID)
+	if err != nil {
+		return domain.Creative{}, err
+	}
+	if in.AssetID == "" {
+		return domain.Creative{}, domain.ErrInvalidInput
+	}
+	conn, err := s.activeConnectionByID(ctx, userID, campaign.ConnectionID)
+	if err != nil {
+		return domain.Creative{}, err
+	}
+	p, err := s.provider(conn.Provider)
+	if err != nil {
+		return domain.Creative{}, err
+	}
+	if !p.Capabilities().Creatives {
+		return domain.Creative{}, fmt.Errorf("%w: %s", domain.ErrInvalidInput, "ce provider ne supporte pas encore les creatives")
+	}
+	if err := s.publishCreative(ctx, userID, p, conn, campaign.ID, CreateCampaignInput{
+		AssetID: in.AssetID, Headline: in.Headline, PrimaryText: in.PrimaryText, CTA: in.CTA,
+	}); err != nil {
+		return domain.Creative{}, err
+	}
+	// La créative la plus récente du user correspond à celle publiée.
+	creatives, err := s.creatives.List(ctx, userID)
+	if err != nil {
+		return domain.Creative{}, err
+	}
+	if len(creatives) == 0 {
+		return domain.Creative{}, errors.New("creative introuvable après publication")
+	}
+	return creatives[0], nil
+}
+
+// ListCreatives renvoie les créatives de l'utilisateur (mapping interne/externe).
+func (s *Service) ListCreatives(ctx context.Context, userID string) ([]domain.Creative, error) {
+	return s.creatives.List(ctx, userID)
+}
+
 // ListCampaigns renvoie les campagnes internes de l'utilisateur.
 func (s *Service) ListCampaigns(ctx context.Context, userID string) ([]domain.Campaign, error) {
 	return s.campaigns.List(ctx, userID)

@@ -31,7 +31,9 @@ import (
 	videoadapp "afrilaunch/backend/internal/application/videoad"
 	"afrilaunch/backend/internal/config"
 	"afrilaunch/backend/internal/domain"
+	adsgoogle "afrilaunch/backend/internal/infra/ads/googleads"
 	adsmeta "afrilaunch/backend/internal/infra/ads/meta"
+	adstiktok "afrilaunch/backend/internal/infra/ads/tiktok"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
 	authinfra "afrilaunch/backend/internal/infra/auth"
 	cryptoinfra "afrilaunch/backend/internal/infra/crypto"
@@ -150,6 +152,17 @@ func main() {
 			cfg.MetaOAuthRedirectURI, cfg.MetaOAuthScopes,
 		)
 	}
+	if cfg.GoogleAdsClientID != "" && cfg.GoogleAdsClientSecret != "" && cfg.GoogleAdsDevToken != "" {
+		providers[domain.AdPlatformGoogleAds] = adsgoogle.New(
+			cfg.GoogleAdsClientID, cfg.GoogleAdsClientSecret, cfg.GoogleAdsDevToken,
+			cfg.GoogleAdsLoginCustID, cfg.GoogleAdsAPIVersion,
+		)
+	}
+	if cfg.TikTokAppID != "" && cfg.TikTokAppSecret != "" {
+		providers[domain.AdPlatformTikTokAds] = adstiktok.New(
+			cfg.TikTokAppID, cfg.TikTokAppSecret, cfg.TikTokRedirectURI,
+		)
+	}
 	var adSigner port.StorageSigner
 	if s3Store, ok := objStorage.(*storage.S3); ok {
 		adSigner = s3Store
@@ -184,7 +197,9 @@ func main() {
 	prefH := handler.NewPreferenceHandler(prefSvc)
 	supportH := handler.NewSupportHandler(supportSvc)
 	integrationsH := handler.NewIntegrationHandler(advSvc, cfg.AppURL, map[string]string{
-		domain.AdPlatformMeta: cfg.MetaOAuthRedirectURI,
+		domain.AdPlatformMeta:      cfg.MetaOAuthRedirectURI,
+		domain.AdPlatformGoogleAds: cfg.GoogleAdsRedirectURI,
+		domain.AdPlatformTikTokAds: cfg.TikTokRedirectURI,
 	})
 	adminH := handler.NewAdminHandler(adminSvc)
 	dashboardH := handler.NewDashboardHandler(dashSvc)

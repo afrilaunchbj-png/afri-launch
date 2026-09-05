@@ -35,14 +35,23 @@ type Config struct {
 	HeyGenDefaultVoiceID  string
 
 	// Intégrations publicitaires (ADR-017) — tokens clients chiffrés en DB.
-	AppURL               string // URL publique du frontend (redirections OAuth)
-	EncryptionKey        string
-	EncryptionKeyVersion string
-	MetaAppID            string
-	MetaAppSecret        string
-	MetaGraphVersion     string
-	MetaOAuthRedirectURI string
-	MetaOAuthScopes      string
+	AppURL                string // URL publique du frontend (redirections OAuth)
+	EncryptionKey         string
+	EncryptionKeyVersion  string
+	MetaAppID             string
+	MetaAppSecret         string
+	MetaGraphVersion      string
+	MetaOAuthRedirectURI  string
+	MetaOAuthScopes       string
+	GoogleAdsClientID     string
+	GoogleAdsClientSecret string
+	GoogleAdsDevToken     string
+	GoogleAdsRedirectURI  string
+	GoogleAdsLoginCustID  string
+	GoogleAdsAPIVersion   string
+	TikTokAppID           string
+	TikTokAppSecret       string
+	TikTokRedirectURI     string
 
 	// Stockage objet (S3-compatible / Neon en prod, sinon disque local).
 	StorageDir        string
@@ -101,6 +110,17 @@ func Load() Config {
 		MetaGraphVersion:     get("META_GRAPH_API_VERSION", "v23.0"),
 		MetaOAuthRedirectURI: get("META_OAUTH_REDIRECT_URI", ""),
 		MetaOAuthScopes:      get("META_OAUTH_SCOPES", ""),
+
+		GoogleAdsClientID:     get("GOOGLE_ADS_CLIENT_ID", ""),
+		GoogleAdsClientSecret: get("GOOGLE_ADS_CLIENT_SECRET", ""),
+		GoogleAdsDevToken:     get("GOOGLE_ADS_DEVELOPER_TOKEN", ""),
+		GoogleAdsRedirectURI:  get("GOOGLE_ADS_OAUTH_REDIRECT_URI", ""),
+		GoogleAdsLoginCustID:  get("GOOGLE_ADS_LOGIN_CUSTOMER_ID", ""),
+		GoogleAdsAPIVersion:   get("GOOGLE_ADS_API_VERSION", ""),
+
+		TikTokAppID:       get("TIKTOK_APP_ID", ""),
+		TikTokAppSecret:   get("TIKTOK_APP_SECRET", ""),
+		TikTokRedirectURI: get("TIKTOK_OAUTH_REDIRECT_URI", ""),
 
 		ChromePath: get("CHROME_PATH", ""),
 		FFmpegPath: get("FFMPEG_PATH", "ffmpeg"),

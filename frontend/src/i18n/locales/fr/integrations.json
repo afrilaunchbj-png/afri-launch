@@ -45,5 +45,23 @@
     "deleted": "Supprimée"
   },
   "pause": "Mettre en pause",
-  "resume": "Réactiver"
+  "resume": "Réactiver",
+  "campaignProvider": "Plateforme",
+  "publishCreative": "Publier en campagne",
+  "publishCreativeTitle": "Publier cette vidéo comme créative",
+  "publishCreativeHint": "La vidéo est envoyée à la plateforme et attachée à la campagne choisie (restée en pause jusqu'à publication).",
+  "creativePublished": "Créative publiée",
+  "noCampaignForCreative": "Aucune campagne disponible : connectez votre compte et synchronisez vos campagnes depuis la page Publicité.",
+  "creativeCampaign": "Campagne",
+  "creativeCampaignPlaceholder": "Choisir une campagne",
+  "creativeHeadline": "Titre de la créative",
+  "creativeHeadlinePlaceholder": "Ex. : Lancez votre business en 7 jours",
+  "creativePrimaryText": "Texte principal",
+  "creativeCTA": "Bouton d'appel à l'action",
+  "cta": {
+    "LEARN_MORE": "En savoir plus",
+    "SHOP_NOW": "Acheter",
+    "SIGN_UP": "S'inscrire",
+    "DOWNLOAD": "Télécharger"
+  }
 }

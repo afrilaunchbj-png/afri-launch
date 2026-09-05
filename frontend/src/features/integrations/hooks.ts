@@ -8,11 +8,13 @@ import {
   fetchConnectURL,
   fetchIntegrations,
   pauseCampaign,
+  publishCreative,
   resumeCampaign,
   selectAdAccount,
   syncCampaigns,
   type AdProvider,
   type CreateAdCampaignInput,
+  type PublishCreativeInput,
 } from "./api"
 
 export const integrationKeys = {
@@ -89,6 +91,16 @@ export function usePauseResumeCampaign() {
   return useMutation({
     mutationFn: ({ id, action }: { id: string; action: "pause" | "resume" }) =>
       action === "pause" ? pauseCampaign(id) : resumeCampaign(id),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: integrationKeys.campaigns() }),
+  })
+}
+
+/** usePublishCreative publie un asset interne comme créative sur une campagne. */
+export function usePublishCreative() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ campaignId, input }: { campaignId: string; input: PublishCreativeInput }) =>
+      publishCreative(campaignId, input),
     onSettled: () => queryClient.invalidateQueries({ queryKey: integrationKeys.campaigns() }),
   })
 }
