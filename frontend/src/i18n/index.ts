@@ -4,6 +4,7 @@ import { initReactI18next } from "react-i18next"
 import authEn from "./locales/en/auth.json"
 import adminEn from "./locales/en/admin.json"
 import chatEn from "./locales/en/chat.json"
+import commerceEn from "./locales/en/commerce.json"
 import commonEn from "./locales/en/common.json"
 import creditsEn from "./locales/en/credits.json"
 import dashboardEn from "./locales/en/dashboard.json"
@@ -14,6 +15,7 @@ import supportEn from "./locales/en/support.json"
 import authFr from "./locales/fr/auth.json"
 import adminFr from "./locales/fr/admin.json"
 import chatFr from "./locales/fr/chat.json"
+import commerceFr from "./locales/fr/commerce.json"
 import commonFr from "./locales/fr/common.json"
 import creditsFr from "./locales/fr/credits.json"
 import dashboardFr from "./locales/fr/dashboard.json"
@@ -29,6 +31,7 @@ export const resources = {
     credits: creditsFr,
     dashboard: dashboardFr,
     chat: chatFr,
+    commerce: commerceFr,
     projects: projectsFr,
     integrations: integrationsFr,
     settings: settingsFr,
@@ -41,6 +44,7 @@ export const resources = {
     credits: creditsEn,
     dashboard: dashboardEn,
     chat: chatEn,
+    commerce: commerceEn,
     projects: projectsEn,
     integrations: integrationsEn,
     settings: settingsEn,

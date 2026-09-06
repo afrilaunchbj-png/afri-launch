@@ -30,6 +30,7 @@ import {
   type AdConnection,
   type AdProvider,
 } from "@/features/integrations/api"
+import { ChariowPanel } from "@/features/commerce/chariow-panel"
 import {
   useAdAccounts,
   useCampaigns,
@@ -53,6 +54,7 @@ export default function IntegrationsPage() {
   const { t } = useTranslation()
   const { data, isLoading, isError, refetch } = useIntegrations()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [tab, setTab] = useState<"ads" | "commerce">("ads")
 
   const byProvider = useMemo(() => {
     const map = new Map<string, AdConnection>()
@@ -85,13 +87,28 @@ export default function IntegrationsPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("integrations:subtitle")}</p>
       </header>
 
-      <section className="space-y-4">
-        {PROVIDERS.map((p) => (
-          <ProviderCard key={p.id} provider={p.id} name={p.name} connection={byProvider.get(p.id)} />
-        ))}
-      </section>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button variant={tab === "ads" ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setTab("ads")}>
+          {t("integrations:campaignsTitle")}
+        </Button>
+        <Button variant={tab === "commerce" ? "default" : "outline"} size="sm" className="rounded-full" onClick={() => setTab("commerce")}>
+          {t("commerce:title")}
+        </Button>
+      </div>
 
-      <CampaignsSection />
+      {tab === "commerce" ? (
+        <ChariowPanel />
+      ) : (
+        <>
+          <section className="space-y-4">
+            {PROVIDERS.map((p) => (
+              <ProviderCard key={p.id} provider={p.id} name={p.name} connection={byProvider.get(p.id)} />
+            ))}
+          </section>
+
+          <CampaignsSection />
+        </>
+      )}
     </div>
   )
 }

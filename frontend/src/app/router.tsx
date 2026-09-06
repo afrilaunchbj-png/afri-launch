@@ -16,6 +16,7 @@ import AdminTicketsPage from "@/pages/admin-tickets"
 import AdminTransactionsPage from "@/pages/admin-transactions"
 import AdminUsersPage from "@/pages/admin-users"
 import AuthViewPage from "@/pages/auth-view"
+import BuyPage from "@/pages/buy"
 import CreditsPage from "@/pages/credits"
 import DashboardPage from "@/pages/dashboard"
 import DiscoverPage from "@/pages/discover"
@@ -38,7 +39,7 @@ export const router = createBrowserRouter([
       {
         path: "/",
         element: <RootLayout />,
-        children: [{ index: true, element: <HomePage /> }],
+        children: [{ index: true, element: <HomePage /> }, { path: "buy/:token", element: <BuyPage /> }],
       },
       {
         element: <AuthLayout />,

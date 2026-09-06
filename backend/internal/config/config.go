@@ -67,6 +67,10 @@ type Config struct {
 	PayDunyaToken     string
 	PayDunyaMode      string
 
+	// Commerce (Chariow) : base URL de l'API publique (les clés API et les
+	// secrets de Pulse appartiennent aux utilisateurs → chiffrés en base).
+	CommerceChariowBaseURL string
+
 	// Stockage objet (S3-compatible / Neon en prod, sinon disque local).
 	StorageDir        string
 	S3Endpoint        string
@@ -147,6 +151,8 @@ func Load() Config {
 		PayDunyaPrivate:   get("PAYDUNYA_PRIVATE_KEY", ""),
 		PayDunyaToken:     get("PAYDUNYA_TOKEN", ""),
 		PayDunyaMode:      get("PAYDUNYA_MODE", "test"),
+
+		CommerceChariowBaseURL: get("CHARIOW_API_BASE_URL", "https://api.chariow.com/v1"),
 
 		ChromePath: get("CHROME_PATH", ""),
 		FFmpegPath: get("FFMPEG_PATH", "ffmpeg"),

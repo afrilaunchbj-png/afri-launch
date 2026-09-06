@@ -137,7 +137,7 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 ## Work In Progress
 
-- Aucune feature en cours.
+- **Commerce Chariow (ADR-019)** : port `CommerceProvider` + `infra/commerce/chariow` (client HTTP, base `https://api.chariow.com/v1`) ; migration `00020` (`commerce_connections`/`_product_links`/`_sales`/`_webhook_events`), repo, service `application/commerce` (connect validé `GET /store`, clé+secret Pulse chiffrés AES-GCM, association projet↔produit, checkout public `/buy/:token` avec `custom_metadata` multi-tenant, webhooks Pulse HMAC + dedupe `x-pulse-delivery-id`, sync idempotente) ; endpoints `/api/v1/commerce/*` protégés + publics + webhook ; FE onglet « Vente » dans `/integrations` (`features/commerce/chariow-panel`) + page d'achat publique `/buy/:token` ; docs `docs/integrations/chariow.md`. **Non commité, non déployé** — build/vet/tests Go + typecheck/build FE OK. Limitations clés : pas de création de produit ni de Pulse via l'API publique (association + webhook manuels).
 
 ## Remaining Work
 
@@ -176,6 +176,8 @@ Voir `docs/decisions.md` (ADR). Synthèse + ajouts récents :
 
 - Schéma v18 (Neon production + local). `db/migrations/` 00001..00018.
 - `00018_support_attachments.sql` : `support_attachments` (captures d'écran/PDF liées aux tickets ou messages, max 5 Mo).
+- `00019_billing_checkout.sql` : `payments` (checkout_url) + seed des packs de crédits.
+- `00020_commerce.sql` : module commerce Chariow (ADR-019) — connexions par utilisateur (clés chiffrées), liens projet↔produit, ventes, événements de webhooks.
 - `00017_advertising.sql` : `ad_platform_connections` (tokens chiffrés), `oauth_states` (usage unique), `ad_campaigns`, `ad_creatives`, `ad_insights`, `provider_operations`.
 - `00011_conversations.sql` : `conversations`, `conversation_messages` (payload JSONB), `product_ideas.conversation_id`.
 - `00012_user_preferences.sql` : `user_preferences` (language, theme) — clée par `user_id`.

@@ -97,6 +97,73 @@ type AuditLog struct {
 	CreatedAt time.Time   `json:"created_at"`
 }
 
+type CommerceConnection struct {
+	ID               string             `json:"id"`
+	UserID           string             `json:"user_id"`
+	Provider         string             `json:"provider"`
+	Status           string             `json:"status"`
+	ApiKeyEnc        string             `json:"api_key_enc"`
+	WebhookSecretEnc string             `json:"webhook_secret_enc"`
+	ExternalStoreID  string             `json:"external_store_id"`
+	StoreName        string             `json:"store_name"`
+	StoreUrl         string             `json:"store_url"`
+	StoreCurrency    string             `json:"store_currency"`
+	LastError        string             `json:"last_error"`
+	LastErrorAt      pgtype.Timestamptz `json:"last_error_at"`
+	LastSyncAt       pgtype.Timestamptz `json:"last_sync_at"`
+	ConnectedAt      pgtype.Timestamptz `json:"connected_at"`
+	CreatedAt        time.Time          `json:"created_at"`
+	UpdatedAt        time.Time          `json:"updated_at"`
+}
+
+type CommerceProductLink struct {
+	ID                  string    `json:"id"`
+	UserID              string    `json:"user_id"`
+	ConnectionID        string    `json:"connection_id"`
+	ProjectID           string    `json:"project_id"`
+	ExternalProductID   string    `json:"external_product_id"`
+	ExternalProductSlug string    `json:"external_product_slug"`
+	ExternalProductName string    `json:"external_product_name"`
+	PriceMinor          int64     `json:"price_minor"`
+	Currency            string    `json:"currency"`
+	Status              string    `json:"status"`
+	IsPublic            bool      `json:"is_public"`
+	PublicToken         string    `json:"public_token"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type CommerceSale struct {
+	ID             string             `json:"id"`
+	UserID         string             `json:"user_id"`
+	ConnectionID   string             `json:"connection_id"`
+	ProductLinkID  pgtype.UUID        `json:"product_link_id"`
+	ExternalSaleID string             `json:"external_sale_id"`
+	Status         string             `json:"status"`
+	AmountMinor    int64              `json:"amount_minor"`
+	Currency       string             `json:"currency"`
+	BuyerEmail     string             `json:"buyer_email"`
+	BuyerName      string             `json:"buyer_name"`
+	CheckoutUrl    string             `json:"checkout_url"`
+	CustomMetadata []byte             `json:"custom_metadata"`
+	Payload        []byte             `json:"payload"`
+	CreatedAt      time.Time          `json:"created_at"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	CompletedAt    pgtype.Timestamptz `json:"completed_at"`
+}
+
+type CommerceWebhookEvent struct {
+	ID                 string    `json:"id"`
+	UserID             string    `json:"user_id"`
+	Provider           string    `json:"provider"`
+	ExternalPulseID    string    `json:"external_pulse_id"`
+	ExternalDeliveryID string    `json:"external_delivery_id"`
+	EventType          string    `json:"event_type"`
+	Payload            []byte    `json:"payload"`
+	Status             string    `json:"status"`
+	CreatedAt          time.Time `json:"created_at"`
+}
+
 type Conversation struct {
 	ID            string      `json:"id"`
 	UserID        string      `json:"user_id"`

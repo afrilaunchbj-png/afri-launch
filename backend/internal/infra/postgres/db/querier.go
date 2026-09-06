@@ -57,6 +57,9 @@ type Querier interface {
 	CreateResearchRequest(ctx context.Context, arg CreateResearchRequestParams) (ResearchRequest, error)
 	CreateSupportAttachment(ctx context.Context, arg CreateSupportAttachmentParams) (SupportAttachment, error)
 	CreateTicket(ctx context.Context, arg CreateTicketParams) (SupportTicket, error)
+	DeleteCommerceConnection(ctx context.Context, arg DeleteCommerceConnectionParams) error
+	DeleteCommerceProductLink(ctx context.Context, arg DeleteCommerceProductLinkParams) error
+	DeleteCommerceProductLinksByProject(ctx context.Context, arg DeleteCommerceProductLinksByProjectParams) error
 	FailJob(ctx context.Context, arg FailJobParams) (GenerationJob, error)
 	FailProviderOperation(ctx context.Context, arg FailProviderOperationParams) error
 	GetAdCampaign(ctx context.Context, arg GetAdCampaignParams) (AdCampaign, error)
@@ -64,6 +67,13 @@ type Querier interface {
 	GetAdConnectionByProvider(ctx context.Context, arg GetAdConnectionByProviderParams) (AdPlatformConnection, error)
 	GetAdCreative(ctx context.Context, arg GetAdCreativeParams) (AdCreative, error)
 	GetAsset(ctx context.Context, arg GetAssetParams) (Asset, error)
+	GetCommerceConnection(ctx context.Context, arg GetCommerceConnectionParams) (CommerceConnection, error)
+	GetCommerceConnectionByStoreID(ctx context.Context, externalStoreID string) (CommerceConnection, error)
+	GetCommerceProductLink(ctx context.Context, arg GetCommerceProductLinkParams) (CommerceProductLink, error)
+	GetCommerceProductLinkByExternal(ctx context.Context, arg GetCommerceProductLinkByExternalParams) (CommerceProductLink, error)
+	GetCommerceProductLinkByProject(ctx context.Context, arg GetCommerceProductLinkByProjectParams) (CommerceProductLink, error)
+	GetCommerceProductLinkByToken(ctx context.Context, publicToken string) (CommerceProductLink, error)
+	GetCommerceSaleByExternalID(ctx context.Context, arg GetCommerceSaleByExternalIDParams) (CommerceSale, error)
 	GetConversation(ctx context.Context, arg GetConversationParams) (Conversation, error)
 	GetCreditAccountByID(ctx context.Context, id string) (CreditAccount, error)
 	GetCreditAccountByUserID(ctx context.Context, userID string) (CreditAccount, error)
@@ -88,6 +98,7 @@ type Querier interface {
 	GetUserCreditAccount(ctx context.Context, userID string) (GetUserCreditAccountRow, error)
 	GetUserPreferences(ctx context.Context, userID string) (UserPreference, error)
 	InsertAuditLog(ctx context.Context, arg InsertAuditLogParams) error
+	InsertCommerceWebhookEvent(ctx context.Context, arg InsertCommerceWebhookEventParams) (CommerceWebhookEvent, error)
 	InsertTicketMessage(ctx context.Context, arg InsertTicketMessageParams) (InsertTicketMessageRow, error)
 	InsertUserPreferences(ctx context.Context, arg InsertUserPreferencesParams) (UserPreference, error)
 	ListActivePlans(ctx context.Context) ([]Plan, error)
@@ -105,6 +116,10 @@ type Querier interface {
 	ListAllTickets(ctx context.Context, arg ListAllTicketsParams) ([]ListAllTicketsRow, error)
 	ListAssetsByProject(ctx context.Context, projectID string) ([]Asset, error)
 	ListAuditLogs(ctx context.Context, arg ListAuditLogsParams) ([]AuditLog, error)
+	ListCommerceConnections(ctx context.Context, userID string) ([]CommerceConnection, error)
+	ListCommerceProductLinks(ctx context.Context, userID string) ([]CommerceProductLink, error)
+	ListCommerceSalesByProductLink(ctx context.Context, arg ListCommerceSalesByProductLinkParams) ([]CommerceSale, error)
+	ListCommerceSalesByUser(ctx context.Context, arg ListCommerceSalesByUserParams) ([]CommerceSale, error)
 	ListConversationMessages(ctx context.Context, conversationID string) ([]ConversationMessage, error)
 	ListConversations(ctx context.Context, arg ListConversationsParams) ([]Conversation, error)
 	ListCreditTransactions(ctx context.Context, arg ListCreditTransactionsParams) ([]CreditTransaction, error)
@@ -154,6 +169,8 @@ type Querier interface {
 	UpdateAdCampaign(ctx context.Context, arg UpdateAdCampaignParams) (AdCampaign, error)
 	UpdateAdConnectionTokens(ctx context.Context, arg UpdateAdConnectionTokensParams) (AdPlatformConnection, error)
 	UpdateAdCreativeExternal(ctx context.Context, arg UpdateAdCreativeExternalParams) (AdCreative, error)
+	UpdateCommerceConnectionState(ctx context.Context, arg UpdateCommerceConnectionStateParams) error
+	UpdateCommerceProductLinkPublic(ctx context.Context, arg UpdateCommerceProductLinkPublicParams) error
 	UpdateCreditReservationStatus(ctx context.Context, arg UpdateCreditReservationStatusParams) (CreditReservation, error)
 	UpdateIdeaContent(ctx context.Context, arg UpdateIdeaContentParams) (ProductIdea, error)
 	UpdateJobStatus(ctx context.Context, arg UpdateJobStatusParams) (GenerationJob, error)
@@ -164,6 +181,9 @@ type Querier interface {
 	UpdateUserPreferences(ctx context.Context, arg UpdateUserPreferencesParams) (UserPreference, error)
 	UpsertAdCampaign(ctx context.Context, arg UpsertAdCampaignParams) (AdCampaign, error)
 	UpsertAdInsight(ctx context.Context, arg UpsertAdInsightParams) error
+	UpsertCommerceConnection(ctx context.Context, arg UpsertCommerceConnectionParams) error
+	UpsertCommerceProductLink(ctx context.Context, arg UpsertCommerceProductLinkParams) (CommerceProductLink, error)
+	UpsertCommerceSale(ctx context.Context, arg UpsertCommerceSaleParams) (CommerceSale, error)
 	UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error)
 	UserCreditsPerDay(ctx context.Context, arg UserCreditsPerDayParams) ([]UserCreditsPerDayRow, error)
 	UserProjectsPerWeek(ctx context.Context, arg UserProjectsPerWeekParams) ([]UserProjectsPerWeekRow, error)

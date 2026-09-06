@@ -35,6 +35,7 @@ type Deps struct {
 	Support       *handler.SupportHandler
 	Integrations  *handler.IntegrationHandler
 	Payments      *handler.PaymentHandler
+	Commerce      *handler.CommerceHandler
 	Admin         *handler.AdminHandler
 	Dashboard     *handler.DashboardHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
@@ -72,6 +73,12 @@ func NewRouter(d Deps) http.Handler {
 		// Webhooks des providers de paiement : notifications serveur-à-serveur
 		// (sans JWT ; chaque statut est reconfirmé par API avant octroi).
 		r.Post("/payments/webhook/{provider}", d.Payments.Webhook)
+
+		// Commerce Chariow — endpoints publics (acheteur final + webhook Pulse).
+		// Le webhook est signé HMAC (secret par boutique, vérifié côté service).
+		r.Get("/commerce/public/{token}", d.Commerce.PublicProductInfo)
+		r.Post("/commerce/public/{token}/checkout", d.Commerce.PublicCheckout)
+		r.Post("/commerce/webhook/chariow", d.Commerce.Webhook)
 
 		// Routes protégées (JWT Neon Auth).
 		r.Group(func(r chi.Router) {
@@ -146,6 +153,19 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/payments", d.Payments.ListMine)
 			r.Get("/payments/{id}", d.Payments.Get)
 			r.Post("/payments/{id}/sync", d.Payments.Sync)
+
+			// Commerce Chariow (ADR-019) — gestion multi-tenant de la boutique.
+			r.Get("/commerce/status", d.Commerce.Status)
+			r.Post("/commerce/chariow/connect", d.Commerce.Connect)
+			r.Post("/commerce/chariow/webhook-secret", d.Commerce.UpdateWebhookSecret)
+			r.Post("/commerce/chariow/disconnect", d.Commerce.Disconnect)
+			r.Get("/commerce/products", d.Commerce.Products)
+			r.Get("/commerce/links", d.Commerce.Links)
+			r.Post("/commerce/links", d.Commerce.Link)
+			r.Put("/commerce/links/{id}/public", d.Commerce.PublishLink)
+			r.Delete("/commerce/links/{id}", d.Commerce.Unlink)
+			r.Get("/commerce/sales", d.Commerce.Sales)
+			r.Post("/commerce/sync", d.Commerce.Sync)
 
 			r.Get("/opportunities", d.Opportunities.List)
 			r.Get("/opportunities/filters", d.Opportunities.Filters)

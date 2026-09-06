@@ -17,6 +17,7 @@ import (
 	auditapp "afrilaunch/backend/internal/application/audit"
 	authapp "afrilaunch/backend/internal/application/auth"
 	chatapp "afrilaunch/backend/internal/application/chat"
+	commerceapp "afrilaunch/backend/internal/application/commerce"
 	creditsapp "afrilaunch/backend/internal/application/credits"
 	dashboardapp "afrilaunch/backend/internal/application/dashboard"
 	documentapp "afrilaunch/backend/internal/application/document"
@@ -37,6 +38,7 @@ import (
 	adstiktok "afrilaunch/backend/internal/infra/ads/tiktok"
 	aiinfra "afrilaunch/backend/internal/infra/ai"
 	authinfra "afrilaunch/backend/internal/infra/auth"
+	commercechariow "afrilaunch/backend/internal/infra/commerce/chariow"
 	cryptoinfra "afrilaunch/backend/internal/infra/crypto"
 	eventsinfra "afrilaunch/backend/internal/infra/events"
 	payinfra "afrilaunch/backend/internal/infra/payments/fedapay"
@@ -241,6 +243,13 @@ func main() {
 	eventsH := handler.NewEventHandler(eventBus)
 	prefH := handler.NewPreferenceHandler(prefSvc)
 	supportH := handler.NewSupportHandler(supportSvc)
+	// Commerce (ADR-019) : chaque utilisateur connecte sa boutique Chariow
+	// via une API key chiffrée en base ; webhooks Pulse signés + sync API.
+	commerceProvider := commercechariow.New(cfg.CommerceChariowBaseURL)
+	commerceRepo := postgres.NewCommerceRepository(store)
+	commerceSvc := commerceapp.NewService(commerceProvider, commerceRepo, encryptor, auditRec, cfg.AppURL)
+	commerceH := handler.NewCommerceHandler(commerceSvc)
+
 	paymentH := handler.NewPaymentHandler(paymentSvc)
 	integrationsH := handler.NewIntegrationHandler(advSvc, cfg.AppURL, map[string]string{
 		domain.AdPlatformMeta:      cfg.MetaOAuthRedirectURI,
@@ -271,6 +280,7 @@ func main() {
 		Support:       supportH,
 		Integrations:  integrationsH,
 		Payments:      paymentH,
+		Commerce:      commerceH,
 		Admin:         adminH,
 		Dashboard:     dashboardH,
 		AI:            aiSvc,
