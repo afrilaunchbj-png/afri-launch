@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"errors"
 	"html"
 	"regexp"
 	"strconv"
@@ -34,22 +33,49 @@ func (s *Service) GenerateEbookDraftHTML(ctx context.Context, req EbookRequest) 
 // RenderEbookFromDraft prépare et rend en PDF un brouillon HTML existant
 // (sans nouvel appel LLM) : sauts de chapitres + sommaire + fond blanc.
 func (s *Service) RenderEbookFromDraft(ctx context.Context, draft []byte, language string) ([]byte, error) {
-	if len(bytes.TrimSpace(draft)) == 0 {
-		return nil, errors.New("document: brouillon ebook vide")
+	html, err := s.PrepareEbookPDFHTML(ctx, EbookRequest{Language: language}, draft, nil)
+	if err != nil {
+		return nil, err
 	}
-	html := ensureChapterPageBreaks(draft)
-	html = prepareEbookHTML(html, language)
+	return s.render.HTMLToPDF(ctx, html)
+}
+
+// PrepareEbookPDFHTML construit le HTML FINAL du PDF : à partir du brouillon
+// édité s'il est fourni, sinon par génération LLM ; puis applique sauts de
+// chapitres, sommaire, fond blanc et injecte la cover en PREMIÈRE PAGE
+// (avant le rendu — la cover ne doit jamais être ajoutée au PDF rendu).
+func (s *Service) PrepareEbookPDFHTML(ctx context.Context, req EbookRequest, draft []byte, coverPNG []byte) ([]byte, error) {
+	var (
+		html []byte
+		err  error
+	)
+	if len(bytes.TrimSpace(draft)) > 0 {
+		html = draft
+	} else {
+		html, err = s.generateHTML(ctx, BuildEbookPrompt(req))
+		if err != nil {
+			return nil, err
+		}
+	}
+	html = ensureChapterPageBreaks(html)
+	html = prepareEbookHTML(html, req.Language)
+	if len(coverPNG) > 0 {
+		html = PrependCoverPage(html, coverPNG)
+	}
+	return html, nil
+}
+
+// RenderPDF rend un HTML préparé en PDF.
+func (s *Service) RenderPDF(ctx context.Context, html []byte) ([]byte, error) {
 	return s.render.HTMLToPDF(ctx, html)
 }
 
 // GenerateEbook génère un ebook (HTML → PDF).
 func (s *Service) GenerateEbook(ctx context.Context, req EbookRequest) ([]byte, error) {
-	html, err := s.generateHTML(ctx, BuildEbookPrompt(req))
+	html, err := s.PrepareEbookPDFHTML(ctx, req, nil, nil)
 	if err != nil {
 		return nil, err
 	}
-	html = ensureChapterPageBreaks(html)
-	html = prepareEbookHTML(html, req.Language)
 	return s.render.HTMLToPDF(ctx, html)
 }
 

@@ -334,7 +334,7 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 
 	// Version portrait (PDF) : on réutilise le brouillon HTML édité s'il
 	// existe (plus d'appel LLM), sinon génération complète.
-	pdf, err := w.buildEbookPDF(ctx, job, c.language, ebookReq, coverPNG)
+	pdf, err := w.buildEbookPDF(ctx, job, ebookReq, coverPNG)
 	if err != nil {
 		return nil, err
 	}
@@ -410,28 +410,18 @@ func (w *Worker) runEbookDraft(ctx context.Context, job domain.GenerationJob) ([
 }
 
 // buildEbookPDF produit le PDF : à partir du brouillon HTML édité s'il
-// existe (pas de LLM), sinon par génération complète ; cover en 1re page.
-func (w *Worker) buildEbookPDF(ctx context.Context, job domain.GenerationJob, language string, req document.EbookRequest, coverPNG []byte) ([]byte, error) {
-	var (
-		pdf []byte
-		err error
-	)
+// existe (pas de LLM), sinon par génération complète ; la cover est injectée
+// dans le HTML AVANT le rendu (jamais après coup sur des octets PDF).
+func (w *Worker) buildEbookPDF(ctx context.Context, job domain.GenerationJob, req document.EbookRequest, coverPNG []byte) ([]byte, error) {
 	draft, err := w.loadEbookDraft(ctx, job)
 	if err != nil {
 		return nil, err
 	}
-	if len(draft) > 0 {
-		pdf, err = w.docs.RenderEbookFromDraft(ctx, draft, language)
-	} else {
-		pdf, err = w.docs.GenerateEbook(ctx, req)
-	}
+	html, err := w.docs.PrepareEbookPDFHTML(ctx, req, draft, coverPNG)
 	if err != nil {
 		return nil, err
 	}
-	if coverPNG != nil {
-		pdf = document.PrependCoverPage(pdf, coverPNG)
-	}
-	return pdf, nil
+	return w.docs.RenderPDF(ctx, html)
 }
 
 // loadEbookDraft charge le brouillon HTML le plus récent du projet (kind
