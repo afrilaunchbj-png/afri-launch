@@ -102,6 +102,7 @@ export default function ProjectPage() {
   const config = project?.config
   const hasCover = useMemo(() => !!assets?.some((a) => a.kind === "cover"), [assets])
   const coverAsset = useMemo(() => assets?.filter((a) => a.kind === "cover").slice(-1)[0], [assets])
+  const draftAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_html").slice(-1)[0], [assets])
   const videoAsset = useLatestVideoAsset(assets)
 
   // Aperçu de la cover (dernière générée).
@@ -151,6 +152,7 @@ export default function ProjectPage() {
   }, [config?.ebook_min_pages, config?.ebook_max_pages])
 
   const [instructions, setInstructions] = useState("")
+  const [draftOpen, setDraftOpen] = useState(false)
 
   // Jobs en cours (statuts via le canal + polling de secours).
   const [coverJobId, setCoverJobId] = useState<string | null>(null)
@@ -232,8 +234,6 @@ export default function ProjectPage() {
   const coverBusy = generateCover.isPending || isActive(coverJob)
   const draftBusy = generateDraft.isPending || isActive(ebookDraftJob)
   const ebookBusy = generateEbook.isPending || isActive(ebookJob)
-  const draftAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_html").slice(-1)[0], [assets])
-  const [draftOpen, setDraftOpen] = useState(false)
   const postersBusy = generatePosters.isPending || isActive(postersJob)
 
   const steps = [
