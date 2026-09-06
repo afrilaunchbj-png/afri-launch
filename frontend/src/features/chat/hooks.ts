@@ -5,11 +5,16 @@ import { useTranslation } from "react-i18next"
 
 import { isAppError } from "@/lib/errors"
 
-import { confirmIdea, createConversation, fetchConversation, sendChatMessage } from "./api"
+import { confirmIdea, createConversation, fetchConversation, fetchConversations, sendChatMessage } from "./api"
 
 export const chatKeys = {
   all: ["chat"] as const,
+  list: () => [...chatKeys.all, "list"] as const,
   detail: (id: string) => [...chatKeys.all, "detail", id] as const,
+}
+
+export function useConversations() {
+  return useQuery({ queryKey: chatKeys.list(), queryFn: fetchConversations })
 }
 
 export function useConversation(id: string | undefined) {

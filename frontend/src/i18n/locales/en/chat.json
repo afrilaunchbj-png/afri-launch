@@ -24,5 +24,7 @@
   "confirmIdea": "Validate this idea",
   "createProject": "Turn into project",
   "pageTitle": "Discover",
-  "pageDescription": "Explore a market and shape your product idea with the copilot."
+  "pageDescription": "Explore a market and shape your product idea with the copilot.",
+  "historyTitle": "History",
+  "historyEmpty": "No conversations yet."
 }

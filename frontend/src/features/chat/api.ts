@@ -1,4 +1,4 @@
-import { api, type ApiSingle } from "@/lib/api/client"
+import { api, type ApiList, type ApiSingle } from "@/lib/api/client"
 
 export interface ChatConversation {
   id: string
@@ -68,6 +68,10 @@ export interface ConversationDetail extends ChatConversation {
 export interface SendMessageAccepted {
   conversation_id: string
   message_id: string
+}
+
+export function fetchConversations() {
+  return api.get<ApiList<ChatConversation>>("/api/v1/conversations?pageSize=50").then((r) => r.data)
 }
 
 export function fetchConversation(id: string) {

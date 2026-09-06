@@ -6,6 +6,7 @@ import { PanelRightOpen, Rocket, SquarePen } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import {
   Sheet,
@@ -22,7 +23,7 @@ import type { ChatIdea } from "@/features/chat/api"
 import { ChatInput } from "@/features/chat/components/chat-input"
 import { ChatMessages, type StreamingState } from "@/features/chat/components/chat-messages"
 import { ContextPanel } from "@/features/chat/components/context-panel"
-import { chatKeys, useConfirmIdea, useConversation, useCreateConversation, useSendChatMessage } from "@/features/chat/hooks"
+import { chatKeys, useConfirmIdea, useConversation, useConversations, useCreateConversation, useSendChatMessage } from "@/features/chat/hooks"
 import { useCreateProject } from "@/features/projects/hooks"
 
 interface ChatDeltaEvent {
@@ -48,6 +49,39 @@ interface ChatErrorEvent {
   conversation_id: string
   message_id: string
   error: string
+}
+
+function HistoryList({ current, onSelect }: { current?: string; onSelect: (id: string) => void }) {
+  const { t } = useTranslation()
+  const { data, isLoading } = useConversations()
+  return (
+    <aside className="hidden w-64 shrink-0 flex-col overflow-hidden rounded-lg border bg-card md:flex">
+      <div className="border-b px-4 py-3">
+        <h2 className="text-sm font-semibold">{t("chat:historyTitle")}</h2>
+      </div>
+      <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-2">
+        {isLoading ? (
+          <p className="px-2 py-1 text-xs text-muted-foreground">{t("common.loading")}</p>
+        ) : !data || data.length === 0 ? (
+          <p className="px-2 py-1 text-xs text-muted-foreground">{t("chat:historyEmpty")}</p>
+        ) : (
+          data.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => onSelect(c.id)}
+              className={cn(
+                "block w-full truncate rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                current === c.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              <span className="block truncate font-medium">{c.title || t("chat:newChat")}</span>
+              <span className="block truncate text-xs opacity-70">{new Date(c.updated_at).toLocaleString()}</span>
+            </button>
+          ))
+        )}
+      </div>
+    </aside>
+  )
 }
 
 export default function DiscoverPage() {
@@ -154,6 +188,7 @@ export default function DiscoverPage() {
         <p className="mt-1 text-sm text-muted-foreground">{t("chat:pageDescription")}</p>
       </header>
       <div className="flex h-[calc(100dvh-16rem)] min-h-[380px] gap-4 md:h-[calc(100dvh-12.5rem)]">
+      <HistoryList current={conversationId} onSelect={(id) => setSearchParams({ c: id })} />
       <Card className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
         <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
           <div className="min-w-0">
