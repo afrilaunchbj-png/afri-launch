@@ -18,6 +18,8 @@ import AdminTransactionsPage from "@/pages/admin-transactions"
 import AdminUsersPage from "@/pages/admin-users"
 import AuthViewPage from "@/pages/auth-view"
 import BuyPage from "@/pages/buy"
+import CguPage from "@/pages/cgu"
+import CgvPage from "@/pages/cgv"
 import CreditsPage from "@/pages/credits"
 import DashboardPage from "@/pages/dashboard"
 import DiscoverPage from "@/pages/discover"
@@ -40,7 +42,12 @@ export const router = createBrowserRouter([
       {
         path: "/",
         element: <RootLayout />,
-        children: [{ index: true, element: <HomePage /> }, { path: "buy/:token", element: <BuyPage /> }],
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: "buy/:token", element: <BuyPage /> },
+          { path: "cgu", element: <CguPage /> },
+          { path: "cgv", element: <CgvPage /> },
+        ],
       },
       {
         element: <AuthLayout />,

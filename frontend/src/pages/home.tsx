@@ -243,12 +243,19 @@ export default function HomePage() {
       <footer className="border-t py-8">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-muted-foreground sm:flex-row sm:px-6">
           <p>© {new Date().getFullYear()} AfriLaunch · {t("home.rights")}</p>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             <Link to="/login" className="hover:text-primary hover:underline">
               {t("auth:login")}
             </Link>
             <Link to="/register" className="hover:text-primary hover:underline">
               {t("auth:register")}
+            </Link>
+            <span className="text-muted-foreground/40">·</span>
+            <Link to="/cgu" className="hover:text-primary hover:underline">
+              {t("home.cgu")}
+            </Link>
+            <Link to="/cgv" className="hover:text-primary hover:underline">
+              {t("home.cgv")}
             </Link>
           </div>
         </div>
