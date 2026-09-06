@@ -90,5 +90,6 @@
   "draftSave": "Save draft",
   "editDraft": "Edit draft",
   "generateDraft": "Generate draft (HTML)",
-  "renderFromDraft": "Generate PDF/PPTX from draft"
+  "renderFromDraft": "Generate PDF/PPTX from draft",
+  "latest": "Latest"
 }

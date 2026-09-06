@@ -90,5 +90,6 @@
   "draftSave": "Enregistrer le brouillon",
   "editDraft": "Éditer le brouillon",
   "generateDraft": "Générer le brouillon (HTML)",
-  "renderFromDraft": "Générer le PDF/PPTX depuis le brouillon"
+  "renderFromDraft": "Générer le PDF/PPTX depuis le brouillon",
+  "latest": "Dernière génération"
 }

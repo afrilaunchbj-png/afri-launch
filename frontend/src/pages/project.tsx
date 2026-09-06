@@ -105,6 +105,18 @@ export default function ProjectPage() {
   const draftAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_html").slice(-1)[0], [assets])
   const pdfAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_pdf").slice(-1)[0], [assets])
   const deckAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_deck").slice(-1)[0], [assets])
+  const latestAssetIds = useMemo(() => {
+    const newest = new Map<string, Asset>()
+    for (const a of assets ?? []) {
+      const prev = newest.get(a.kind)
+      if (!prev || a.created_at.localeCompare(prev.created_at) > 0) newest.set(a.kind, a)
+    }
+    return new Set([...newest.values()].map((a) => a.id))
+  }, [assets])
+  const sortedAssets = useMemo(
+    () => [...(assets ?? [])].sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    [assets],
+  )
   const videoAsset = useLatestVideoAsset(assets)
 
   // Aperçu de la cover (dernière générée).
@@ -417,13 +429,23 @@ export default function ProjectPage() {
                 </Button>
                 <div className="flex flex-wrap items-center gap-2">
                   {pdfAsset ? (
-                    <Button size="sm" variant="outline" onClick={() => handleDownload(pdfAsset.id, pdfAsset.filename)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title={new Date(pdfAsset.created_at).toLocaleString()}
+                      onClick={() => handleDownload(pdfAsset.id, pdfAsset.filename)}
+                    >
                       <Download className="h-4 w-4" />
                       PDF
                     </Button>
                   ) : null}
                   {deckAsset ? (
-                    <Button size="sm" variant="outline" onClick={() => handleDownload(deckAsset.id, deckAsset.filename)}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      title={new Date(deckAsset.created_at).toLocaleString()}
+                      onClick={() => handleDownload(deckAsset.id, deckAsset.filename)}
+                    >
                       <Download className="h-4 w-4" />
                       PPTX
                     </Button>
@@ -508,12 +530,20 @@ export default function ProjectPage() {
           <p className="text-sm text-muted-foreground">{t("projects:noAssets")}</p>
         ) : (
           <div className="divide-y rounded-lg border bg-card">
-            {assets.map((a) => (
+            {sortedAssets.map((a) => (
               <div key={a.id} className="flex items-center justify-between gap-3 p-4">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{a.filename}</p>
+                  <p className="truncate text-sm font-medium">
+                    {a.filename}
+                    {latestAssetIds.has(a.id) ? (
+                      <Badge variant="secondary" className="ml-2 align-middle text-[10px]">
+                        {t("projects:latest")}
+                      </Badge>
+                    ) : null}
+                  </p>
                   <p className="text-xs text-muted-foreground">
-                    {t(`projects:assetKind.${a.kind}`)} · {(a.size_bytes / 1024).toFixed(0)} KB
+                    {t(`projects:assetKind.${a.kind}`)} · {(a.size_bytes / 1024).toFixed(0)} KB ·{" "}
+                    {new Date(a.created_at).toLocaleString()}
                   </p>
                 </div>
                 <Button
