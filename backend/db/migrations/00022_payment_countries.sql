@@ -14,14 +14,14 @@ CREATE TABLE payment_countries (
 );
 
 INSERT INTO payment_countries (code, name, currency, enabled) VALUES
-    ('BJ', 'Bénin', 'XOF', true),
-    ('BF', 'Burkina Faso', 'XOF', false),
-    ('CI', 'Côte d''Ivoire', 'XOF', false),
-    ('GW', 'Guinée-Bissau', 'XOF', false),
-    ('ML', 'Mali', 'XOF', false),
-    ('NE', 'Niger', 'XOF', false),
-    ('SN', 'Sénégal', 'XOF', false),
-    ('TG', 'Togo', 'XOF', false)
+    ('BEN', 'Bénin', 'XOF', true),
+    ('BFA', 'Burkina Faso', 'XOF', false),
+    ('CIV', 'Côte d''Ivoire', 'XOF', false),
+    ('GNB', 'Guinée-Bissau', 'XOF', false),
+    ('MLI', 'Mali', 'XOF', false),
+    ('NER', 'Niger', 'XOF', false),
+    ('SEN', 'Sénégal', 'XOF', false),
+    ('TGO', 'Togo', 'XOF', false)
 ON CONFLICT (code) DO NOTHING;
 
 -- +goose Down

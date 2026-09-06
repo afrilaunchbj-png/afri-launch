@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -69,6 +70,14 @@ func (p *PawaPay) CreateCheckout(ctx context.Context, in port.PaymentCheckoutInp
 		} `json:"failureReason"`
 	}
 	if err := p.do(ctx, http.MethodPost, "/v2/checkouts", body, &out); err != nil {
+		// Journalisation du payload SANS secret (dépannage : le paramètre
+		// rejecté est visible ici, ex. country/currency/amount).
+		slog.Warn("pawapay checkout rejected",
+			"error", err.Error(),
+			"payload", map[string]any{
+				"checkoutId": in.PaymentID, "returnUrl": in.ReturnURL,
+				"amounts": amounts, "reason": pawaReason(in.Description),
+			})
 		return port.PaymentCheckoutResult{}, err
 	}
 	if out.Failure != nil {

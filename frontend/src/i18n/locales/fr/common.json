@@ -27,7 +27,9 @@
       "processing": "En cours",
       "completed": "Terminé",
       "failed": "Échoué"
-    }
+    },
+    "enable": "Activer",
+    "disable": "Désactiver"
   },
   "theme": {
     "light": "Clair",
@@ -88,7 +90,5 @@
     "imgHero": "Entrepreneure ouest-africaine travaillant sur son produit digital",
     "imgMarket": "Commerçante africaine utilisant le paiement mobile sur son marché",
     "imgLaunch": "Supports de produits digitaux prêts à être lancés"
-  },
-  "enable": "Activer",
-  "disable": "Désactiver"
+  }
 }
