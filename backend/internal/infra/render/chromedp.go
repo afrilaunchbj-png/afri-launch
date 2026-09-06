@@ -5,13 +5,28 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"github.com/chromedp/cdproto/emulation"
 	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/cdproto/runtime"
 	"github.com/chromedp/chromedp"
 
 	"afrilaunch/backend/internal/infra/pptx"
 )
+
+// waitImagesExpr résout une promesse dès que le document est complet et que
+// toutes les images (dont les covers data: URL injectées) sont décodées.
+const waitImagesExpr = `new Promise((resolve) => {
+  const done = () => {
+    if (document.readyState === 'complete' && Array.from(document.images).every(i => i.complete)) {
+      return resolve(true);
+    }
+    setTimeout(done, 60);
+  };
+  setTimeout(done, 8000); // garde-fou : on imprime même si une image tarde
+  done();
+})`
 
 // ChromedpRenderer implémente port.Renderer avec Chrome headless.
 type ChromedpRenderer struct {
@@ -44,6 +59,18 @@ func (r *ChromedpRenderer) HTMLToPDF(ctx context.Context, html []byte) ([]byte, 
 	err := chromedp.Run(cctx,
 		chromedp.Navigate(dataURL(html)),
 		chromedp.ActionFunc(func(ctx context.Context) error {
+			// Attendre que la page et les images (cover, visuels) soient prêtes
+			// avant l'impression, sinon la première page peut sortir vide.
+			var ok bool
+			_ = chromedp.Evaluate(waitImagesExpr, &ok, func(p *runtime.EvaluateParams) *runtime.EvaluateParams {
+				return p.WithAwaitPromise(true)
+			}).Do(ctx)
+			// Petite marge de sécurité de mise en page (polices @page).
+			select {
+			case <-time.After(150 * time.Millisecond):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
 			var err error
 			pdf, _, err = page.PrintToPDF().
 				WithPrintBackground(true).

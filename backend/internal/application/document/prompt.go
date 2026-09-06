@@ -84,7 +84,10 @@ func BuildEbookPrompt(req EbookRequest) Prompt {
 - One continuous HTML page styled for print (PDF, A4).
 - Use @page { size: A4; margin: 2cm; } and print-friendly typography.
 - Structure: introduction, chapters (with headings), short sections, a practical
-  checklist, and a conclusion with a call to action.`
+  checklist, and a conclusion with a call to action.
+- Keep the printed page background WHITE (#ffffff): never set a background color
+  or gradient on <html>, <body> or full-page containers (a table of contents page
+  and the cover are added automatically).`
 	if req.HasCover {
 		system += `
 - A cover image is injected automatically as the FIRST page of the PDF.
@@ -94,7 +97,10 @@ func BuildEbookPrompt(req EbookRequest) Prompt {
 	system += `
 - Wrap each chapter in a <section class="chapter"> element.
 - In the CSS, add: section.chapter { break-before: page; } so that each chapter
-  starts on a new page. Do NOT apply a page break to the introduction.`
+  starts on a new page. Do NOT apply a page break to the introduction.
+- Each <section class="chapter"> MUST begin with a single <h1> holding the
+  chapter title (used to build the automatic table of contents).
+- Do NOT add a table of contents yourself: one is inserted automatically.`
 
 	user := fmt.Sprintf(
 		"Write an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s.",

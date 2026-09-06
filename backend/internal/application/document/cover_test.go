@@ -87,3 +87,43 @@ func TestBuildSalesPagePromptPalette(t *testing.T) {
 		t.Errorf("palette manquante dans la page de vente")
 	}
 }
+
+func TestPrepareEbookHTMLAddsTOCAndWhiteBackground(t *testing.T) {
+	html := `<html><head><style>body{background:#F8F9FA}</style></head><body>` +
+		`<p>Intro…</p>` +
+		`<section class="chapter"><h1>Chapitre un</h1><p>a</p></section>` +
+		`<section class="chapter"><h1>Chapitre <em>deux</em></h1><p>b</p></section>` +
+		`</body></html>`
+
+	out := string(prepareEbookHTML([]byte(html), "fr"))
+
+	// Fond blanc forcé à l'impression.
+	if !strings.Contains(out, "background: #ffffff !important") {
+		t.Error("fond blanc manquant")
+	}
+	// Page sommaire générée avec les titres de chapitres (HTML strippé).
+	for _, want := range []string{`<section class="toc-page">`, "Sommaire", "Chapitre un", "Chapitre deux"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("sommaire : %q manquant", want)
+		}
+	}
+	// Ordre : cover (ajoutée ensuite par PrependCoverPage) → sommaire → contenu.
+	withCover := string(PrependCoverPage([]byte(out), []byte{0x89, 'P', 'N', 'G'}))
+	cover := strings.Index(withCover, `class="cover-page"`)
+	toc := strings.Index(withCover, `<section class="toc-page">`)
+	intro := strings.Index(withCover, "Intro…")
+	if cover < 0 || toc < 0 || intro < 0 || !(cover < toc && toc < intro) {
+		t.Fatalf("ordre attendu cover<sommaire<contenu, got cover=%d toc=%d intro=%d", cover, toc, intro)
+	}
+}
+
+func TestPrepareEbookHTMLNoChaptersNoTOC(t *testing.T) {
+	html := `<html><head></head><body><p>pas de chapitres</p></body></html>`
+	out := string(prepareEbookHTML([]byte(html), "en"))
+	if strings.Contains(out, `<section class="toc-page">`) {
+		t.Error("aucun sommaire attendu sans section.chapter")
+	}
+	if !strings.Contains(out, "background: #ffffff !important") {
+		t.Error("le fond blanc doit rester appliqué")
+	}
+}

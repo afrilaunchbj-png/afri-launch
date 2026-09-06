@@ -1,6 +1,10 @@
 package domain
 
-import "time"
+import (
+	"encoding/json"
+	"strconv"
+	"time"
+)
 
 // Niveaux de difficulté d'entrée sur une opportunité.
 const (
@@ -38,6 +42,51 @@ type Evidence struct {
 	Metric          string `json:"metric,omitempty"`
 	Value           string `json:"value,omitempty"`
 	RetrievedAt     string `json:"retrieved_at,omitempty"`
+}
+
+// evidenceWire est la forme wire d'Evidence : `value` est décodé en brut pour
+// accepter une chaîne OU un nombre renvoyé par le LLM (ex. 45 vs "45%").
+type evidenceWire struct {
+	Source          string          `json:"source"`
+	Title           string          `json:"title"`
+	URL             string          `json:"url"`
+	PublicationDate string          `json:"publication_date"`
+	Country         string          `json:"country"`
+	Metric          string          `json:"metric"`
+	Value           json.RawMessage `json:"value"`
+	RetrievedAt     string          `json:"retrieved_at"`
+}
+
+// UnmarshalJSON tolère un `value` numérique : il est normalisé en chaîne.
+func (e *Evidence) UnmarshalJSON(b []byte) error {
+	var raw evidenceWire
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	e.Source, e.Title, e.URL = raw.Source, raw.Title, raw.URL
+	e.PublicationDate, e.Country, e.Metric, e.RetrievedAt = raw.PublicationDate, raw.Country, raw.Metric, raw.RetrievedAt
+	e.Value = scalarString(raw.Value)
+	return nil
+}
+
+// scalarString convertit un json.RawMessage (string, nombre, bool) en chaîne.
+func scalarString(v json.RawMessage) string {
+	if len(v) == 0 || string(v) == "null" {
+		return ""
+	}
+	var s string
+	if json.Unmarshal(v, &s) == nil {
+		return s
+	}
+	var f float64
+	if json.Unmarshal(v, &f) == nil {
+		return strconv.FormatFloat(f, 'f', -1, 64)
+	}
+	var b bool
+	if json.Unmarshal(v, &b) == nil {
+		return strconv.FormatBool(b)
+	}
+	return ""
 }
 
 // Opportunity est une niche de marché scorée.

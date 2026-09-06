@@ -3,6 +3,9 @@ package document
 import (
 	"context"
 	"encoding/base64"
+	"html"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"afrilaunch/backend/internal/application/ai"
@@ -27,6 +30,7 @@ func (s *Service) GenerateEbook(ctx context.Context, req EbookRequest) ([]byte, 
 		return nil, err
 	}
 	html = ensureChapterPageBreaks(html)
+	html = prepareEbookHTML(html, req.Language)
 	return s.render.HTMLToPDF(ctx, html)
 }
 
@@ -131,4 +135,129 @@ func PrependCoverPage(html []byte, coverPNG []byte) []byte {
 		}
 	}
 	return []byte(cover + s)
+}
+
+// ---------- Préparation du rendu ebook (PDF) ----------
+
+// ebookPrintCSS garantit un fond blanc sur toutes les pages du PDF et style
+// la page de sommaire. Injecté APRÈS le <style> du LLM (d'où !important).
+const ebookPrintCSS = `<style>
+html, body { background: #ffffff !important; }
+.toc-page { break-after: page; page-break-after: always; }
+.toc-title { margin: 0 0 0.6em; }
+.toc-list { list-style: none; margin: 0; padding: 0; }
+.toc-list li { display: flex; align-items: baseline; gap: 0.6em; margin: 0.45em 0; }
+.toc-num { min-width: 1.4em; font-weight: 600; color: #855300; }
+.toc-entry { font-weight: 500; }
+</style>`
+
+// prepareEbookHTML : ① force le fond blanc d'impression ; ② insère une page
+// « Sommaire » (après le <body>, donc après la cover injectée ensuite par
+// PrependCoverPage) listant les chapitres détectés dans le HTML généré.
+func prepareEbookHTML(html []byte, language string) []byte {
+	s := string(html)
+
+	if toc, ok := buildTOC(s, language); ok {
+		s = insertAfterBodyOpen(s, toc)
+	}
+	return []byte(insertBeforeHeadEnd(s, ebookPrintCSS))
+}
+
+// tocLabel donne le titre de la page de sommaire dans la langue de l'ebook.
+func tocLabel(language string) string {
+	switch strings.ToLower(language) {
+	case "en", "en-us", "en-gb":
+		return "Table of contents"
+	case "fr", "fr-fr":
+		return "Sommaire"
+	default:
+		return "Sommaire"
+	}
+}
+
+var (
+	chapterOpenRe = regexp.MustCompile(`(?is)<section\b[^>]*class\s*=\s*["'][^"']*\bchapter\b[^"']*["'][^>]*>`)
+	headingOpenRe = regexp.MustCompile(`(?is)<(h[1-4])(?:\s[^>]*)?>`)
+	tagRe         = regexp.MustCompile(`(?s)<[^>]*>`)
+)
+
+// chapterHeadings extrait le premier titre (h1→h4) de chaque chapitre.
+func chapterHeadings(s string) []string {
+	locs := chapterOpenRe.FindAllStringIndex(s, -1)
+	headings := make([]string, 0, len(locs))
+	for i, loc := range locs {
+		from := loc[1]
+		until := len(s)
+		if i+1 < len(locs) {
+			until = locs[i+1][0]
+		}
+		if h := nextHeadingText(s, from, until); h != "" {
+			headings = append(headings, h)
+		}
+	}
+	return headings
+}
+
+// nextHeadingText renvoie le texte du premier heading (h1→h4) dans [from,until).
+func nextHeadingText(s string, from, until int) string {
+	if until > len(s) {
+		until = len(s)
+	}
+	region := s[from:until]
+	m := headingOpenRe.FindStringSubmatchIndex(region)
+	if m == nil {
+		return ""
+	}
+	level := region[m[2]:m[3]]
+	contentStart := from + m[1]
+	closeTag := "</" + level
+	ci := strings.Index(strings.ToLower(s[contentStart:until]), strings.ToLower(closeTag))
+	end := until
+	if ci >= 0 {
+		end = contentStart + ci
+	}
+	inner := s[contentStart:end]
+	inner = tagRe.ReplaceAllString(inner, "")
+	return strings.Join(strings.Fields(html.UnescapeString(inner)), " ")
+}
+
+// buildTOC génère le HTML de la page de sommaire à partir des chapitres.
+func buildTOC(s, language string) (string, bool) {
+	headings := chapterHeadings(s)
+	if len(headings) == 0 {
+		return "", false
+	}
+	var b strings.Builder
+	b.WriteString(`<section class="toc-page">`)
+	b.WriteString(`<h1 class="toc-title">` + html.EscapeString(tocLabel(language)) + `</h1>`)
+	b.WriteString(`<ul class="toc-list">`)
+	for i, h := range headings {
+		b.WriteString(`<li><span class="toc-num">` + strconv.Itoa(i+1) + `.</span><span class="toc-entry">` + html.EscapeString(h) + `</span></li>`)
+	}
+	b.WriteString(`</ul></section>`)
+	return b.String(), true
+}
+
+// insertBeforeHeadEnd injecte `css` juste avant </head> (ou avant <body>).
+func insertBeforeHeadEnd(s, css string) string {
+	if i := strings.Index(s, "</head>"); i >= 0 {
+		return s[:i] + css + s[i:]
+	}
+	return insertAfterBodyOpen(s, css)
+}
+
+// insertAfterBodyOpen injecte `content` juste après la balise <body …> ;
+// en l'absence de <body>, après </head>, sinon au tout début du document.
+func insertAfterBodyOpen(s, content string) string {
+	if i := strings.Index(s, "<body"); i >= 0 {
+		if j := strings.Index(s[i:], ">"); j >= 0 {
+			pos := i + j + 1
+			return s[:pos] + content + s[pos:]
+		}
+	}
+	if j := strings.Index(s, "</head>"); j >= 0 {
+		pos := j + len("</head>")
+		return s[:pos] + content + s[pos:]
+	}
+	return content + s
 }
