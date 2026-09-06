@@ -24,7 +24,7 @@
   "step5": "Paste it here",
   "apiKey": "Chariow API key",
   "webhookSecret": "Pulse webhook secret (optional)",
-  "webhookSecretHint": "whsec_… created with the Pulse. Can be added later. Without webhooks, sales are synced via “Sync sales”.",
+  "webhookSecretHint": "Copy the URL above into Chariow (Automations → Pulses), pick successful.sale / failed.sale / abandoned.sale, then paste the generated whsec_… secret here. Without a webhook, use “Sync sales”.",
   "linkedProducts": "Products linked to your projects",
   "linkProduct": "Link a product",
   "noLinkedProducts": "No linked products yet.",
@@ -53,5 +53,12 @@
   "buying": "Redirecting…",
   "checkoutReady": "Redirecting to secure checkout…",
   "purchaseCompleted": "Purchase confirmed! Your product has been delivered.",
-  "alreadyPurchased": "You already own this product."
+  "alreadyPurchased": "You already own this product.",
+  "webhookSetup": "Configure webhook",
+  "webhookEdit": "Webhook",
+  "webhookSaved": "Webhook secret saved.",
+  "delete": "Delete",
+  "deleteConfirm": "Delete this Chariow connection? Its linked products and sales will be removed.",
+  "reconnect": "Reconnect",
+  "save": "Save"
 }

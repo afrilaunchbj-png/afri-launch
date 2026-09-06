@@ -26,15 +26,16 @@ type CommerceHandler struct {
 func NewCommerceHandler(svc *commerce.Service) *CommerceHandler { return &CommerceHandler{svc: svc} }
 
 type commerceConnectionDTO struct {
-	Provider      string  `json:"provider"`
-	Status        string  `json:"status"`
-	StoreID       string  `json:"store_id"`
-	StoreName     string  `json:"store_name"`
-	StoreURL      string  `json:"store_url"`
-	StoreCurrency string  `json:"store_currency"`
-	WebhookURL    string  `json:"webhook_url"`
-	ConnectedAt   *string `json:"connected_at"`
-	LastSyncAt    *string `json:"last_sync_at"`
+	Provider          string  `json:"provider"`
+	Status            string  `json:"status"`
+	StoreID           string  `json:"store_id"`
+	StoreName         string  `json:"store_name"`
+	StoreURL          string  `json:"store_url"`
+	StoreCurrency     string  `json:"store_currency"`
+	WebhookURL        string  `json:"webhook_url"`
+	WebhookConfigured bool    `json:"webhook_configured"`
+	ConnectedAt       *string `json:"connected_at"`
+	LastSyncAt        *string `json:"last_sync_at"`
 }
 
 type commerceProductDTO struct {
@@ -70,11 +71,11 @@ type commerceSaleDTO struct {
 	CreatedAt     string `json:"created_at"`
 }
 
-func toConnectionDTO(c domain.CommerceConnection, webhookURL string) commerceConnectionDTO {
+func toConnectionDTO(c domain.CommerceConnection, webhookURL string, webhookConfigured bool) commerceConnectionDTO {
 	return commerceConnectionDTO{
 		Provider: c.Provider, Status: c.Status, StoreID: c.StoreID,
 		StoreName: c.StoreName, StoreURL: c.StoreURL, StoreCurrency: c.StoreCurrency,
-		WebhookURL:  webhookURL,
+		WebhookURL: webhookURL, WebhookConfigured: webhookConfigured,
 		ConnectedAt: formatTS(c.ConnectedAt), LastSyncAt: formatTS(c.LastSyncAt),
 	}
 }
@@ -90,16 +91,18 @@ func formatTS(t *time.Time) *string {
 // Status gère GET /commerce/status.
 func (h *CommerceHandler) Status(w http.ResponseWriter, r *http.Request) {
 	userID := authctx.UserID(r.Context())
-	conn, ok, err := h.svc.Status(r.Context(), userID)
+	conn, ok, hasWebhook, err := h.svc.Status(r.Context(), userID)
 	if err != nil {
 		writeAPIError(w, r, err)
 		return
 	}
-	if !ok {
-		writeData(w, http.StatusOK, map[string]any{"connected": false})
+	if conn.ID == "" {
+		writeData(w, http.StatusOK, map[string]any{"connected": false, "connection": nil})
 		return
 	}
-	writeData(w, http.StatusOK, map[string]any{"connected": true, "connection": toConnectionDTO(conn, h.webhookURL(r))})
+	writeData(w, http.StatusOK, map[string]any{
+		"connected": ok, "connection": toConnectionDTO(conn, h.webhookURL(r), hasWebhook),
+	})
 }
 
 // Connect gère POST /commerce/chariow/connect.
@@ -119,7 +122,7 @@ func (h *CommerceHandler) Connect(w http.ResponseWriter, r *http.Request) {
 		writeCommerceError(w, r, err)
 		return
 	}
-	writeData(w, http.StatusCreated, toConnectionDTO(conn, h.webhookURL(r)))
+	writeData(w, http.StatusCreated, toConnectionDTO(conn, h.webhookURL(r), strings.TrimSpace(in.WebhookSecret) != ""))
 }
 
 // UpdateWebhookSecret gère POST /commerce/chariow/webhook-secret.
@@ -141,6 +144,15 @@ func (h *CommerceHandler) UpdateWebhookSecret(w http.ResponseWriter, r *http.Req
 // Disconnect gère POST /commerce/chariow/disconnect.
 func (h *CommerceHandler) Disconnect(w http.ResponseWriter, r *http.Request) {
 	if err := h.svc.Disconnect(r.Context(), authctx.UserID(r.Context())); err != nil {
+		writeCommerceError(w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// Delete gère DELETE /commerce/chariow (suppression complète de la connexion).
+func (h *CommerceHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	if err := h.svc.DeleteConnection(r.Context(), authctx.UserID(r.Context())); err != nil {
 		writeCommerceError(w, r, err)
 		return
 	}

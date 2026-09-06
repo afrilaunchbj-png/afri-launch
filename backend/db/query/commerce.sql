@@ -43,16 +43,14 @@ INSERT INTO commerce_product_links
     (user_id, connection_id, project_id, external_product_id, external_product_slug,
      external_product_name, price_minor, currency, status, is_public, public_token)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-ON CONFLICT (connection_id, external_product_id) DO UPDATE SET
+ON CONFLICT (connection_id, project_id) DO UPDATE SET
     user_id = excluded.user_id,
-    project_id = excluded.project_id,
+    external_product_id = excluded.external_product_id,
     external_product_slug = excluded.external_product_slug,
     external_product_name = excluded.external_product_name,
     price_minor = excluded.price_minor,
     currency = excluded.currency,
     status = excluded.status,
-    is_public = excluded.is_public,
-    public_token = excluded.public_token,
     updated_at = now()
 RETURNING *;
 
@@ -64,7 +62,9 @@ LIMIT 1;
 
 -- name: GetCommerceProductLinkByExternal :one
 SELECT * FROM commerce_product_links
-WHERE connection_id = $1 AND external_product_id = $2;
+WHERE connection_id = $1 AND external_product_id = $2
+ORDER BY created_at ASC
+LIMIT 1;
 
 -- name: GetCommerceProductLink :one
 SELECT * FROM commerce_product_links WHERE id = $1 AND user_id = $2;

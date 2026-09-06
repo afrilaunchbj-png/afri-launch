@@ -10,6 +10,7 @@ export interface CommerceConnection {
   store_url: string
   store_currency: string
   webhook_url: string
+  webhook_configured?: boolean
   connected_at?: string | null
   last_sync_at?: string | null
 }
@@ -66,6 +67,10 @@ export function updateCommerceWebhookSecret(webhookSecret: string) {
 
 export function disconnectCommerce() {
   return api.post("/api/v1/commerce/chariow/disconnect")
+}
+
+export function deleteCommerce() {
+  return api.delete("/api/v1/commerce/chariow")
 }
 
 export function syncCommerceSales() {

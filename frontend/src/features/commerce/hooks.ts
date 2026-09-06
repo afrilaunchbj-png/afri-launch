@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
   connectCommerce,
+  deleteCommerce,
   disconnectCommerce,
   fetchCommerceLinks,
   fetchCommerceProducts,
@@ -61,6 +62,18 @@ export function useDisconnectCommerce() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: disconnectCommerce,
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: commerceKeys.status() })
+      qc.invalidateQueries({ queryKey: commerceKeys.links() })
+      qc.invalidateQueries({ queryKey: commerceKeys.sales() })
+    },
+  })
+}
+
+export function useDeleteCommerce() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteCommerce,
     onSettled: () => {
       qc.invalidateQueries({ queryKey: commerceKeys.status() })
       qc.invalidateQueries({ queryKey: commerceKeys.links() })

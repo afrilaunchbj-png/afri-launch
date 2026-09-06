@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router"
 import { useTranslation } from "react-i18next"
-import { CheckCircle2, Copy, ExternalLink, Link2, RefreshCw, Store, Trash2, Unplug } from "lucide-react"
+import { CheckCircle2, Copy, ExternalLink, Link2, RefreshCw, Store, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { LoadingState } from "@/components/states/loading-state"
@@ -31,11 +31,12 @@ import {
   useCommerceSales,
   useCommerceStatus,
   useConnectCommerce,
-  useDisconnectCommerce,
+  useDeleteCommerce,
   useLinkCommerceProduct,
   usePublishCommerceLink,
   useSyncCommerce,
   useUnlinkCommerceProduct,
+  useUpdateCommerceWebhookSecret,
 } from "@/features/commerce/hooks"
 import { isAppError } from "@/lib/errors"
 import { cn } from "@/lib/utils"
@@ -49,16 +50,18 @@ export function ChariowPanel() {
   const { t } = useTranslation()
   const statusQ = useCommerceStatus()
   const connect = useConnectCommerce()
-  const disconnect = useDisconnectCommerce()
+  const deleteConn = useDeleteCommerce()
   const sync = useSyncCommerce()
   const [connectOpen, setConnectOpen] = useState(false)
+  const [webhookOpen, setWebhookOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
   if (statusQ.isLoading) return <LoadingState label={t("common.loading")} />
   if (statusQ.isError || !statusQ.data) return null
 
-  const connected = statusQ.data.connected === true
   const conn = statusQ.data.connection
+  const connected = statusQ.data.connected === true && conn?.status === "connected"
+  const hasWebhook = connected && !!conn?.webhook_configured
 
   const copyWebhook = () => {
     if (!conn?.webhook_url) return
@@ -107,15 +110,31 @@ export function ChariowPanel() {
                   <RefreshCw className="h-4 w-4" />
                   {t("commerce:sync")}
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => disconnect.mutate(undefined, { onError: onError(t) })} loading={disconnect.isPending}>
-                  <Unplug className="h-4 w-4" />
-                  {t("commerce:disconnect")}
+                <Button
+                  size="sm"
+                  variant={hasWebhook ? "ghost" : "outline"}
+                  onClick={() => setWebhookOpen(true)}
+                >
+                  <Link2 className="h-4 w-4" />
+                  {hasWebhook ? t("commerce:webhookEdit") : t("commerce:webhookSetup")}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-destructive hover:text-destructive"
+                  loading={deleteConn.isPending}
+                  onClick={() => {
+                    if (window.confirm(t("commerce:deleteConfirm"))) deleteConn.mutate(undefined, { onError: onError(t) })
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("commerce:delete")}
                 </Button>
               </>
             ) : (
               <Button size="sm" onClick={() => setConnectOpen(true)}>
                 <Link2 className="h-4 w-4" />
-                {t("commerce:connect")}
+                {conn ? t("commerce:reconnect") : t("commerce:connect")}
               </Button>
             )}
           </div>
@@ -139,6 +158,7 @@ export function ChariowPanel() {
       </CardContent>
 
       <ConnectDialog open={connectOpen} onClose={() => setConnectOpen(false)} onSubmit={connect} />
+      <WebhookDialog open={webhookOpen} onClose={() => setWebhookOpen(false)} />
     </Card>
   )
 }
@@ -154,17 +174,15 @@ function ConnectDialog({
 }) {
   const { t } = useTranslation()
   const [apiKey, setApiKey] = useState("")
-  const [webhookSecret, setWebhookSecret] = useState("")
 
   const submit = () => {
     if (!apiKey.trim()) return
     onSubmit.mutate(
-      { api_key: apiKey.trim(), webhook_secret: webhookSecret.trim() || undefined },
+      { api_key: apiKey.trim() },
       {
         onSuccess: () => {
           toast.success(t("commerce:connectSuccess"))
           setApiKey("")
-          setWebhookSecret("")
           onClose()
         },
         onError: (e) => toast.error(isAppError(e) ? e.message : t("common.genericError")),
@@ -189,22 +207,59 @@ function ConnectDialog({
           <Label htmlFor="com-api-key">{t("commerce:apiKey")}</Label>
           <Input id="com-api-key" value={apiKey} onChange={(e) => setApiKey(e.target.value)} placeholder="sk_live_…" />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="com-whsec">{t("commerce:webhookSecret")}</Label>
-          <Input
-            id="com-whsec"
-            value={webhookSecret}
-            onChange={(e) => setWebhookSecret(e.target.value)}
-            placeholder="whsec_…"
-          />
-          <p className="text-xs text-muted-foreground">{t("commerce:webhookSecretHint")}</p>
-        </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>
             {t("integrations:cancel")}
           </Button>
           <Button onClick={submit} disabled={!apiKey.trim()} loading={onSubmit.isPending}>
             {t("commerce:connect")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function WebhookDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useTranslation()
+  const update = useUpdateCommerceWebhookSecret()
+  const [secret, setSecret] = useState("")
+
+  const submit = () => {
+    if (!secret.trim()) return
+    update.mutate(secret.trim(), {
+      onSuccess: () => {
+        toast.success(t("commerce:webhookSaved"))
+        setSecret("")
+        onClose()
+      },
+      onError: (e) => toast.error(isAppError(e) ? e.message : t("common.genericError")),
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("commerce:webhookSetup")}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{t("commerce:webhookSecretHint")}</p>
+        <div className="space-y-1.5">
+          <Label htmlFor="com-whsec">{t("commerce:webhookSecret")}</Label>
+          <Input
+            id="com-whsec"
+            value={secret}
+            onChange={(e) => setSecret(e.target.value)}
+            placeholder="whsec_…"
+            autoComplete="off"
+          />
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>
+            {t("integrations:cancel")}
+          </Button>
+          <Button onClick={submit} disabled={!secret.trim()} loading={update.isPending}>
+            {t("commerce:save")}
           </Button>
         </DialogFooter>
       </DialogContent>

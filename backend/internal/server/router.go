@@ -159,6 +159,7 @@ func NewRouter(d Deps) http.Handler {
 			r.Post("/commerce/chariow/connect", d.Commerce.Connect)
 			r.Post("/commerce/chariow/webhook-secret", d.Commerce.UpdateWebhookSecret)
 			r.Post("/commerce/chariow/disconnect", d.Commerce.Disconnect)
+			r.Delete("/commerce/chariow", d.Commerce.Delete)
 			r.Get("/commerce/products", d.Commerce.Products)
 			r.Get("/commerce/links", d.Commerce.Links)
 			r.Post("/commerce/links", d.Commerce.Link)

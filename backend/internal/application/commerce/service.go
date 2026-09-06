@@ -90,16 +90,17 @@ func (s *Service) Connect(ctx context.Context, userID string, in ConnectInput) (
 	return conn, nil
 }
 
-// Status renvoie la connexion de l'utilisateur (false si non connecté).
-func (s *Service) Status(ctx context.Context, userID string) (domain.CommerceConnection, bool, error) {
-	conn, _, _, err := s.repo.GetConnectionByProvider(ctx, userID, ProviderChariow)
+// Status renvoie la connexion de l'utilisateur, un indicateur « actif »
+// (statut connected) et la présence d'un secret de webhook configuré.
+func (s *Service) Status(ctx context.Context, userID string) (conn domain.CommerceConnection, ok bool, hasWebhookSecret bool, err error) {
+	conn, secretEnc, _, err := s.repo.GetConnectionByProvider(ctx, userID, ProviderChariow)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			return domain.CommerceConnection{}, false, nil
+			return domain.CommerceConnection{}, false, false, nil
 		}
-		return domain.CommerceConnection{}, false, err
+		return domain.CommerceConnection{}, false, false, err
 	}
-	return conn, true, nil
+	return conn, conn.Status == domain.CommerceStatusConnected, secretEnc != "", nil
 }
 
 // UpdateWebhookSecret met à jour le secret Pulse (permet d'ajouter le
@@ -130,9 +131,23 @@ func (s *Service) Disconnect(ctx context.Context, userID string) error {
 	return nil
 }
 
+// DeleteConnection supprime entièrement la connexion (liens et ventes liées
+// supprimés en cascade) — utilisée pour changer de boutique Chariow.
+func (s *Service) DeleteConnection(ctx context.Context, userID string) error {
+	conn, _, _, err := s.repo.GetConnectionByProvider(ctx, userID, ProviderChariow)
+	if err != nil {
+		return err
+	}
+	if err := s.repo.DeleteConnection(ctx, conn.ID, userID); err != nil {
+		return err
+	}
+	s.log(ctx, userID, "commerce.delete_connection", map[string]any{"store": conn.StoreID})
+	return nil
+}
+
 // SetReconnectRequired marque la connexion après un 401/403 Chariow.
 func (s *Service) SetReconnectRequired(ctx context.Context, userID string, cause string) {
-	conn, ok, err := s.Status(ctx, userID)
+	conn, ok, _, err := s.Status(ctx, userID)
 	if err != nil || !ok {
 		return
 	}
