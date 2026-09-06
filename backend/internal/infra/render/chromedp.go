@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/chromedp/cdproto/emulation"
@@ -27,6 +29,29 @@ const waitImagesExpr = `new Promise((resolve) => {
   setTimeout(done, 8000); // garde-fou : on imprime même si une image tarde
   done();
 })`
+
+// tempHTMLURL écrit le HTML dans un fichier temporaire et renvoie son URL
+// file:// — les data: URLs sont limitées (~2 Mo) et échouent (ERR_ABORTED)
+// dès que le document embarque la cover en base64.
+func tempHTMLURL(html []byte) (string, func(), error) {
+	f, err := os.CreateTemp("", "afrilaunch-*.html")
+	if err != nil {
+		return "", nil, err
+	}
+	clean := func() {
+		_ = f.Close()
+		_ = os.Remove(f.Name())
+	}
+	if _, err := f.Write(html); err != nil {
+		clean()
+		return "", nil, err
+	}
+	if err := f.Close(); err != nil {
+		clean()
+		return "", nil, err
+	}
+	return "file://" + filepath.ToSlash(f.Name()), clean, nil
+}
 
 // ChromedpRenderer implémente port.Renderer avec Chrome headless.
 type ChromedpRenderer struct {
@@ -55,9 +80,15 @@ func (r *ChromedpRenderer) HTMLToPDF(ctx context.Context, html []byte) ([]byte, 
 	cctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
+	url, clean, err := tempHTMLURL(html)
+	if err != nil {
+		return nil, fmt.Errorf("render pdf: %w", err)
+	}
+	defer clean()
+
 	var pdf []byte
-	err := chromedp.Run(cctx,
-		chromedp.Navigate(dataURL(html)),
+	err = chromedp.Run(cctx,
+		chromedp.Navigate(url),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			// Attendre que la page et les images (cover, visuels) soient prêtes
 			// avant l'impression, sinon la première page peut sortir vide.
@@ -92,8 +123,14 @@ func (r *ChromedpRenderer) SlidesToPNG(ctx context.Context, html []byte) ([][]by
 	cctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
+	url, clean, err := tempHTMLURL(html)
+	if err != nil {
+		return nil, fmt.Errorf("render slides: %w", err)
+	}
+	defer clean()
+
 	if err := chromedp.Run(cctx,
-		chromedp.Navigate(dataURL(html)),
+		chromedp.Navigate(url),
 		chromedp.WaitVisible("section.slide", chromedp.ByQuery),
 	); err != nil {
 		return nil, fmt.Errorf("render slides: %w", err)
@@ -146,9 +183,15 @@ func (r *ChromedpRenderer) HTMLToPNG(ctx context.Context, html []byte, width, he
 	cctx, cancel := chromedp.NewContext(allocCtx)
 	defer cancel()
 
+	url, clean, err := tempHTMLURL(html)
+	if err != nil {
+		return nil, fmt.Errorf("render png: %w", err)
+	}
+	defer clean()
+
 	var buf []byte
-	err := chromedp.Run(cctx,
-		chromedp.Navigate(dataURL(html)),
+	err = chromedp.Run(cctx,
+		chromedp.Navigate(url),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			return emulation.SetDeviceMetricsOverride(int64(width), int64(height), 1, false).Do(ctx)
 		}),
