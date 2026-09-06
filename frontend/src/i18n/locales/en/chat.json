@@ -1,6 +1,6 @@
 {
-  "title": "New conversation",
-  "subtitle": "Find an opportunity and shape your idea with the copilot.",
+  "title": "Title",
+  "subtitle": "Subtitle",
   "newChat": "New conversation",
   "placeholder": "e.g. I want to launch something around mobile money in Benin…",
   "send": "Send",
@@ -26,5 +26,12 @@
   "pageTitle": "Discover",
   "pageDescription": "Explore a market and shape your product idea with the copilot.",
   "historyTitle": "History",
-  "historyEmpty": "No conversations yet."
+  "historyEmpty": "No conversations yet.",
+  "refineIdea": "Refine in chat",
+  "editIdea": "Edit",
+  "editIdeaTitle": "Edit idea",
+  "editIdeaHint": "The validated title and subtitle will be used to create the project.",
+  "saveConfirmIdea": "Save and validate",
+  "marketsTitle": "Target markets",
+  "marketsHint": "Pick one or more markets for this product (ebook, posters, sales page)."
 }

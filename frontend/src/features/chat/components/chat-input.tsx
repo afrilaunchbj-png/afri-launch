@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { SendHorizonal } from "lucide-react"
 
@@ -8,12 +8,24 @@ import { Textarea } from "@/components/ui/textarea"
 interface ChatInputProps {
   disabled: boolean
   onSend: (content: string) => void
+  /** Pré-remplit le champ (ex. « Affine l'idée 1 … ») et met le focus. */
+  prefill?: string
 }
 
-export function ChatInput({ disabled, onSend }: ChatInputProps) {
+export function ChatInput({ disabled, onSend, prefill }: ChatInputProps) {
   const { t } = useTranslation()
   const [draft, setDraft] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (prefill !== undefined && prefill !== "") {
+      setDraft(prefill)
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus()
+        resize()
+      })
+    }
+  }, [prefill])
 
   const resize = () => {
     const el = textareaRef.current

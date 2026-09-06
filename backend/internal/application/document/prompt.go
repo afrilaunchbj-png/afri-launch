@@ -20,6 +20,8 @@ type EbookRequest struct {
 	MinPages int
 	MaxPages int
 	HasCover bool // la cover générée est injectée en première page
+	// Markets : marchés cibles multi-pays (codes) ; vide = Country.
+	Markets []string
 }
 
 // DeckRequest décrit la génération d'un deck (pitch/présentation).
@@ -30,6 +32,7 @@ type DeckRequest struct {
 	Country  string
 	Palette  *domain.ProjectPalette
 	Style    string
+	Markets  []string
 }
 
 // SalesPageRequest décrit la génération d'une page de vente.
@@ -42,6 +45,15 @@ type SalesPageRequest struct {
 	Price    string
 	Palette  *domain.ProjectPalette
 	Style    string
+	Markets  []string
+}
+
+// targetMarketsLabel renvoie la liste des marchés cibles (ou le pays unique).
+func targetMarketsLabel(country string, markets []string) string {
+	if len(markets) > 0 {
+		return strings.Join(markets, ", ")
+	}
+	return country
 }
 
 // Prompt est la consigne envoyée au LLM.
@@ -103,8 +115,8 @@ func BuildEbookPrompt(req EbookRequest) Prompt {
 - Do NOT add a table of contents yourself: one is inserted automatically.`
 
 	user := fmt.Sprintf(
-		"Write an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s.",
-		req.Language, req.Country, req.Audience, req.Topic, req.Product,
+		"Write an ebook in %s (target market(s): %s, audience: %s) about: %s. Format: %s.",
+		req.Language, targetMarketsLabel(req.Country, req.Markets), req.Audience, req.Topic, req.Product,
 	)
 	if req.MinPages > 0 || req.MaxPages > 0 {
 		user += fmt.Sprintf(
@@ -127,8 +139,8 @@ func BuildDeckPrompt(req DeckRequest) Prompt {
 - One idea per slide, short bullets, strong titles, generous whitespace.`
 
 	user := fmt.Sprintf(
-		"Build a pitch deck in %s (target market: %s, audience: %s) about: %s.",
-		req.Language, req.Country, req.Audience, req.Topic,
+		"Build a pitch deck in %s (target market(s): %s, audience: %s) about: %s.",
+		req.Language, targetMarketsLabel(req.Country, req.Markets), req.Audience, req.Topic,
 	)
 	return Prompt{System: system, User: user}
 }
@@ -153,8 +165,8 @@ func BuildEbookDeckPrompt(req EbookRequest) Prompt {
 - One idea per slide, short bullets, strong titles, generous whitespace.`
 
 	user := fmt.Sprintf(
-		"Build a landscape slide-deck version of an ebook in %s (target market: %s, audience: %s) about: %s. Format: %s.",
-		req.Language, req.Country, req.Audience, req.Topic, req.Product,
+		"Build a landscape slide-deck version of an ebook in %s (target market(s): %s, audience: %s) about: %s. Format: %s.",
+		req.Language, targetMarketsLabel(req.Country, req.Markets), req.Audience, req.Topic, req.Product,
 	)
 	return Prompt{System: system, User: user}
 }
@@ -169,8 +181,8 @@ func BuildSalesPagePrompt(req SalesPageRequest) Prompt {
 - Mobile-first, high contrast, generous whitespace.`
 
 	user := fmt.Sprintf(
-		"Write a sales page in %s (target market: %s, audience: %s) for: %s. Promise: %s. Price: %s.",
-		req.Language, req.Country, req.Audience, req.Product, req.Promise, req.Price,
+		"Write a sales page in %s (target market(s): %s, audience: %s) for: %s. Promise: %s. Price: %s.",
+		req.Language, targetMarketsLabel(req.Country, req.Markets), req.Audience, req.Product, req.Promise, req.Price,
 	)
 	return Prompt{System: system, User: user}
 }

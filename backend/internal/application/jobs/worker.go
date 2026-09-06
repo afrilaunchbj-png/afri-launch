@@ -235,6 +235,18 @@ func (w *Worker) publishStage(job domain.GenerationJob, stage string) {
 	w.events.Publish(job.UserID, port.AppEvent{Type: port.EventJobUpdated, Data: raw})
 }
 
+// targetMarkets renvoie les marchés cibles du projet (config) ou le marché
+// unique de l'opportunité en repli.
+func (c genContext) targetMarkets() []string {
+	if len(c.config.TargetMarkets) > 0 {
+		return c.config.TargetMarkets
+	}
+	if c.country != "" {
+		return []string{c.country}
+	}
+	return nil
+}
+
 func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
 	switch job.Kind {
 	case domain.JobIdeas:
@@ -324,6 +336,7 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 		Audience: c.audience,
 		Language: c.language,
 		Country:  c.country,
+		Markets:  c.targetMarkets(),
 		Product:  c.format,
 		Palette:  c.palette,
 		Style:    c.config.Style,
@@ -395,7 +408,7 @@ func (w *Worker) runEbookDraft(ctx context.Context, job domain.GenerationJob) ([
 	}
 	req := document.EbookRequest{
 		Topic: c.topic, Audience: c.audience, Language: c.language, Country: c.country,
-		Product: c.format, Palette: c.palette, Style: c.config.Style,
+		Markets: c.targetMarkets(), Product: c.format, Palette: c.palette, Style: c.config.Style,
 		MinPages: minPages, MaxPages: maxPages, HasCover: coverPNG != nil,
 	}
 	html, err := w.docs.GenerateEbookDraftHTML(ctx, req)
@@ -561,6 +574,7 @@ func (w *Worker) runSalesPage(ctx context.Context, job domain.GenerationJob) ([]
 		Audience: c.audience,
 		Language: c.language,
 		Country:  c.country,
+		Markets:  c.targetMarkets(),
 		Price:    c.price,
 		Palette:  c.palette,
 		Style:    c.config.Style,

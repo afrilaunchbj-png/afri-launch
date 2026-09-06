@@ -70,3 +70,29 @@ func TestBuildLLMMessagesTrimsHistory(t *testing.T) {
 		t.Errorf("le troncage doit garder les derniers messages")
 	}
 }
+
+func TestIdeasContextMessage(t *testing.T) {
+	ideas := []domain.ProductIdea{
+		{Title: "Formation couture", Status: "draft", Subtitle: "en ligne"},
+		{Title: "Ebook recettes", Status: "confirmed"},
+	}
+	out := ideasContextMessage(ideas)
+	for _, want := range []string{"[1] Formation couture", "[2] Ebook recettes — status: confirmed"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("ideasContextMessage manque %q\n%s", want, out)
+		}
+	}
+}
+
+func TestParseConfirmBlock(t *testing.T) {
+	c, err := parseConfirmBlock(`{"index":2,"title":"Nouveau titre","subtitle":"Sous-titre"}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Index != 2 || c.Title != "Nouveau titre" || c.Subtitle != "Sous-titre" {
+		t.Fatalf("confirm = %+v", c)
+	}
+	if _, err := parseConfirmBlock(`{}`); err == nil {
+		t.Fatal("index manquant accepté")
+	}
+}

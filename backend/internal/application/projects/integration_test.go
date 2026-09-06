@@ -103,7 +103,7 @@ func TestProjectsCoverFirstGate(t *testing.T) {
 		t.Fatalf("confirm idea: %v", err)
 	}
 
-	project, err := svc.Create(ctx, user.ID, nil, &idea.ID, "Guide couture")
+	project, err := svc.Create(ctx, user.ID, nil, &idea.ID, "Guide couture", nil)
 	if err != nil {
 		t.Fatalf("create project: %v", err)
 	}

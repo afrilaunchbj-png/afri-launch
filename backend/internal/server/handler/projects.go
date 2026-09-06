@@ -34,9 +34,10 @@ type projectDTO struct {
 }
 
 type createProjectRequest struct {
-	OpportunityID *string `json:"opportunity_id"`
-	IdeaID        *string `json:"idea_id"`
-	Title         string  `json:"title"`
+	OpportunityID *string  `json:"opportunity_id"`
+	IdeaID        *string  `json:"idea_id"`
+	Title         string   `json:"title"`
+	TargetMarkets []string `json:"target_markets"`
 }
 
 // Create gère POST /projects.
@@ -48,7 +49,7 @@ func (h *ProjectHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	userID := authctx.UserID(r.Context())
 
-	project, err := h.svc.Create(r.Context(), userID, in.OpportunityID, in.IdeaID, in.Title)
+	project, err := h.svc.Create(r.Context(), userID, in.OpportunityID, in.IdeaID, in.Title, in.TargetMarkets)
 	if err != nil {
 		writeAPIError(w, r, err)
 		return

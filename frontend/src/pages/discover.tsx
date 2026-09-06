@@ -1,11 +1,18 @@
 import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router"
 import { useTranslation } from "react-i18next"
-import { useQueryClient } from "@tanstack/react-query"
-import { PanelRightOpen, Rocket, SquarePen } from "lucide-react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { MapPin, PanelRightOpen, Rocket, SquarePen } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
 import {
@@ -17,13 +24,14 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { RECONNECTED_EVENT, useAppEvent, useEventsConnection } from "@/lib/api/events"
+import { api, type ApiSingle } from "@/lib/api/client"
 import { isAppError } from "@/lib/errors"
 
 import type { ChatIdea } from "@/features/chat/api"
 import { ChatInput } from "@/features/chat/components/chat-input"
 import { ChatMessages, type StreamingState } from "@/features/chat/components/chat-messages"
 import { ContextPanel } from "@/features/chat/components/context-panel"
-import { chatKeys, useConfirmIdea, useConversation, useConversations, useCreateConversation, useSendChatMessage } from "@/features/chat/hooks"
+import { chatKeys, useConfirmIdea, useConversation, useConversations, useCreateConversation, useSendChatMessage, useUpdateChatIdea } from "@/features/chat/hooks"
 import { useCreateProject } from "@/features/projects/hooks"
 
 interface ChatDeltaEvent {
@@ -101,6 +109,9 @@ export default function DiscoverPage() {
 
   const [streaming, setStreaming] = useState<StreamingState | null>(null)
   const [contextOpen, setContextOpen] = useState(false)
+  const [prefill, setPrefill] = useState("")
+  const [createTarget, setCreateTarget] = useState<ChatIdea | null>(null)
+  const updateIdea = useUpdateChatIdea(conversationId ?? "")
 
   const invalidate = (id: string) => {
     queryClient.invalidateQueries({ queryKey: chatKeys.detail(id) })
@@ -126,6 +137,12 @@ export default function DiscoverPage() {
     if (d.conversation_id !== conversationId) return
     setStreaming(null)
     invalidate(d.conversation_id)
+  })
+
+  useAppEvent("chat.confirmed", (raw) => {
+    const d = raw as { conversation_id: string; idea: ChatIdea }
+    if (d.conversation_id !== conversationId) return
+    queryClient.invalidateQueries({ queryKey: chatKeys.detail(conversationId) })
   })
 
   useAppEvent("chat.error", (raw) => {
@@ -163,10 +180,23 @@ export default function DiscoverPage() {
   const handleConfirmIdea = (idea: ChatIdea) => confirmIdea.mutate(idea.id)
 
   const handleCreateProject = (idea: ChatIdea) => {
+    setCreateTarget(idea)
+  }
+
+  const handleCreateProjectWithMarkets = (idea: ChatIdea, markets: string[]) => {
     createProject.mutate(
-      { idea_id: idea.id, opportunity_id: idea.opportunity_id ?? null, title: idea.title },
+      { idea_id: idea.id, opportunity_id: idea.opportunity_id ?? null, title: idea.title, target_markets: markets },
       { onSuccess: (p) => navigate(`/projects/${p.id}`) },
     )
+  }
+
+  const handleRefine = (idea: ChatIdea, index: number) => {
+    setPrefill(`Affine l'idée ${index + 1} « ${idea.title} » : `)
+  }
+
+  const handleSaveIdea = (idea: ChatIdea, title: string, subtitle: string) => {
+    if (!conversationId) return
+    updateIdea.mutate({ ideaId: idea.id, title, subtitle, confirm: true })
   }
 
   const sending = send.isPending || createConv.isPending
@@ -177,7 +207,10 @@ export default function DiscoverPage() {
       detail={detail}
       onConfirmIdea={handleConfirmIdea}
       onCreateProject={handleCreateProject}
+      onRefine={handleRefine}
+      onSaveIdea={handleSaveIdea}
       creating={createProject.isPending || confirmIdea.isPending}
+      saving={updateIdea.isPending}
     />
   )
 
@@ -247,13 +280,89 @@ export default function DiscoverPage() {
           </div>
         )}
 
-        <ChatInput disabled={sending} onSend={handleSend} />
+        <ChatInput disabled={sending} onSend={handleSend} prefill={prefill} />
       </Card>
 
       <aside className="hidden w-80 shrink-0 lg:block xl:w-96">
         {panel}
       </aside>
       </div>
+
+      {createTarget ? (
+        <MarketPickerDialog
+          creating={createProject.isPending}
+          onCancel={() => setCreateTarget(null)}
+          onCreate={(markets) => handleCreateProjectWithMarkets(createTarget, markets)}
+        />
+      ) : null}
     </div>
+  )
+}
+
+interface MarketOption {
+  id: string
+  code: string
+  name: string
+  currency: string
+}
+
+function MarketPickerDialog({
+  creating,
+  onCancel,
+  onCreate,
+}: {
+  creating: boolean
+  onCancel: () => void
+  onCreate: (markets: string[]) => void
+}) {
+  const { t } = useTranslation()
+  const { data: markets } = useQuery({
+    queryKey: ["markets"],
+    queryFn: () => api.get<ApiSingle<MarketOption[]>>("/api/v1/markets").then((r) => r.data),
+  })
+  const [selected, setSelected] = useState<string[]>([])
+  const toggle = (code: string) =>
+    setSelected((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
+
+  return (
+    <Dialog open onOpenChange={(v) => !v && onCancel()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("chat:marketsTitle")}</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">{t("chat:marketsHint")}</p>
+        <div className="max-h-[50vh] space-y-1 overflow-y-auto">
+          {(markets ?? []).map((m) => { return (
+              <label
+                key={m.id}
+                className="flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm hover:bg-muted/40"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(m.code)}
+                  onChange={() => toggle(m.code)}
+                  className="h-4 w-4"
+                />
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{m.name}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{m.code}</span>
+              </label>
+            )
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onCancel}>
+            {t("integrations:cancel")}
+          </Button>
+          <Button
+            onClick={() => onCreate(selected)}
+            disabled={creating || (selected.length === 0)}
+            loading={creating}
+          >
+            {t("chat:createProject")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -1,6 +1,6 @@
 {
-  "title": "Nouvelle conversation",
-  "subtitle": "Trouvez une opportunité et façonnez votre idée avec le copilote.",
+  "title": "Titre",
+  "subtitle": "Sous-titre",
   "newChat": "Nouvelle conversation",
   "placeholder": "Ex. : je veux lancer une activité autour du mobile money au Bénin…",
   "send": "Envoyer",
@@ -26,5 +26,12 @@
   "pageTitle": "Découvrir",
   "pageDescription": "Explorez un marché et façonnez votre idée de produit avec le copilote.",
   "historyTitle": "Historique",
-  "historyEmpty": "Aucune conversation pour l’instant."
+  "historyEmpty": "Aucune conversation pour l’instant.",
+  "refineIdea": "Affiner dans le chat",
+  "editIdea": "Éditer",
+  "editIdeaTitle": "Éditer l'idée",
+  "editIdeaHint": "Le titre et le sous-titre validés seront utilisés pour créer le projet.",
+  "saveConfirmIdea": "Enregistrer et valider",
+  "marketsTitle": "Marchés cibles",
+  "marketsHint": "Choisissez un ou plusieurs marchés pour ce produit (ebook, affiches, page de vente)."
 }

@@ -31,7 +31,13 @@ Then stop immediately. The system will run the online search and return verified
 @@IDEAS
 {"ideas":[{"title":"...","hook":"...","explanation":"...","subtitle":"...","audience":"...","problem":"...","promise":"...","format":"...","estimated_price":"...","difficulty":"...","market_evidence":"...","why_now":"...","competitive_angle":"..."}]}
 @@END
-Nothing after @@END. "hook" is a punchy one-line pitch with a clear, honest number ONLY if supported by evidence (never invent a statistic).`
+Nothing after @@END. "hook" is a punchy one-line pitch with a clear, honest number ONLY if supported by evidence (never invent a statistic).
+- From time to time the system injects a message "IDEAS CONTEXT". It lists, in order, the ideas already displayed in this conversation, numbered [1], [2], … with their status (draft/confirmed). It is authoritative: NEVER claim you have not shown ideas that appear in it, and refer to them by their number (e.g. "l'idée 1").
+- When the user asks to refine/rewrite an idea (title or subtitle) or to validate one, answer with a short confirmation sentence and finish your reply with exactly:
+@@CONFIRM
+{"index":1,"title":"...","subtitle":"..."}
+@@END
+Only include the fields the user actually settled on (you may keep title/subtitle from IDEAS CONTEXT otherwise). Omit a field you are not changing rather than guessing. The system persists the change and marks the idea as confirmed; afterwards point the user to the "Create project" button. Do not propose a duplicate idea you just confirmed.`
 
 // languageNames mappe un code i18n vers son nom complet pour le prompt.
 var languageNames = map[string]string{
@@ -150,4 +156,44 @@ func buildLLMMessages(history []domain.ConversationMessage) []port.LLMMessage {
 		out = append(out, port.LLMMessage{Role: m.Role, Content: m.Content})
 	}
 	return out
+}
+
+// confirmInput est le contenu du bloc @@CONFIRM.
+type confirmInput struct {
+	Index    int    `json:"index"`
+	Title    string `json:"title"`
+	Subtitle string `json:"subtitle"`
+}
+
+// parseConfirmBlock décode le JSON d'un bloc @@CONFIRM … @@END.
+func parseConfirmBlock(block string) (confirmInput, error) {
+	var in confirmInput
+	if err := json.Unmarshal([]byte(strings.TrimSpace(block)), &in); err != nil {
+		return confirmInput{}, err
+	}
+	if in.Index < 1 {
+		return confirmInput{}, fmt.Errorf("index d'idée manquant ou invalide")
+	}
+	return in, nil
+}
+
+// ideasContextMessage construit le rappel numéroté des idées de la conversation.
+func ideasContextMessage(ideas []domain.ProductIdea) string {
+	if len(ideas) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString("IDEAS CONTEXT (authoritative; numbered in display order):\n")
+	for i, idea := range ideas {
+		fmt.Fprintf(&b, "[%d] %s — status: %s", i+1, idea.Title, idea.Status)
+		if idea.Subtitle != "" {
+			b.WriteString(" — subtitle: " + idea.Subtitle)
+		}
+		if idea.Hook != "" {
+			b.WriteString(" — hook: " + idea.Hook)
+		}
+		b.WriteString("\n")
+	}
+	b.WriteString("Do not respond to this instruction directly; use it as reference for refining/confirming ideas.")
+	return b.String()
 }

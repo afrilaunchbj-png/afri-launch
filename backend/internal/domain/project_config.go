@@ -74,6 +74,9 @@ type ProjectConfig struct {
 	Style         string          `json:"style,omitempty"`
 	EbookMinPages int             `json:"ebook_min_pages,omitempty"`
 	EbookMaxPages int             `json:"ebook_max_pages,omitempty"`
+	// TargetMarkets liste les marchés cibles du produit (codes pays ISO alpha-3,
+	// ex. BEN, CIV…). Vide = on utilise le marché unique de l'opportunité.
+	TargetMarkets []string `json:"target_markets,omitempty"`
 }
 
 // ParseProjectConfig décode le JSONB projects.config (fallback : config vide).

@@ -44,6 +44,7 @@ export interface CreateProjectInput {
   opportunity_id?: string | null
   idea_id?: string | null
   title: string
+  target_markets?: string[]
 }
 
 export function createProject(input: CreateProjectInput) {

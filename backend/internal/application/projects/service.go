@@ -35,7 +35,8 @@ func NewService(jobs *jobs.Worker, projects port.ProjectRepository, ideas port.I
 }
 
 // Create crée un projet à partir d'une idée (et d'une opportunité).
-func (s *Service) Create(ctx context.Context, userID string, opportunityID, ideaID *string, title string) (domain.Project, error) {
+// markets : marchés cibles multi-pays (facultatif) persistés dans projects.config.
+func (s *Service) Create(ctx context.Context, userID string, opportunityID, ideaID *string, title string, markets []string) (domain.Project, error) {
 	if title == "" {
 		title = "Projet"
 	}
@@ -48,6 +49,9 @@ func (s *Service) Create(ctx context.Context, userID string, opportunityID, idea
 	})
 	if err == nil && s.audit != nil {
 		s.audit.Log(ctx, userID, domain.AuditProjectCreated, "project", project.ID, map[string]any{"title": project.Title})
+	}
+	if len(markets) > 0 && err == nil {
+		project, err = s.projects.UpdateConfig(ctx, project.UserID, project.ID, domain.ProjectConfig{TargetMarkets: markets}.Marshal())
 	}
 	return project, err
 }

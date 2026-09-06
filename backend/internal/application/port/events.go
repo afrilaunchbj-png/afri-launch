@@ -9,6 +9,7 @@ const (
 	EventChatDelta     = "chat.delta"
 	EventChatTool      = "chat.tool"
 	EventChatCompleted = "chat.completed"
+	EventChatConfirmed = "chat.confirmed"
 	EventChatError     = "chat.error"
 	EventJobUpdated    = "job.updated"
 )

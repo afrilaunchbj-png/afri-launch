@@ -73,6 +73,26 @@ func (h *ConversationHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeData(w, http.StatusCreated, toConversationDTO(conv))
 }
 
+// UpdateIdea gère PUT /conversations/{id}/ideas/{ideaId} (titre/sous-titre + confirmation).
+func (h *ConversationHandler) UpdateIdea(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Title    string `json:"title"`
+		Subtitle string `json:"subtitle"`
+		Confirm  bool   `json:"confirm"`
+	}
+	if err := decodeJSON(w, r, &in); err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	userID := authctx.UserID(r.Context())
+	idea, err := h.svc.UpdateIdea(r.Context(), userID, chi.URLParam(r, "id"), chi.URLParam(r, "ideaId"), in.Title, in.Subtitle, in.Confirm)
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, toIdeaDTO(idea))
+}
+
 // List gère GET /conversations.
 func (h *ConversationHandler) List(w http.ResponseWriter, r *http.Request) {
 	userID := authctx.UserID(r.Context())

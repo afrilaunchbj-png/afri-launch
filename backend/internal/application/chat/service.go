@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"strings"
 	"sync"
@@ -66,6 +67,7 @@ type turnResult struct {
 	search   *searchArgs // ligne @@SEARCH détectée
 	ideas    ideasPayload
 	hasIdeas bool
+	confirm  *confirmInput // bloc @@CONFIRM détecté
 }
 
 // Service orchestre les conversations et les tours du copilote.
@@ -223,6 +225,12 @@ func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assista
 	}
 	msgs := buildLLMMessages(history)
 
+	// Contexte idées : rappelle au modèle les idées déjà affichées (numérotées)
+	// pour qu'il puisse les reformuler/confirmer sans « oublier » les tours.
+	if ctxIdeas, err := s.ideasContext(ctx, conv); err == nil && ctxIdeas != "" {
+		msgs = append(msgs, port.LLMMessage{Role: "system", Content: ctxIdeas})
+	}
+
 	searched := false
 	for round := 0; round < 2; round++ {
 		res, err := s.streamAnswer(ctx, conv, assistantID, language, msgs)
@@ -257,7 +265,7 @@ func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assista
 			continue
 		}
 
-		// Réponse finale : enregistrer le bloc d'idées éventuel.
+		// Réponse finale : enregistrer le bloc d'idées et/ou la confirmation.
 		visible := strings.TrimSpace(res.visible)
 		var created []domain.ProductIdea
 		if res.hasIdeas && len(res.ideas.Ideas) > 0 {
@@ -266,18 +274,39 @@ func (s *Service) runTurn(ctx context.Context, conv domain.Conversation, assista
 				return
 			}
 		}
+		if res.confirm != nil {
+			confirmed, err := s.applyConfirm(ctx, conv, *res.confirm)
+			if err != nil {
+				s.failTurn(ctx, conv, assistantID, err)
+				return
+			}
+			s.publish(conv.UserID, port.EventChatConfirmed, map[string]any{
+				"conversation_id": conv.ID,
+				"idea":            toIdeaEvent(confirmed),
+			})
+		}
 		s.finishTurn(ctx, conv, assistantID, visible, created)
 		return
 	}
 	s.failTurn(ctx, conv, assistantID, errors.New("le copilote a enchaîné trop d'outils"))
 }
 
+// ideasContext renvoie un rappel numéroté des idées actuelles de la conversation.
+func (s *Service) ideasContext(ctx context.Context, conv domain.Conversation) (string, error) {
+	ideas, err := s.ideas.ListByConversation(ctx, conv.UserID, conv.ID)
+	if err != nil {
+		return "", err
+	}
+	return ideasContextMessage(ideas), nil
+}
+
 // errAbortStop interrompt proprement le flux LLM (cas contrôlés).
 var errAbortStop = errors.New("chat: stop stream")
 
 const (
-	markerSearch = "@@SEARCH"
-	markerIdeas  = "@@IDEAS"
+	markerSearch  = "@@SEARCH"
+	markerIdeas   = "@@IDEAS"
+	markerConfirm = "@@CONFIRM"
 )
 
 // markerHold renvoie la longueur du suffixe de s qui pourrait être le début
@@ -285,7 +314,7 @@ const (
 func markerHold(s string) int {
 	for l := len(s); l > 0; l-- {
 		suffix := s[len(s)-l:]
-		if strings.HasPrefix(markerSearch, suffix) || strings.HasPrefix(markerIdeas, suffix) {
+		if strings.HasPrefix(markerSearch, suffix) || strings.HasPrefix(markerIdeas, suffix) || strings.HasPrefix(markerConfirm, suffix) {
 			return l
 		}
 	}
@@ -299,15 +328,17 @@ func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, as
 	var res turnResult
 
 	var (
-		pending   string // texte pas encore émis (détection "@@" multi-delta)
-		mode      int
-		ideasBuf  strings.Builder
-		searchBuf strings.Builder
+		pending    string // texte pas encore émis (détection "@@" multi-delta)
+		mode       int
+		ideasBuf   strings.Builder
+		searchBuf  strings.Builder
+		confirmBuf strings.Builder
 	)
 	const (
-		modeText   = 0
-		modeIdeas  = 1
-		modeSearch = 2
+		modeText    = 0
+		modeIdeas   = 1
+		modeSearch  = 2
+		modeConfirm = 3
 	)
 
 	publish := func(chunk string) {
@@ -323,6 +354,12 @@ func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, as
 		case modeIdeas:
 			ideasBuf.WriteString(delta)
 			if strings.HasSuffix(ideasBuf.String(), "@@END") {
+				return errAbortStop
+			}
+			return nil
+		case modeConfirm:
+			confirmBuf.WriteString(delta)
+			if strings.HasSuffix(confirmBuf.String(), "@@END") {
 				return errAbortStop
 			}
 			return nil
@@ -352,9 +389,17 @@ func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, as
 			mode = modeSearch
 			return nil
 		}
+		// Bloc de confirmation d'idée : @@CONFIRM … @@END.
+		if idx := strings.Index(pending, "@@CONFIRM"); idx >= 0 {
+			publish(pending[:idx])
+			confirmBuf.WriteString(pending[idx+len("@@CONFIRM"):])
+			pending = ""
+			mode = modeConfirm
+			return nil
+		}
 
 		// Pas de marqueur complet : émettre tout sauf un éventuel suffixe
-		// qui pourrait être le début d'un marqueur (@@SEARCH / @@IDEAS).
+		// qui pourrait être le début d'un marqueur (@@SEARCH / @@IDEAS / @@CONFIRM).
 		if hold := markerHold(pending); hold < len(pending) {
 			publish(pending[:len(pending)-hold])
 			pending = pending[len(pending)-hold:]
@@ -379,6 +424,10 @@ func (s *Service) streamAnswer(ctx context.Context, conv domain.Conversation, as
 		res.search = &args
 	case modeIdeas:
 		res.ideas, res.hasIdeas = parseIdeasBlock(ideasBuf.String())
+	case modeConfirm:
+		if c, perr := parseConfirmBlock(confirmBuf.String()); perr == nil {
+			res.confirm = &c
+		}
 	default: // modeText : vider le tampon de garde
 		publish(pending)
 		pending = ""
@@ -490,6 +539,64 @@ func (s *Service) createIdeas(ctx context.Context, conv domain.Conversation, ins
 		slog.Warn("chat: consume idea credits", "err", err)
 	}
 	return created, nil
+}
+
+// applyConfirm applique une confirmation @@CONFIRM : met à jour titre/sous-titre
+// (optionnels) puis passe l'idée au statut "confirmed".
+func (s *Service) applyConfirm(ctx context.Context, conv domain.Conversation, in confirmInput) (domain.ProductIdea, error) {
+	ideas, err := s.ideas.ListByConversation(ctx, conv.UserID, conv.ID)
+	if err != nil {
+		return domain.ProductIdea{}, err
+	}
+	if in.Index < 1 || in.Index > len(ideas) {
+		return domain.ProductIdea{}, fmt.Errorf("le copilote a cité l'idée n°%d, or il n'y en a que %d", in.Index, len(ideas))
+	}
+	idea := ideas[in.Index-1]
+	idea.Title = firstNonEmpty(in.Title, idea.Title)
+	idea.Subtitle = firstNonEmpty(in.Subtitle, idea.Subtitle)
+	if idea, err = s.ideas.UpdateContent(ctx, idea); err != nil {
+		return domain.ProductIdea{}, err
+	}
+	return s.ideas.SetStatus(ctx, conv.UserID, idea.ID, domain.IdeaConfirmed)
+}
+
+// UpdateIdea met à jour titre/sous-titre d'une idée de la conversation et,
+// si demandé, la confirme (édition via l'UI).
+func (s *Service) UpdateIdea(ctx context.Context, userID, convID, ideaID, title, subtitle string, confirm bool) (domain.ProductIdea, error) {
+	conv, err := s.conversations.Get(ctx, userID, convID)
+	if err != nil {
+		return domain.ProductIdea{}, err
+	}
+	idea, err := s.ideas.Get(ctx, userID, ideaID)
+	if err != nil {
+		return domain.ProductIdea{}, err
+	}
+	if idea.ConversationID == nil || *idea.ConversationID != conv.ID {
+		return domain.ProductIdea{}, domain.ErrForbidden
+	}
+	idea.Title = firstNonEmpty(strings.TrimSpace(title), idea.Title)
+	idea.Subtitle = firstNonEmpty(strings.TrimSpace(subtitle), idea.Subtitle)
+	if idea, err = s.ideas.UpdateContent(ctx, idea); err != nil {
+		return domain.ProductIdea{}, err
+	}
+	if confirm {
+		idea, err = s.ideas.SetStatus(ctx, userID, idea.ID, domain.IdeaConfirmed)
+		if err != nil {
+			return domain.ProductIdea{}, err
+		}
+	}
+	s.publish(userID, port.EventChatConfirmed, map[string]any{
+		"conversation_id": convID,
+		"idea":            toIdeaEvent(idea),
+	})
+	return idea, nil
+}
+
+func firstNonEmpty(v, fallback string) string {
+	if v != "" {
+		return v
+	}
+	return fallback
 }
 
 // finishTurn persiste le message assistant et publie l'événement de fin.

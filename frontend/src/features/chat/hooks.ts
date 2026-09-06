@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 
 import { isAppError } from "@/lib/errors"
 
-import { confirmIdea, createConversation, fetchConversation, fetchConversations, sendChatMessage } from "./api"
+import { confirmIdea, createConversation, fetchConversation, fetchConversations, sendChatMessage, updateChatIdea } from "./api"
 
 export const chatKeys = {
   all: ["chat"] as const,
@@ -22,6 +22,15 @@ export function useConversation(id: string | undefined) {
     queryKey: chatKeys.detail(id ?? ""),
     queryFn: () => fetchConversation(id as string),
     enabled: !!id,
+  })
+}
+
+export function useUpdateChatIdea(conversationId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ideaId, title, subtitle, confirm = true }: { ideaId: string; title?: string; subtitle?: string; confirm?: boolean }) =>
+      updateChatIdea(conversationId, ideaId, { title, subtitle, confirm }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: chatKeys.detail(conversationId) }),
   })
 }
 

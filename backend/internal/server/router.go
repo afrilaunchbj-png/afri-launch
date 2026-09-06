@@ -94,6 +94,7 @@ func NewRouter(d Deps) http.Handler {
 			r.Get("/conversations", d.Conversations.List)
 			r.Post("/conversations", d.Conversations.Create)
 			r.Get("/conversations/{id}", d.Conversations.Get)
+			r.Put("/conversations/{id}/ideas/{ideaId}", d.Conversations.UpdateIdea)
 			r.Post("/conversations/{id}/messages", d.Conversations.SendMessage)
 
 			// Préférences utilisateur (langue, thème).

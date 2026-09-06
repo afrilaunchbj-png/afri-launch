@@ -11,10 +11,13 @@ interface ContextPanelProps {
   detail: ConversationDetail | undefined
   onConfirmIdea: (idea: ChatIdea) => void
   onCreateProject: (idea: ChatIdea) => void
+  onRefine: (idea: ChatIdea, index: number) => void
+  onSaveIdea: (idea: ChatIdea, title: string, subtitle: string) => void
   creating: boolean
+  saving?: boolean
 }
 
-export function ContextPanel({ detail, onConfirmIdea, onCreateProject, creating }: ContextPanelProps) {
+export function ContextPanel({ detail, onConfirmIdea, onCreateProject, onRefine, onSaveIdea, creating, saving }: ContextPanelProps) {
   const { t } = useTranslation()
   const opportunity = detail?.opportunity
   const ideas = detail?.ideas ?? []
@@ -59,13 +62,16 @@ export function ContextPanel({ detail, onConfirmIdea, onCreateProject, creating 
           <p className="rounded-lg border border-dashed p-4 text-xs text-muted-foreground">{t("chat:noIdeas")}</p>
         ) : (
           <div className="space-y-3">
-            {ideas.map((idea) => (
+            {ideas.map((idea, idx) => (
               <ChatIdeaCard
                 key={idea.id}
                 idea={idea}
                 pending={creating}
+                saving={saving}
                 onConfirm={() => onConfirmIdea(idea)}
                 onCreateProject={() => onCreateProject(idea)}
+                onRefine={() => onRefine(idea, idx)}
+                onSaveIdea={(title, subtitle) => onSaveIdea(idea, title, subtitle)}
               />
             ))}
           </div>

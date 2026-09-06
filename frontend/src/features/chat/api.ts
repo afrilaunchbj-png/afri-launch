@@ -78,6 +78,10 @@ export function fetchConversation(id: string) {
   return api.get<ApiSingle<ConversationDetail>>(`/api/v1/conversations/${id}`).then((r) => r.data)
 }
 
+export function updateChatIdea(conversationId: string, ideaId: string, payload: { title?: string; subtitle?: string; confirm?: boolean }) {
+  return api.put<ApiSingle<ChatIdea>>(`/api/v1/conversations/${conversationId}/ideas/${ideaId}`, payload).then((r) => r.data)
+}
+
 export function createConversation() {
   return api.post<ApiSingle<ChatConversation>>("/api/v1/conversations").then((r) => r.data)
 }
