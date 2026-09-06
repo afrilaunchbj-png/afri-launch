@@ -48,10 +48,11 @@ func TestCreateCheckoutAccepted(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := New("tok-1", srv.URL, "BEN")
+	p := New("tok-1", srv.URL)
 	res, err := p.CreateCheckout(context.Background(), port.PaymentCheckoutInput{
 		PaymentID: "pay-1", AmountMinor: 5000, Currency: "XOF",
 		Description: "Pack Business — 120 crédits", ReturnURL: "https://app.test/credits",
+		CountryAmounts: []port.PaymentCountryAmount{{Country: "BEN", Currency: "XOF", AmountMinor: 5000}},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -90,7 +91,7 @@ func TestVerifyStatusMapping(t *testing.T) {
 		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"status": remote})
 		}))
-		p := New("tok", srv.URL, "")
+		p := New("tok", srv.URL)
 		got, err := p.VerifyStatus(context.Background(), "ref-1")
 		if err != nil {
 			t.Fatal(err)
@@ -103,7 +104,7 @@ func TestVerifyStatusMapping(t *testing.T) {
 }
 
 func TestHandleWebhookExtractsReference(t *testing.T) {
-	p := New("tok", "", "")
+	p := New("tok", "")
 
 	res, err := p.HandleWebhook(context.Background(), port.PaymentWebhookInput{
 		Body: []byte(`{"depositId":"d-1","clientReferenceId":"pay-1","status":"COMPLETED"}`),
@@ -155,9 +156,10 @@ func TestAmountFormatNonDecimalCurrency(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	p := New("tok", srv.URL, "")
+	p := New("tok", srv.URL)
 	if _, err := p.CreateCheckout(context.Background(), port.PaymentCheckoutInput{
 		PaymentID: "p", AmountMinor: 12345, Currency: "GHS", ReturnURL: "r",
+		CountryAmounts: []port.PaymentCountryAmount{{Country: "GH", Currency: "GHS", AmountMinor: 12345}},
 	}); err != nil {
 		t.Fatal(err)
 	}

@@ -95,5 +95,9 @@
   "supportTeam": "Support",
   "replyPlaceholder": "Write your reply to the user…",
   "sendReply": "Reply",
-  "replySent": "Reply sent."
+  "replySent": "Reply sent.",
+  "paymentCountries": "Payment countries",
+  "paymentCountriesDesc": "Countries accepted for credit top-ups (PawaPay, XOF). Enable or disable without touching env variables.",
+  "enabled": "Enabled",
+  "disabled": "Disabled"
 }

@@ -80,5 +80,6 @@
   },
   "generateVideo": "Générer la vidéo",
   "videoNone": "Aucune vidéo générée pour l'instant.",
-  "videoLoadingPreview": "Chargement de l'aperçu vidéo…"
+  "videoLoadingPreview": "Chargement de l'aperçu vidéo…",
+  "salesPageSection": "Page de vente (Chariow)"
 }

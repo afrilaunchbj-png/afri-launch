@@ -9,6 +9,7 @@ import AdminAssetsPage from "@/pages/admin-assets"
 import AdminAuditLogsPage from "@/pages/admin-audit-logs"
 import AdminConversationsPage from "@/pages/admin-conversations"
 import AdminJobsPage from "@/pages/admin-jobs"
+import AdminPaymentCountriesPage from "@/pages/admin-payment-countries"
 import AdminPage from "@/pages/admin"
 import AdminProjectsPage from "@/pages/admin-projects"
 import AdminTicketDetailPage from "@/pages/admin-ticket-detail"
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
           { path: "admin/jobs", element: <AdminJobsPage /> },
           { path: "admin/transactions", element: <AdminTransactionsPage /> },
           { path: "admin/audit-logs", element: <AdminAuditLogsPage /> },
+          { path: "admin/payment-countries", element: <AdminPaymentCountriesPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

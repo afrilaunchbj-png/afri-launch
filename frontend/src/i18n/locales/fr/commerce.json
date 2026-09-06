@@ -60,5 +60,17 @@
   "delete": "Supprimer",
   "deleteConfirm": "Supprimer cette connexion Chariow ? Ses produits liés et ventes seront retirés.",
   "reconnect": "Reconnecter",
-  "save": "Enregistrer"
+  "save": "Enregistrer",
+  "linkedBadge": "Liée à Chariow",
+  "notLinkedBadge": "Non liée",
+  "needsConnection": "Connectez d'abord votre boutique Chariow pour vendre ce produit.",
+  "goToIntegrations": "Ouvrir les Intégrations",
+  "notLinkedHint": "Associez ce projet à un produit déjà publié dans votre boutique Chariow.",
+  "configure": "Configurer",
+  "changeProduct": "Changer de produit",
+  "viewSalesPage": "Consulter la page de vente",
+  "openStore": "Voir la boutique",
+  "unlinkConfirm": "Retirer le lien de ce produit ? Les ventes passées restent conservées.",
+  "salesCount": "Ventes réussies",
+  "salesRevenue": "Revenus"
 }

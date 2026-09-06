@@ -8,7 +8,7 @@
     "projects": "Projects",
     "credits": "Credits",
     "marketing": "Marketing",
-    "integrations": "Advertising",
+    "integrations": "Integrations",
     "settings": "Settings",
     "support": "Support",
     "admin": "Administration"
@@ -88,5 +88,7 @@
     "imgHero": "West African entrepreneur working on her digital product",
     "imgMarket": "African market vendor using mobile payment",
     "imgLaunch": "Digital product materials ready to launch"
-  }
+  },
+  "enable": "Enable",
+  "disable": "Disable"
 }

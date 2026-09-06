@@ -7,6 +7,14 @@ import (
 )
 
 // PaymentCheckoutInput décrit un checkout à créer chez le provider.
+// PaymentCountryAmount est un couple pays → montant/devise pour un checkout.
+// (PawaPay : un montant par pays ; les autres providers l'ignorent.)
+type PaymentCountryAmount struct {
+	Country     string
+	Currency    string
+	AmountMinor int64
+}
+
 type PaymentCheckoutInput struct {
 	// PaymentID est l'UUID interne du paiement — utilisé comme référence
 	// idempotente chez le provider (depositId / merchant_reference…).
@@ -25,6 +33,9 @@ type PaymentCheckoutInput struct {
 	CustomerName  string
 	CustomerEmail string
 	CustomerPhone string
+	// CountryAmounts liste les pays (avec montant/devise) proposés au client.
+	// Renseignée par le service depuis les pays actifs (paiements).
+	CountryAmounts []PaymentCountryAmount
 }
 
 // PaymentCheckoutResult est le résultat d'une création de checkout.
@@ -91,4 +102,12 @@ type PaymentRepository interface {
 	Get(ctx context.Context, userID, id string) (domain.Payment, error)
 	GetByProviderReference(ctx context.Context, providerReference string) (domain.Payment, error)
 	ListByUser(ctx context.Context, userID string, limit int) ([]domain.Payment, error)
+}
+
+// PaymentCountryRepository liste les pays acceptés pour les paiements et
+// permet de les activer/désactiver (administration).
+type PaymentCountryRepository interface {
+	List(ctx context.Context) ([]domain.PaymentCountry, error)
+	ListEnabled(ctx context.Context) ([]domain.PaymentCountry, error)
+	SetEnabled(ctx context.Context, code string, enabled bool) error
 }

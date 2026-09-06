@@ -60,5 +60,17 @@
   "delete": "Delete",
   "deleteConfirm": "Delete this Chariow connection? Its linked products and sales will be removed.",
   "reconnect": "Reconnect",
-  "save": "Save"
+  "save": "Save",
+  "linkedBadge": "Linked to Chariow",
+  "notLinkedBadge": "Not linked",
+  "needsConnection": "First connect your Chariow store to sell this product.",
+  "goToIntegrations": "Open Integrations",
+  "notLinkedHint": "Link this project to a product already published in your Chariow store.",
+  "configure": "Configure",
+  "changeProduct": "Change product",
+  "viewSalesPage": "View sales page",
+  "openStore": "View store",
+  "unlinkConfirm": "Unlink this product? Past sales are kept.",
+  "salesCount": "Successful sales",
+  "salesRevenue": "Revenue"
 }

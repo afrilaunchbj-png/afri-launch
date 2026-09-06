@@ -311,6 +311,15 @@ type Payment struct {
 	CheckoutUrl       *string     `json:"checkout_url"`
 }
 
+type PaymentCountry struct {
+	Code      string    `json:"code"`
+	Name      string    `json:"name"`
+	Currency  string    `json:"currency"`
+	Enabled   bool      `json:"enabled"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 type Plan struct {
 	ID         string    `json:"id"`
 	Name       string    `json:"name"`

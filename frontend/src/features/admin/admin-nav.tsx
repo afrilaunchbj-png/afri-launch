@@ -11,6 +11,7 @@ const sections = [
   { to: "/admin/jobs", labelKey: "admin:jobsTitle" },
   { to: "/admin/transactions", labelKey: "admin:transactionsTitle" },
   { to: "/admin/audit-logs", labelKey: "admin:auditTitle" },
+  { to: "/admin/payment-countries", labelKey: "admin:paymentCountries" },
 ]
 
 /** Navigation secondaire de l'administration (affichée en haut de chaque page). */

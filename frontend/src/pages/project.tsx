@@ -29,6 +29,8 @@ import type { Job } from "@/features/generation/api"
 import type { ProjectPalette } from "@/features/projects/api"
 import { assetDownloadPath, type Asset } from "@/features/projects/api"
 import { downloadAsset, useAssets, useGenerate, useGenerateCover, useProject, useUpdateProjectConfig } from "@/features/projects/hooks"
+import { useCommerceLinks } from "@/features/commerce/hooks"
+import { CommerceSalesPanel } from "@/features/commerce/project-sales-panel"
 import { PublishCreativeDialog } from "@/features/integrations/publish-creative-dialog"
 import { useLatestVideoAsset, VideoAdsPanel, VideoPreview } from "@/features/video-ads/video-ads-panel"
 import { isAppError } from "@/lib/errors"
@@ -90,8 +92,9 @@ export default function ProjectPage() {
   const { data: assets } = useAssets(id)
   const generateEbook = useGenerate("ebook")
   const generatePosters = useGenerate("posters")
-  const generateSalesPage = useGenerate("sales-page")
   const generateCover = useGenerateCover(id)
+  const { data: commerceLinks } = useCommerceLinks()
+  const hasCommerce = useMemo(() => !!commerceLinks?.some((l) => l.project_id === id), [commerceLinks, id])
   const updateConfig = useUpdateProjectConfig(id)
 
   const config = project?.config
@@ -151,18 +154,15 @@ export default function ProjectPage() {
   const [coverJobId, setCoverJobId] = useState<string | null>(null)
   const [ebookJobId, setEbookJobId] = useState<string | null>(null)
   const [postersJobId, setPostersJobId] = useState<string | null>(null)
-  const [salesJobId, setSalesJobId] = useState<string | null>(null)
   const { data: coverJob } = useJob(coverJobId)
   const { data: ebookJob } = useJob(ebookJobId)
   const { data: postersJob } = useJob(postersJobId)
-  const { data: salesJob } = useJob(salesJobId)
 
   useEffect(() => {
     const entries = [
       { job: coverJob, done: () => setCoverJobId(null) },
       { job: ebookJob, done: () => setEbookJobId(null) },
       { job: postersJob, done: () => setPostersJobId(null) },
-      { job: salesJob, done: () => setSalesJobId(null) },
     ]
     for (const entry of entries) {
       if (!entry.job) continue
@@ -174,7 +174,7 @@ export default function ProjectPage() {
         entry.done()
       }
     }
-  }, [coverJob, ebookJob, postersJob, salesJob, refetch, t])
+  }, [coverJob, ebookJob, postersJob, refetch, t])
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
@@ -227,13 +227,12 @@ export default function ProjectPage() {
   const coverBusy = generateCover.isPending || isActive(coverJob)
   const ebookBusy = generateEbook.isPending || isActive(ebookJob)
   const postersBusy = generatePosters.isPending || isActive(postersJob)
-  const salesBusy = generateSalesPage.isPending || isActive(salesJob)
 
   const steps = [
     { n: 1, label: t("projects:stepCover"), done: hasCover, locked: false },
     { n: 2, label: t("projects:ebook"), done: hasAsset("ebook_pdf"), locked: !hasCover },
     { n: 3, label: t("projects:posters"), done: hasAsset("poster"), locked: !hasCover },
-    { n: 4, label: t("projects:salesPage"), done: hasAsset("sales_page"), locked: !hasCover },
+    { n: 4, label: t("projects:salesPage"), done: hasCommerce, locked: !hasCover },
     { n: 5, label: t("projects:videoTitle"), done: hasAsset("video_ad"), locked: !hasCover },
   ]
 
@@ -407,7 +406,6 @@ export default function ProjectPage() {
 
           {[
             { icon: Images, title: t("projects:posters"), busy: postersBusy, job: postersJobId, setJob: setPostersJobId, kind: "poster", gen: generatePosters },
-            { icon: Megaphone, title: t("projects:salesPage"), busy: salesBusy, job: salesJobId, setJob: setSalesJobId, kind: "sales_page", gen: generateSalesPage },
           ].map((card) => (
             <Card key={card.kind} className={hasCover ? "" : "opacity-70"}>
               <CardContent className="flex h-full flex-col gap-3 p-5">
@@ -430,6 +428,12 @@ export default function ProjectPage() {
             </Card>
           ))}
         </div>
+      </section>
+
+      {/* Étape 4 : page de vente (vente via Chariow, ADR-019) */}
+      <section>
+        <h2 className="mb-3 font-display text-lg font-semibold text-primary">{t("projects:salesPageSection")}</h2>
+        <CommerceSalesPanel projectId={id} />
       </section>
 
       {/* Étape 5 : vidéo publicitaire (job video_ad, ADR-016) */}

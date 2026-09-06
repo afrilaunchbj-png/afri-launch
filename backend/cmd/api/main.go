@@ -203,7 +203,7 @@ func main() {
 	switch cfg.PaymentProvider {
 	case domain.PaymentProviderPawaPay:
 		if cfg.PawaPayAPIToken != "" {
-			paymentProviders[domain.PaymentProviderPawaPay] = paypawa.New(cfg.PawaPayAPIToken, cfg.PawaPayAPIURL, cfg.PawaPayCountry)
+			paymentProviders[domain.PaymentProviderPawaPay] = paypawa.New(cfg.PawaPayAPIToken, cfg.PawaPayAPIURL)
 		}
 	case domain.PaymentProviderFedaPay:
 		if cfg.FedaPaySecretKey != "" {
@@ -222,6 +222,7 @@ func main() {
 		paymentProviders,
 		postgres.NewPlanRepository(store),
 		postgres.NewPaymentRepository(store),
+		postgres.NewPaymentCountryRepository(store),
 		creditRepo,
 		auditRec,
 		"AfriLaunch",
@@ -251,6 +252,7 @@ func main() {
 	commerceH := handler.NewCommerceHandler(commerceSvc)
 
 	paymentH := handler.NewPaymentHandler(paymentSvc)
+	adminCountriesH := handler.NewAdminCountryHandler(paymentSvc)
 	integrationsH := handler.NewIntegrationHandler(advSvc, cfg.AppURL, map[string]string{
 		domain.AdPlatformMeta:      cfg.MetaOAuthRedirectURI,
 		domain.AdPlatformGoogleAds: cfg.GoogleAdsRedirectURI,
@@ -261,30 +263,31 @@ func main() {
 	healthH := handler.NewHealth(store)
 
 	router := server.NewRouter(server.Deps{
-		Config:        cfg,
-		Tokens:        verifier,
-		Users:         users,
-		Health:        healthH,
-		Auth:          authH,
-		Credits:       creditH,
-		Opportunities: oppH,
-		Markets:       marketH,
-		Ideas:         ideaH,
-		Projects:      projectH,
-		Assets:        assetH,
-		Jobs:          jobH,
-		Research:      researchH,
-		Conversations: chatH,
-		Events:        eventsH,
-		Preferences:   prefH,
-		Support:       supportH,
-		Integrations:  integrationsH,
-		Payments:      paymentH,
-		Commerce:      commerceH,
-		Admin:         adminH,
-		Dashboard:     dashboardH,
-		AI:            aiSvc,
-		Documents:     docSvc,
+		Config:         cfg,
+		Tokens:         verifier,
+		Users:          users,
+		Health:         healthH,
+		Auth:           authH,
+		Credits:        creditH,
+		Opportunities:  oppH,
+		Markets:        marketH,
+		Ideas:          ideaH,
+		Projects:       projectH,
+		Assets:         assetH,
+		Jobs:           jobH,
+		Research:       researchH,
+		Conversations:  chatH,
+		Events:         eventsH,
+		Preferences:    prefH,
+		Support:        supportH,
+		Integrations:   integrationsH,
+		Payments:       paymentH,
+		Commerce:       commerceH,
+		Admin:          adminH,
+		AdminCountries: adminCountriesH,
+		Dashboard:      dashboardH,
+		AI:             aiSvc,
+		Documents:      docSvc,
 	})
 
 	srv := &http.Server{

@@ -59,7 +59,6 @@ type Config struct {
 	PaymentWebhookURL string
 	PawaPayAPIToken   string
 	PawaPayAPIURL     string
-	PawaPayCountry    string
 	FedaPaySecretKey  string
 	FedaPayAPIURL     string
 	PayDunyaMasterKey string
@@ -144,7 +143,6 @@ func Load() Config {
 		PaymentWebhookURL: get("PAYMENT_WEBHOOK_URL", ""),
 		PawaPayAPIToken:   get("PAWAPAY_API_TOKEN", ""),
 		PawaPayAPIURL:     get("PAWAPAY_API_URL", "https://api.pawapay.io"),
-		PawaPayCountry:    get("PAWAPAY_COUNTRY", "BEN"),
 		FedaPaySecretKey:  get("FEDAPAY_SECRET_KEY", ""),
 		FedaPayAPIURL:     get("FEDAPAY_API_URL", "https://api.fedapay.com/v1"),
 		PayDunyaMasterKey: get("PAYDUNYA_MASTER_KEY", ""),

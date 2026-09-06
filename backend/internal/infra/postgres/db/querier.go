@@ -125,6 +125,7 @@ type Querier interface {
 	ListCreditTransactions(ctx context.Context, arg ListCreditTransactionsParams) ([]CreditTransaction, error)
 	ListDistinctCountries(ctx context.Context) ([]string, error)
 	ListDistinctSectors(ctx context.Context) ([]string, error)
+	ListEnabledPaymentCountries(ctx context.Context) ([]PaymentCountry, error)
 	ListGenerationCosts(ctx context.Context) ([]GenerationCost, error)
 	ListIdeaMessages(ctx context.Context, ideaID string) ([]IdeaMessage, error)
 	ListIdeasByConversation(ctx context.Context, arg ListIdeasByConversationParams) ([]ProductIdea, error)
@@ -133,6 +134,7 @@ type Querier interface {
 	ListJobsByProject(ctx context.Context, projectID pgtype.UUID) ([]GenerationJob, error)
 	ListMarkets(ctx context.Context) ([]Market, error)
 	ListOpportunities(ctx context.Context, arg ListOpportunitiesParams) ([]Opportunity, error)
+	ListPaymentCountries(ctx context.Context) ([]PaymentCountry, error)
 	ListPaymentsByUser(ctx context.Context, arg ListPaymentsByUserParams) ([]Payment, error)
 	ListPlans(ctx context.Context) ([]Plan, error)
 	ListProjectsByUser(ctx context.Context, userID string) ([]Project, error)
@@ -156,6 +158,7 @@ type Querier interface {
 	SetConversationOpportunity(ctx context.Context, arg SetConversationOpportunityParams) (Conversation, error)
 	SetConversationTitle(ctx context.Context, arg SetConversationTitleParams) (Conversation, error)
 	SetIdeaStatus(ctx context.Context, arg SetIdeaStatusParams) (ProductIdea, error)
+	SetPaymentCountryEnabled(ctx context.Context, arg SetPaymentCountryEnabledParams) error
 	SetTicketStatus(ctx context.Context, arg SetTicketStatusParams) (SupportTicket, error)
 	SetUserRole(ctx context.Context, arg SetUserRoleParams) (User, error)
 	SubtractCredits(ctx context.Context, arg SubtractCreditsParams) (CreditAccount, error)

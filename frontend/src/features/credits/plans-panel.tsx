@@ -1,6 +1,6 @@
 import { useSearchParams } from "react-router"
 import { useTranslation } from "react-i18next"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -27,6 +27,7 @@ export function PlansPanel() {
   const checkout = useCreateCheckout()
   const sync = useSyncPayment()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [buyingId, setBuyingId] = useState<string | null>(null)
 
   // Retour du provider : reconfirme le statut puis nettoie l'URL.
   useEffect(() => {
@@ -64,10 +65,12 @@ export function PlansPanel() {
   if (!data || !data.enabled) return null
 
   const handleBuy = (planId: string) => {
+    setBuyingId(planId)
     checkout.mutate(planId, {
       onSuccess: ({ redirect_url }) => {
         window.location.href = redirect_url
       },
+      onSettled: () => setBuyingId(null),
       onError: (error) => toast.error(isAppError(error) ? error.message : t("common.genericError")),
     })
   }
@@ -89,7 +92,12 @@ export function PlansPanel() {
                 {t("credits:planCredits", { count: plan.credits })}
               </p>
               <p className="text-sm text-muted-foreground">{formatPrice(plan.price_minor, plan.currency)}</p>
-              <Button className="mt-auto" size="sm" loading={checkout.isPending} onClick={() => handleBuy(plan.id)}>
+              <Button
+                className="mt-auto"
+                size="sm"
+                loading={checkout.isPending && buyingId === plan.id}
+                onClick={() => handleBuy(plan.id)}
+              >
                 {t("credits:buy")}
               </Button>
             </CardContent>

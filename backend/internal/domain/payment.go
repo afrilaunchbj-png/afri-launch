@@ -32,6 +32,15 @@ type Plan struct {
 	CreatedAt  time.Time
 }
 
+// PaymentCountry est un pays accepté pour les paiements (pays → devise),
+// activable/désactivable via l'administration (plus de config par env).
+type PaymentCountry struct {
+	Code     string
+	Name     string
+	Currency string
+	Enabled  bool
+}
+
 // Payment est un achat de crédits (une recharge) via un provider.
 type Payment struct {
 	ID                string
@@ -53,4 +62,5 @@ var (
 	ErrPaymentNotFound         = ErrNotFound
 	ErrPaymentProviderDisabled = errors.New("payments: aucun provider de paiement configuré")
 	ErrPaymentInvalidState     = errors.New("payments: transition de statut invalide")
+	ErrNoPaymentCountry        = errors.New("payments: aucun pays de paiement actif")
 )

@@ -95,5 +95,9 @@
   "supportTeam": "Support",
   "replyPlaceholder": "Écrivez votre réponse à l'utilisateur…",
   "sendReply": "Répondre",
-  "replySent": "Réponse envoyée."
+  "replySent": "Réponse envoyée.",
+  "paymentCountries": "Pays de paiement",
+  "paymentCountriesDesc": "Pays acceptés pour les recharges de crédits (PawaPay, XOF). Activez ou désactivez sans toucher aux variables d'environnement.",
+  "enabled": "Activé",
+  "disabled": "Désactivé"
 }

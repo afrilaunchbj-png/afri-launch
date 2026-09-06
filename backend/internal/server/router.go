@@ -16,28 +16,29 @@ import (
 
 // Deps regroupe les dépendances nécessaires au routeur (injection).
 type Deps struct {
-	Config        config.Config
-	Tokens        port.TokenVerifier
-	Users         port.UserRepository
-	Health        *handler.Health
-	Auth          *handler.AuthHandler
-	Credits       *handler.CreditHandler
-	Opportunities *handler.OpportunityHandler
-	Markets       *handler.MarketHandler
-	Ideas         *handler.IdeaHandler
-	Projects      *handler.ProjectHandler
-	Assets        *handler.AssetHandler
-	Jobs          *handler.JobHandler
-	Research      *handler.ResearchHandler
-	Conversations *handler.ConversationHandler
-	Events        *handler.EventHandler
-	Preferences   *handler.PreferenceHandler
-	Support       *handler.SupportHandler
-	Integrations  *handler.IntegrationHandler
-	Payments      *handler.PaymentHandler
-	Commerce      *handler.CommerceHandler
-	Admin         *handler.AdminHandler
-	Dashboard     *handler.DashboardHandler
+	Config         config.Config
+	Tokens         port.TokenVerifier
+	Users          port.UserRepository
+	Health         *handler.Health
+	Auth           *handler.AuthHandler
+	Credits        *handler.CreditHandler
+	Opportunities  *handler.OpportunityHandler
+	Markets        *handler.MarketHandler
+	Ideas          *handler.IdeaHandler
+	Projects       *handler.ProjectHandler
+	Assets         *handler.AssetHandler
+	Jobs           *handler.JobHandler
+	Research       *handler.ResearchHandler
+	Conversations  *handler.ConversationHandler
+	Events         *handler.EventHandler
+	Preferences    *handler.PreferenceHandler
+	Support        *handler.SupportHandler
+	Integrations   *handler.IntegrationHandler
+	Payments       *handler.PaymentHandler
+	Commerce       *handler.CommerceHandler
+	Admin          *handler.AdminHandler
+	AdminCountries *handler.AdminCountryHandler
+	Dashboard      *handler.DashboardHandler
 	// AI : providers IA, consommés par les workers (générations asynchrones).
 	AI *ai.Service
 	// Documents : génération ebook/deck (LLM → HTML → chromedp → PDF/PPTX).
@@ -141,6 +142,8 @@ func NewRouter(d Deps) http.Handler {
 				r.Get("/jobs", d.Admin.Jobs)
 				r.Get("/credit-transactions", d.Admin.CreditTransactions)
 				r.Get("/audit-logs", d.Admin.AuditLogs)
+				r.Get("/payment-countries", d.AdminCountries.List)
+				r.Put("/payment-countries/{code}", d.AdminCountries.Update)
 			})
 
 			r.Get("/credits", d.Credits.Summary)

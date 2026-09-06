@@ -23,19 +23,15 @@ const defaultAPIURL = "https://api.pawapay.io"
 type PawaPay struct {
 	apiToken string
 	apiURL   string
-	country  string // ISO 3166-1 alpha-3 (BEN, CIV…) — marchés proposés au client
 	http     *http.Client
 }
 
-// New construit le provider PawaPay. country vide = "BEN".
-func New(apiToken, apiURL, country string) *PawaPay {
+// New construit le provider PawaPay.
+func New(apiToken, apiURL string) *PawaPay {
 	if apiURL == "" {
 		apiURL = defaultAPIURL
 	}
-	if country == "" {
-		country = "BEN"
-	}
-	return &PawaPay{apiToken: apiToken, apiURL: apiURL, country: country, http: &http.Client{Timeout: 30 * time.Second}}
+	return &PawaPay{apiToken: apiToken, apiURL: apiURL, http: &http.Client{Timeout: 30 * time.Second}}
 }
 
 func (p *PawaPay) Provider() string { return domain.PaymentProviderPawaPay }
@@ -43,13 +39,23 @@ func (p *PawaPay) Provider() string { return domain.PaymentProviderPawaPay }
 // CreateCheckout crée un checkout hébergé (l'utilisateur choisit son
 // opérateur et paye sur la page PawaPay) puis renvoie l'URL de redirection.
 func (p *PawaPay) CreateCheckout(ctx context.Context, in port.PaymentCheckoutInput) (port.PaymentCheckoutResult, error) {
+	if len(in.CountryAmounts) == 0 {
+		return port.PaymentCheckoutResult{}, fmt.Errorf("pawapay: aucun pays de paiement actif")
+	}
+	countries := make([]string, 0, len(in.CountryAmounts))
+	amounts := make([]map[string]string, 0, len(in.CountryAmounts))
+	for _, c := range in.CountryAmounts {
+		countries = append(countries, c.Country)
+		amounts = append(amounts, map[string]string{"country": c.Country, "currency": c.Currency, "amount": formatAmount(c.AmountMinor, c.Currency)})
+	}
+
 	body := map[string]any{
 		"checkoutId":        in.PaymentID, // UUID interne : idempotence côté PawaPay
 		"returnUrl":         in.ReturnURL,
 		"returnMethod":      "INSTANT",
 		"defaultLanguage":   "fr",
-		"countries":         []string{p.country},
-		"amounts":           []map[string]string{{"country": p.country, "currency": in.Currency, "amount": formatAmount(in.AmountMinor, in.Currency)}},
+		"countries":         countries,
+		"amounts":           amounts,
 		"clientReferenceId": in.PaymentID,
 		"reason":            map[string]string{"fr": pawaReason(in.Description)},
 	}

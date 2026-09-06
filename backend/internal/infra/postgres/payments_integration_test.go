@@ -55,6 +55,7 @@ func TestPaymentsCheckoutFlow(t *testing.T) {
 	creditRepo := postgres.NewCreditRepository(store)
 	planRepo := postgres.NewPlanRepository(store)
 	paymentRepo := postgres.NewPaymentRepository(store)
+	countryRepo := postgres.NewPaymentCountryRepository(store)
 	creditSvc := creditsapp.NewService(creditRepo)
 
 	user, err := users.Upsert(ctx, domain.User{ID: uuid.NewString(), Email: "pay-" + uuid.NewString() + "@test.local", FullName: "Payer"})
@@ -66,7 +67,7 @@ func TestPaymentsCheckoutFlow(t *testing.T) {
 	provider := &fakePaymentProvider{remoteStatus: domain.PaymentPending}
 	svc := payments.NewService(
 		payments.ProviderRegistry{"fakepay": provider},
-		planRepo, paymentRepo, creditRepo, nil,
+		planRepo, paymentRepo, countryRepo, creditRepo, nil,
 		"AfriLaunch", "https://app.test/credits", "",
 	)
 

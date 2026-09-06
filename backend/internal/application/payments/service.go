@@ -23,6 +23,7 @@ type Service struct {
 	providers  ProviderRegistry
 	plans      port.PlanRepository
 	payments   port.PaymentRepository
+	countries  port.PaymentCountryRepository
 	credits    port.CreditRepository
 	audit      *audit.Recorder
 	storeName  string
@@ -35,13 +36,14 @@ func NewService(
 	providers ProviderRegistry,
 	plans port.PlanRepository,
 	payments port.PaymentRepository,
+	countries port.PaymentCountryRepository,
 	credits port.CreditRepository,
 	auditRec *audit.Recorder,
 	storeName, returnURL, webhookURL string,
 ) *Service {
 	return &Service{
 		providers: providers, plans: plans, payments: payments,
-		credits: credits, audit: auditRec,
+		countries: countries, credits: credits, audit: auditRec,
 		storeName: storeName, returnURL: returnURL, webhookURL: webhookURL,
 	}
 }
@@ -77,6 +79,30 @@ type CheckoutInput struct {
 	PlanID string `json:"plan_id"`
 }
 
+// ListPaymentCountries liste les pays de paiement (administration).
+func (s *Service) ListPaymentCountries(ctx context.Context) ([]domain.PaymentCountry, error) {
+	return s.countries.List(ctx)
+}
+
+// SetPaymentCountryEnabled active/désactive un pays (administration).
+func (s *Service) SetPaymentCountryEnabled(ctx context.Context, code string, enabled bool) error {
+	countries, err := s.countries.List(ctx)
+	if err != nil {
+		return err
+	}
+	found := false
+	for _, c := range countries {
+		if c.Code == code {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return domain.ErrNotFound
+	}
+	return s.countries.SetEnabled(ctx, code, enabled)
+}
+
 // Checkout crée le paiement (pending), initie le checkout chez le provider
 // et renvoie l'URL de redirection. Les crédits ne sont accordés qu'à la
 // confirmation du provider (webhook vérifié + statut reconfirmé par API).
@@ -91,6 +117,20 @@ func (s *Service) Checkout(ctx context.Context, userID string, planID string) (d
 	}
 	if !plan.IsActive {
 		return domain.Payment{}, "", domain.ErrInvalidInput
+	}
+
+	countries, err := s.countries.ListEnabled(ctx)
+	if err != nil {
+		return domain.Payment{}, "", err
+	}
+	if len(countries) == 0 {
+		return domain.Payment{}, "", domain.ErrNoPaymentCountry
+	}
+	countryAmounts := make([]port.PaymentCountryAmount, 0, len(countries))
+	for _, c := range countries {
+		countryAmounts = append(countryAmounts, port.PaymentCountryAmount{
+			Country: c.Code, Currency: plan.Currency, AmountMinor: plan.PriceMinor,
+		})
 	}
 
 	idempotencyKey := "checkout:" + randomHex()
@@ -108,12 +148,13 @@ func (s *Service) Checkout(ctx context.Context, userID string, planID string) (d
 	}
 
 	result, err := provider.CreateCheckout(ctx, port.PaymentCheckoutInput{
-		PaymentID:   payment.ID,
-		AmountMinor: payment.AmountMinor,
-		Currency:    payment.Currency,
-		Description: fmt.Sprintf("%s — %d crédits", plan.Name, plan.Credits),
-		ReturnURL:   s.returnURL + "?payment=" + payment.ID,
-		WebhookURL:  s.webhookURL,
+		PaymentID:      payment.ID,
+		AmountMinor:    payment.AmountMinor,
+		Currency:       payment.Currency,
+		Description:    fmt.Sprintf("%s — %d crédits", plan.Name, plan.Credits),
+		ReturnURL:      s.returnURL + "?payment=" + payment.ID,
+		WebhookURL:     s.webhookURL,
+		CountryAmounts: countryAmounts,
 	})
 	if err != nil {
 		_, _ = s.payments.MarkStatus(ctx, payment.ID, domain.PaymentFailed)

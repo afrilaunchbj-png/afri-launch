@@ -8,7 +8,7 @@
     "projects": "Projets",
     "credits": "Crédits",
     "marketing": "Marketing",
-    "integrations": "Publicité",
+    "integrations": "Intégrations",
     "settings": "Paramètres",
     "support": "Support",
     "admin": "Administration"
@@ -88,5 +88,7 @@
     "imgHero": "Entrepreneure ouest-africaine travaillant sur son produit digital",
     "imgMarket": "Commerçante africaine utilisant le paiement mobile sur son marché",
     "imgLaunch": "Supports de produits digitaux prêts à être lancés"
-  }
+  },
+  "enable": "Activer",
+  "disable": "Désactiver"
 }

@@ -74,6 +74,8 @@ func mapError(err error) *apierror.APIError {
 		return apierror.Validation("La requête contient des champs invalides.")
 	case errors.Is(err, domain.ErrInsufficient):
 		return apierror.Business("Crédits insuffisants pour cette opération.")
+	case errors.Is(err, domain.ErrNoPaymentCountry):
+		return apierror.Business("Aucun pays de paiement actif — activez-en un dans l'administration.")
 	case errors.Is(err, domain.ErrNotConfirmed):
 		return apierror.Business("Confirmez l'idée avant de générer les assets.")
 	case errors.Is(err, domain.ErrCoverRequired):
