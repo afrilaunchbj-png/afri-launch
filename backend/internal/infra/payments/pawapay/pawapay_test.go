@@ -29,7 +29,8 @@ func TestCreateCheckoutAccepted(t *testing.T) {
 				Currency string `json:"currency"`
 				Amount   string `json:"amount"`
 			} `json:"amounts"`
-			ClientReferenceID string `json:"clientReferenceId"`
+			ClientReferenceID string            `json:"clientReferenceId"`
+			Reason            map[string]string `json:"reason"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		if body.CheckoutID != "pay-1" || body.ClientReferenceID != "pay-1" {
@@ -37,6 +38,9 @@ func TestCreateCheckoutAccepted(t *testing.T) {
 		}
 		if len(body.Amounts) != 1 || body.Amounts[0].Amount != "5000" || body.Amounts[0].Currency != "XOF" {
 			t.Errorf("amounts = %+v", body.Amounts)
+		}
+		if body.Reason["fr"] != "Pack Business 120 credits" {
+			t.Errorf("reason non assaini = %q", body.Reason["fr"])
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"checkoutId": "pay-1", "status": "ACCEPTED", "redirectUrl": "https://checkout.pawapay.io/abc",
@@ -54,6 +58,22 @@ func TestCreateCheckoutAccepted(t *testing.T) {
 	}
 	if res.RedirectURL != "https://checkout.pawapay.io/abc" || res.ProviderReference != "pay-1" {
 		t.Fatalf("res = %+v", res)
+	}
+}
+
+func TestPawaReason(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"Pack Business — 120 crédits", "Pack Business 120 credits"},
+		{"L'ebook : « Succès » (édition #2)", "L ebook Succes edition 2"},
+		{"Crédits + bonus 🚀", "Credits bonus"},
+		{"Achat 100% sécurisé", "Achat 100 securise"},
+		{"   ", "Credit purchase"},
+		{"", "Credit purchase"},
+	}
+	for _, c := range cases {
+		if got := pawaReason(c.in); got != c.want {
+			t.Errorf("pawaReason(%q) = %q, want %q", c.in, got, c.want)
+		}
 	}
 }
 

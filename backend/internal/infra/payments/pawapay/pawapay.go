@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"afrilaunch/backend/internal/application/port"
@@ -50,7 +51,7 @@ func (p *PawaPay) CreateCheckout(ctx context.Context, in port.PaymentCheckoutInp
 		"countries":         []string{p.country},
 		"amounts":           []map[string]string{{"country": p.country, "currency": in.Currency, "amount": formatAmount(in.AmountMinor, in.Currency)}},
 		"clientReferenceId": in.PaymentID,
-		"reason":            map[string]string{"fr": truncate(in.Description, 100)},
+		"reason":            map[string]string{"fr": pawaReason(in.Description)},
 	}
 	var out struct {
 		Status      string `json:"status"`
@@ -174,4 +175,52 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return s[:n]
+}
+
+// pawaReason assainit la description métier pour l'exigence PawaPay :
+// le champ `reason` n'accepte que des caractères ALPHANUMÉRIQUES (ASCII)
+// et des ESPACES. Les accents/tirets/pontuations sont translittérés ou
+// retirés, puis la chaîne est réduite à 100 caractères.
+func pawaReason(s string) string {
+	clean := strings.Map(func(r rune) rune {
+		switch r {
+		case 'é', 'è', 'ê', 'ë':
+			return 'e'
+		case 'É', 'È', 'Ê', 'Ë':
+			return 'E'
+		case 'à', 'â', 'ä':
+			return 'a'
+		case 'À', 'Â', 'Ä':
+			return 'A'
+		case 'î', 'ï':
+			return 'i'
+		case 'Î', 'Ï':
+			return 'I'
+		case 'ô', 'ö':
+			return 'o'
+		case 'Ô', 'Ö':
+			return 'O'
+		case 'ù', 'û', 'ü':
+			return 'u'
+		case 'Ù', 'Û', 'Ü':
+			return 'U'
+		case 'ç':
+			return 'c'
+		case 'Ç':
+			return 'C'
+		}
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == ' ':
+			return r
+		default:
+			// Ponctuation, tirets, emojis… : remplacés par une espace pour
+			// éviter de coller les mots (puis espaces multiples réduits).
+			return ' '
+		}
+	}, s)
+	clean = strings.Join(strings.Fields(clean), " ")
+	if clean == "" {
+		clean = "Credit purchase"
+	}
+	return truncate(clean, 100)
 }

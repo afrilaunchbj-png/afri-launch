@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------- Build API ----------
-FROM golang:1.23-alpine AS api-build
+FROM golang:1.24-alpine AS api-build
 WORKDIR /src
 RUN apk add --no-cache git ca-certificates
 COPY go.mod go.sum ./
