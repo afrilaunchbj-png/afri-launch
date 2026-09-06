@@ -103,6 +103,8 @@ export default function ProjectPage() {
   const hasCover = useMemo(() => !!assets?.some((a) => a.kind === "cover"), [assets])
   const coverAsset = useMemo(() => assets?.filter((a) => a.kind === "cover").slice(-1)[0], [assets])
   const draftAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_html").slice(-1)[0], [assets])
+  const pdfAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_pdf").slice(-1)[0], [assets])
+  const deckAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_deck").slice(-1)[0], [assets])
   const videoAsset = useLatestVideoAsset(assets)
 
   // Aperçu de la cover (dernière générée).
@@ -400,29 +402,49 @@ export default function ProjectPage() {
                   <Save className="h-3.5 w-3.5" />
                 </Button>
               </div>
-              <Button
-                size="sm"
-                disabled={ebookBusy}
-                loading={ebookBusy}
-                onClick={() => generateEbook.mutate(id, { onSuccess: (j) => setEbookJobId(j.id), onError })}
-              >
-                {hasAsset("ebook_pdf") ? t("projects:regenerate") : t("projects:generate")}
-              </Button>
-              {draftAsset ? (
-                <Button size="sm" variant="outline" disabled={!hasCover} onClick={() => setDraftOpen(true)}>
-                  {t("projects:editDraft")}
-                </Button>
-              ) : (
+              <div className="flex flex-col gap-2">
                 <Button
                   size="sm"
-                  variant="ghost"
-                  disabled={draftBusy}
-                  loading={draftBusy}
-                  onClick={() => generateDraft.mutate(id, { onSuccess: (j) => setEbookDraftJobId(j.id), onError })}
+                  disabled={ebookBusy}
+                  loading={ebookBusy}
+                  onClick={() => generateEbook.mutate(id, { onSuccess: (j) => setEbookJobId(j.id), onError })}
                 >
-                  {t("projects:generateDraft")}
+                  {draftAsset
+                    ? t("projects:renderFromDraft")
+                    : hasAsset("ebook_pdf")
+                      ? t("projects:regenerate")
+                      : t("projects:generate")}
                 </Button>
-              )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {pdfAsset ? (
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(pdfAsset.id, pdfAsset.filename)}>
+                      <Download className="h-4 w-4" />
+                      PDF
+                    </Button>
+                  ) : null}
+                  {deckAsset ? (
+                    <Button size="sm" variant="outline" onClick={() => handleDownload(deckAsset.id, deckAsset.filename)}>
+                      <Download className="h-4 w-4" />
+                      PPTX
+                    </Button>
+                  ) : null}
+                </div>
+                {draftAsset ? (
+                  <Button size="sm" variant="ghost" disabled={!hasCover} onClick={() => setDraftOpen(true)}>
+                    {t("projects:editDraft")}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={draftBusy}
+                    loading={draftBusy}
+                    onClick={() => generateDraft.mutate(id, { onSuccess: (j) => setEbookDraftJobId(j.id), onError })}
+                  >
+                    {t("projects:generateDraft")}
+                  </Button>
+                )}
+              </div>
               {!hasCover ? <p className="text-xs text-muted-foreground">{t("projects:coverRequired")}</p> : null}
             </CardContent>
           </Card>
@@ -515,7 +537,10 @@ export default function ProjectPage() {
           assetId={draftAsset.id}
           projectId={id}
           onClose={() => setDraftOpen(false)}
-          onSaved={() => refetch()}
+          onSaved={() => {
+            refetch()
+            generateEbook.mutate(id, { onSuccess: (j) => setEbookJobId(j.id), onError })
+          }}
         />
       ) : null}
     </div>

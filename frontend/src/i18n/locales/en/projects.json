@@ -89,5 +89,6 @@
   "draftSaved": "Draft saved.",
   "draftSave": "Save draft",
   "editDraft": "Edit draft",
-  "generateDraft": "Generate draft (HTML)"
+  "generateDraft": "Generate draft (HTML)",
+  "renderFromDraft": "Generate PDF/PPTX from draft"
 }
