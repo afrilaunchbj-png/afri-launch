@@ -51,7 +51,24 @@ func (p *Provider) GetStore(ctx context.Context, apiKey string) (port.CommerceSt
 	return port.CommerceStore{ID: out.Data.ID, Name: out.Data.Name, URL: out.Data.URL, Currency: out.Data.Currency}, nil
 }
 
+// productJSON est la forme produit retournée par l'API Chariow.
+type productJSON struct {
+	ID      string `json:"id"`
+	Slug    string `json:"slug"`
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	IsFree  bool   `json:"is_free"`
+	Pricing struct {
+		CurrentPrice struct {
+			Value    float64 `json:"value"`
+			Currency string  `json:"currency"`
+		} `json:"current_price"`
+	} `json:"pricing"`
+}
+
 // ListProducts liste les produits publiés de la boutique.
+// L'API renvoie `data` soit en tableau direct, soit enveloppé
+// ({data, pagination}) selon la version — on accepte les deux.
 func (p *Provider) ListProducts(ctx context.Context, apiKey, cursor string, perPage int) ([]port.CommerceProduct, string, error) {
 	path := "/products?per_page=100"
 	if perPage > 0 {
@@ -61,37 +78,40 @@ func (p *Provider) ListProducts(ctx context.Context, apiKey, cursor string, perP
 		path += "&cursor=" + cursor
 	}
 	var out struct {
-		Data struct {
-			Data []struct {
-				ID      string `json:"id"`
-				Slug    string `json:"slug"`
-				Name    string `json:"name"`
-				Type    string `json:"type"`
-				IsFree  bool   `json:"is_free"`
-				Pricing struct {
-					CurrentPrice struct {
-						Value    float64 `json:"value"`
-						Currency string  `json:"currency"`
-					} `json:"current_price"`
-				} `json:"pricing"`
-			} `json:"data"`
-			Pagination struct {
-				NextCursor string `json:"next_cursor"`
-			} `json:"pagination"`
-		} `json:"data"`
+		Data       json.RawMessage `json:"data"`
+		Pagination struct {
+			NextCursor string `json:"next_cursor"`
+		} `json:"pagination"`
 	}
 	if err := p.do(ctx, http.MethodGet, path, apiKey, nil, &out); err != nil {
 		return nil, "", err
 	}
-	products := make([]port.CommerceProduct, 0, len(out.Data.Data))
-	for _, pr := range out.Data.Data {
+	next := out.Pagination.NextCursor
+	var list []productJSON
+	if err := json.Unmarshal(out.Data, &list); err != nil {
+		var wrapped struct {
+			Data       []productJSON `json:"data"`
+			Pagination struct {
+				NextCursor string `json:"next_cursor"`
+			} `json:"pagination"`
+		}
+		if err2 := json.Unmarshal(out.Data, &wrapped); err2 != nil {
+			return nil, "", fmt.Errorf("chariow: décodage produits: %w", err)
+		}
+		list = wrapped.Data
+		if wrapped.Pagination.NextCursor != "" {
+			next = wrapped.Pagination.NextCursor
+		}
+	}
+	products := make([]port.CommerceProduct, 0, len(list))
+	for _, pr := range list {
 		products = append(products, port.CommerceProduct{
 			ID: pr.ID, Slug: pr.Slug, Name: pr.Name, Type: pr.Type, IsFree: pr.IsFree,
 			Currency:   pr.Pricing.CurrentPrice.Currency,
 			PriceMinor: toMinor(pr.Pricing.CurrentPrice.Value, pr.Pricing.CurrentPrice.Currency),
 		})
 	}
-	return products, out.Data.Pagination.NextCursor, nil
+	return products, next, nil
 }
 
 // CreateCheckout initie un checkout hébergé Chariow.

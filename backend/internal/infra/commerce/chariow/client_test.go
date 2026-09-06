@@ -101,3 +101,23 @@ func TestListProductsAndCreateCheckout(t *testing.T) {
 		t.Fatalf("res = %+v", res)
 	}
 }
+
+func TestListProductsArrayShape(t *testing.T) {
+	// Forme réelle de l'API : data est un tableau direct.
+	p := testServer(t, func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": []map[string]any{
+				{"id": "prd_9", "slug": "kit", "name": "Kit", "type": "downloadable", "is_free": true,
+					"pricing": map[string]any{"current_price": map[string]any{"value": 0, "currency": "XOF"}}},
+			},
+			"pagination": map[string]any{"next_cursor": nil, "has_more": false},
+		})
+	})
+	products, next, err := p.ListProducts(context.Background(), "sk_live_1", "", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(products) != 1 || products[0].ID != "prd_9" || !products[0].IsFree || next != "" {
+		t.Fatalf("products = %+v next=%q", products, next)
+	}
+}
