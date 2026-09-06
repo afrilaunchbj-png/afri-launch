@@ -228,5 +228,5 @@ func pawaReason(s string) string {
 	if clean == "" {
 		clean = "Credit purchase"
 	}
-	return truncate(clean, 100)
+	return truncate(clean, 22)
 }

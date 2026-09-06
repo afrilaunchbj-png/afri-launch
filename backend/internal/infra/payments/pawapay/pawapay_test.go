@@ -39,7 +39,7 @@ func TestCreateCheckoutAccepted(t *testing.T) {
 		if len(body.Amounts) != 1 || body.Amounts[0].Amount != "5000" || body.Amounts[0].Currency != "XOF" {
 			t.Errorf("amounts = %+v", body.Amounts)
 		}
-		if body.Reason["fr"] != "Pack Business 120 credits" {
+		if body.Reason["fr"] != "Pack Business 120 cred" {
 			t.Errorf("reason non assaini = %q", body.Reason["fr"])
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -64,8 +64,8 @@ func TestCreateCheckoutAccepted(t *testing.T) {
 
 func TestPawaReason(t *testing.T) {
 	cases := []struct{ in, want string }{
-		{"Pack Business — 120 crédits", "Pack Business 120 credits"},
-		{"L'ebook : « Succès » (édition #2)", "L ebook Succes edition 2"},
+		{"Pack Business — 120 crédits", "Pack Business 120 cred"},
+		{"L'ebook : « Succès » (édition #2)", "L ebook Succes edition"},
 		{"Crédits + bonus 🚀", "Credits bonus"},
 		{"Achat 100% sécurisé", "Achat 100 securise"},
 		{"   ", "Credit purchase"},
