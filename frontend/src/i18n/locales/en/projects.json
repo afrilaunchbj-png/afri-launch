@@ -81,5 +81,13 @@
   "generateVideo": "Generate video",
   "videoNone": "No video generated yet.",
   "videoLoadingPreview": "Loading video preview…",
-  "salesPageSection": "Sales page (Chariow)"
+  "salesPageSection": "Sales page (Chariow)",
+  "ebookDraftTitle": "Ebook draft",
+  "ebookDraftHint": "Edit texts (headings, paragraphs, lists). Styling and layout are preserved.",
+  "editMode": "Edit",
+  "previewMode": "Preview",
+  "draftSaved": "Draft saved.",
+  "draftSave": "Save draft",
+  "editDraft": "Edit draft",
+  "generateDraft": "Generate draft (HTML)"
 }

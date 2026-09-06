@@ -58,6 +58,14 @@ export function fetchProject(id: string) {
   return api.get<ApiSingle<Project>>(`/api/v1/projects/${id}`).then((r) => r.data)
 }
 
+export function generateEbookDraft(id: string) {
+  return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/ebook-draft`).then((r) => r.data)
+}
+
+export function saveEbookDraft(id: string, content: string) {
+  return api.put<ApiSingle<{ asset_id: string; size_bytes: number }>>(`/api/v1/projects/${id}/ebook-draft`, { content }).then((r) => r.data)
+}
+
 export function generateEbook(id: string) {
   return api.post<ApiSingle<Job>>(`/api/v1/projects/${id}/ebook`).then((r) => r.data)
 }

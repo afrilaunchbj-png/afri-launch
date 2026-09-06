@@ -138,7 +138,7 @@ func main() {
 
 	// Services applicatifs.
 	ideaSvc := ideasapp.NewService(worker, ideaRepo, ideaMessageRepo, oppRepo, creditRepo, aiSvc)
-	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo, assetRepo, auditRec)
+	projectSvc := projectsapp.NewService(worker, projectRepo, ideaRepo, assetRepo, objStorage, auditRec)
 	assetSvc := assetsapp.NewService(assetRepo, objStorage)
 	researchSvc := researchapp.NewService(worker, researchRepo)
 	prefRepo := postgres.NewPreferenceRepository(store)

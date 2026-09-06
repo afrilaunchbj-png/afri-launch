@@ -89,6 +89,7 @@ type Asset struct {
 const (
 	AssetEbookPDF  = "ebook_pdf"
 	AssetEbookDeck = "ebook_deck"
+	AssetEbookHTML = "ebook_html" // brouillon éditable (source du PDF)
 	AssetCover     = "cover"
 	AssetPoster    = "poster"
 	AssetSalesPage = "sales_page"
@@ -115,12 +116,13 @@ type GenerationJob struct {
 
 // Kinds et statuts de job.
 const (
-	JobIdeas     = "ideas"
-	JobEbook     = "ebook"
-	JobCover     = "cover"
-	JobPosters   = "posters"
-	JobSalesPage = "sales_page"
-	JobResearch  = "research"
+	JobIdeas      = "ideas"
+	JobEbook      = "ebook"
+	JobEbookDraft = "ebook_draft" // LLM → brouillon HTML éditable
+	JobCover      = "cover"
+	JobPosters    = "posters"
+	JobSalesPage  = "sales_page"
+	JobResearch   = "research"
 )
 
 const (

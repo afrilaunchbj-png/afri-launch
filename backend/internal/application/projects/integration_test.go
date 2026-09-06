@@ -85,7 +85,7 @@ func TestProjectsCoverFirstGate(t *testing.T) {
 	docSvc := document.NewService(aiSvc, nil)
 	worker := jobs.NewWorker(jobRepo, credits, ideas, projectRepo, assetRepo, opps, researchRepo, objStorage, aiSvc, docSvc, nil, nil, nil, videoad.ProviderDefaults{}, nil)
 
-	svc := projectsapp.NewService(worker, projectRepo, ideas, assetRepo, nil)
+	svc := projectsapp.NewService(worker, projectRepo, ideas, assetRepo, nil, nil)
 
 	user, err := users.Upsert(ctx, domain.User{ID: uuid.NewString(), Email: fmt.Sprintf("proj-test-%d@example.com", time.Now().UnixNano()), FullName: "Proj Test"})
 	if err != nil {

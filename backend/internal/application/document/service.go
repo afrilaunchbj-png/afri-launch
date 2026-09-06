@@ -1,8 +1,10 @@
 package document
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
+	"errors"
 	"html"
 	"regexp"
 	"strconv"
@@ -21,6 +23,23 @@ type Service struct {
 // NewService construit le service de génération de documents.
 func NewService(ai *ai.Service, render port.Renderer) *Service {
 	return &Service{ai: ai, render: render}
+}
+
+// GenerateEbookDraftHTML génère uniquement le brouillon HTML d'un ebook
+// (étape 1 du workflow : revue/édition côté frontend avant rendu PDF).
+func (s *Service) GenerateEbookDraftHTML(ctx context.Context, req EbookRequest) ([]byte, error) {
+	return s.generateHTML(ctx, BuildEbookPrompt(req))
+}
+
+// RenderEbookFromDraft prépare et rend en PDF un brouillon HTML existant
+// (sans nouvel appel LLM) : sauts de chapitres + sommaire + fond blanc.
+func (s *Service) RenderEbookFromDraft(ctx context.Context, draft []byte, language string) ([]byte, error) {
+	if len(bytes.TrimSpace(draft)) == 0 {
+		return nil, errors.New("document: brouillon ebook vide")
+	}
+	html := ensureChapterPageBreaks(draft)
+	html = prepareEbookHTML(html, language)
+	return s.render.HTMLToPDF(ctx, html)
 }
 
 // GenerateEbook génère un ebook (HTML → PDF).

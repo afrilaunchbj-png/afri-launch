@@ -10,8 +10,10 @@ import {
   fetchProjects,
   generateCover,
   generateEbook,
+  generateEbookDraft,
   generatePosters,
   generateSalesPage,
+  saveEbookDraft,
   updateProjectConfig,
   type ProjectConfigInput,
 } from "./api"
@@ -25,6 +27,14 @@ export const projectKeys = {
 
 export function useProjects() {
   return useQuery({ queryKey: projectKeys.list(), queryFn: fetchProjects })
+}
+
+export function useGenerateEbookDraft() {
+  return useMutation({ mutationFn: generateEbookDraft })
+}
+
+export function useSaveEbookDraft() {
+  return useMutation({ mutationFn: ({ id, content }: { id: string; content: string }) => saveEbookDraft(id, content) })
 }
 
 export function useProject(id: string) {

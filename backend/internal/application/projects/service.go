@@ -6,23 +6,32 @@ package projects
 import (
 	"context"
 	"encoding/json"
+	"regexp"
 
 	"afrilaunch/backend/internal/application/audit"
 	"afrilaunch/backend/internal/application/jobs"
 	"afrilaunch/backend/internal/application/port"
 	"afrilaunch/backend/internal/domain"
+)
+
+// blocs HTML interdits dans un brouillon édité (pas d'exécution côté rendu).
+var (
+	scriptRe  = regexp.MustCompile(`(?is)<script\b[^>]*>.*?<\/script\s*>`)
+	handlerRe = regexp.MustCompile(`(?is)\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)`)
+	jsURLRe   = regexp.MustCompile(`(?is)(href|src|action)\s*=\s*["']javascript:[^"']*["']`)
 ) // Service orchestre les projets.
 type Service struct {
 	jobs     *jobs.Worker
 	projects port.ProjectRepository
 	ideas    port.IdeaRepository
 	assets   port.AssetRepository
+	storage  port.Storage
 	audit    *audit.Recorder
 }
 
 // NewService construit le service de projets.
-func NewService(jobs *jobs.Worker, projects port.ProjectRepository, ideas port.IdeaRepository, assets port.AssetRepository, auditRec *audit.Recorder) *Service {
-	return &Service{jobs: jobs, projects: projects, ideas: ideas, assets: assets, audit: auditRec}
+func NewService(jobs *jobs.Worker, projects port.ProjectRepository, ideas port.IdeaRepository, assets port.AssetRepository, storage port.Storage, auditRec *audit.Recorder) *Service {
+	return &Service{jobs: jobs, projects: projects, ideas: ideas, assets: assets, storage: storage, audit: auditRec}
 }
 
 // Create crée un projet à partir d'une idée (et d'une opportunité).
@@ -161,6 +170,50 @@ func (s *Service) GenerateEbook(ctx context.Context, userID, projectID string) (
 		return domain.GenerationJob{}, err
 	}
 	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobEbook})
+}
+
+// GenerateEbookDraft lance la génération du brouillon HTML (étape 1).
+func (s *Service) GenerateEbookDraft(ctx context.Context, userID, projectID string) (domain.GenerationJob, error) {
+	if err := s.requireConfirmed(ctx, userID, projectID); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	if err := s.requireCover(ctx, userID, projectID); err != nil {
+		return domain.GenerationJob{}, err
+	}
+	return s.jobs.Dispatch(ctx, jobs.DispatchParams{UserID: userID, ProjectID: &projectID, Kind: domain.JobEbookDraft})
+}
+
+// SaveEbookDraft persiste un brouillon édité (HTML assaini) — nouvelle
+// version d'asset ebook_html ; le rendu PDF suivra le plus récent.
+func (s *Service) SaveEbookDraft(ctx context.Context, userID, projectID string, content []byte) (domain.Asset, error) {
+	if err := s.requireCover(ctx, userID, projectID); err != nil {
+		return domain.Asset{}, err
+	}
+	clean := sanitizeDraftHTML(content)
+	if len(clean) == 0 {
+		return domain.Asset{}, domain.ErrInvalidInput
+	}
+	key := "projects/" + projectID + "/ebook.draft.html"
+	if err := s.storage.Put(ctx, key, clean, "text/html; charset=utf-8"); err != nil {
+		return domain.Asset{}, err
+	}
+	return s.assets.Create(ctx, domain.Asset{
+		UserID:      userID,
+		ProjectID:   projectID,
+		Kind:        domain.AssetEbookHTML,
+		StorageKey:  key,
+		Filename:    "ebook.draft.html",
+		ContentType: "text/html; charset=utf-8",
+		SizeBytes:   int64(len(clean)),
+	})
+}
+
+// sanitizeDraftHTML retire tout risque d'exécution (script, handlers, JS).
+func sanitizeDraftHTML(content []byte) []byte {
+	out := scriptRe.ReplaceAll(content, nil)
+	out = handlerRe.ReplaceAll(out, nil)
+	out = jsURLRe.ReplaceAll(out, nil)
+	return out
 }
 
 // GenerateCover lance la génération (ou régénération) de la couverture.

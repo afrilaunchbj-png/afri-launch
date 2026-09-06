@@ -87,6 +87,29 @@ func (h *ProjectHandler) GenerateEbook(w http.ResponseWriter, r *http.Request) {
 	h.dispatch(w, r, h.svc.GenerateEbook)
 }
 
+// GenerateEbookDraft gère POST /projects/{id}/ebook-draft (brouillon HTML).
+func (h *ProjectHandler) GenerateEbookDraft(w http.ResponseWriter, r *http.Request) {
+	h.dispatch(w, r, h.svc.GenerateEbookDraft)
+}
+
+// SaveEbookDraft gère PUT /projects/{id}/ebook-draft {content}.
+func (h *ProjectHandler) SaveEbookDraft(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Content string `json:"content"`
+	}
+	if err := decodeJSON(w, r, &in); err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	userID := authctx.UserID(r.Context())
+	asset, err := h.svc.SaveEbookDraft(r.Context(), userID, chi.URLParam(r, "id"), []byte(in.Content))
+	if err != nil {
+		writeAPIError(w, r, err)
+		return
+	}
+	writeData(w, http.StatusOK, map[string]any{"asset_id": asset.ID, "size_bytes": asset.SizeBytes})
+}
+
 // GenerateCover gère POST /projects/{id}/cover (body optionnel : instructions).
 func (h *ProjectHandler) GenerateCover(w http.ResponseWriter, r *http.Request) {
 	var in struct {

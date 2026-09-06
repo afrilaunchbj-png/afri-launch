@@ -81,5 +81,13 @@
   "generateVideo": "Générer la vidéo",
   "videoNone": "Aucune vidéo générée pour l'instant.",
   "videoLoadingPreview": "Chargement de l'aperçu vidéo…",
-  "salesPageSection": "Page de vente (Chariow)"
+  "salesPageSection": "Page de vente (Chariow)",
+  "ebookDraftTitle": "Brouillon de l'ebook",
+  "ebookDraftHint": "Éditez les textes (titres, paragraphes, listes). Le style et la mise en page sont conservés.",
+  "editMode": "Édition",
+  "previewMode": "Aperçu",
+  "draftSaved": "Brouillon enregistré.",
+  "draftSave": "Enregistrer le brouillon",
+  "editDraft": "Éditer le brouillon",
+  "generateDraft": "Générer le brouillon (HTML)"
 }

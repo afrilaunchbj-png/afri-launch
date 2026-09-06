@@ -28,9 +28,10 @@ import { useJob } from "@/features/generation/hooks"
 import type { Job } from "@/features/generation/api"
 import type { ProjectPalette } from "@/features/projects/api"
 import { assetDownloadPath, type Asset } from "@/features/projects/api"
-import { downloadAsset, useAssets, useGenerate, useGenerateCover, useProject, useUpdateProjectConfig } from "@/features/projects/hooks"
+import { downloadAsset, useAssets, useGenerate, useGenerateCover, useGenerateEbookDraft, useProject, useUpdateProjectConfig } from "@/features/projects/hooks"
 import { useCommerceLinks } from "@/features/commerce/hooks"
 import { CommerceSalesPanel } from "@/features/commerce/project-sales-panel"
+import { EbookDraftDialog } from "@/features/projects/ebook-draft-dialog"
 import { PublishCreativeDialog } from "@/features/integrations/publish-creative-dialog"
 import { useLatestVideoAsset, VideoAdsPanel, VideoPreview } from "@/features/video-ads/video-ads-panel"
 import { isAppError } from "@/lib/errors"
@@ -93,6 +94,7 @@ export default function ProjectPage() {
   const generateEbook = useGenerate("ebook")
   const generatePosters = useGenerate("posters")
   const generateCover = useGenerateCover(id)
+  const generateDraft = useGenerateEbookDraft()
   const { data: commerceLinks } = useCommerceLinks()
   const hasCommerce = useMemo(() => !!commerceLinks?.some((l) => l.project_id === id), [commerceLinks, id])
   const updateConfig = useUpdateProjectConfig(id)
@@ -152,15 +154,18 @@ export default function ProjectPage() {
 
   // Jobs en cours (statuts via le canal + polling de secours).
   const [coverJobId, setCoverJobId] = useState<string | null>(null)
+  const [ebookDraftJobId, setEbookDraftJobId] = useState<string | null>(null)
   const [ebookJobId, setEbookJobId] = useState<string | null>(null)
   const [postersJobId, setPostersJobId] = useState<string | null>(null)
   const { data: coverJob } = useJob(coverJobId)
+  const { data: ebookDraftJob } = useJob(ebookDraftJobId)
   const { data: ebookJob } = useJob(ebookJobId)
   const { data: postersJob } = useJob(postersJobId)
 
   useEffect(() => {
     const entries = [
       { job: coverJob, done: () => setCoverJobId(null) },
+      { job: ebookDraftJob, done: () => setEbookDraftJobId(null) },
       { job: ebookJob, done: () => setEbookJobId(null) },
       { job: postersJob, done: () => setPostersJobId(null) },
     ]
@@ -174,7 +179,7 @@ export default function ProjectPage() {
         entry.done()
       }
     }
-  }, [coverJob, ebookJob, postersJob, refetch, t])
+  }, [coverJob, ebookDraftJob, ebookJob, postersJob, refetch, t])
 
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
@@ -225,7 +230,10 @@ export default function ProjectPage() {
   const hasAsset = (kind: string): boolean => !!assets?.some((a) => a.kind === kind)
 
   const coverBusy = generateCover.isPending || isActive(coverJob)
+  const draftBusy = generateDraft.isPending || isActive(ebookDraftJob)
   const ebookBusy = generateEbook.isPending || isActive(ebookJob)
+  const draftAsset = useMemo(() => assets?.filter((a) => a.kind === "ebook_html").slice(-1)[0], [assets])
+  const [draftOpen, setDraftOpen] = useState(false)
   const postersBusy = generatePosters.isPending || isActive(postersJob)
 
   const steps = [
@@ -400,6 +408,21 @@ export default function ProjectPage() {
               >
                 {hasAsset("ebook_pdf") ? t("projects:regenerate") : t("projects:generate")}
               </Button>
+              {draftAsset ? (
+                <Button size="sm" variant="outline" disabled={!hasCover} onClick={() => setDraftOpen(true)}>
+                  {t("projects:editDraft")}
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={draftBusy}
+                  loading={draftBusy}
+                  onClick={() => generateDraft.mutate(id, { onSuccess: (j) => setEbookDraftJobId(j.id), onError })}
+                >
+                  {t("projects:generateDraft")}
+                </Button>
+              )}
               {!hasCover ? <p className="text-xs text-muted-foreground">{t("projects:coverRequired")}</p> : null}
             </CardContent>
           </Card>
@@ -486,6 +509,15 @@ export default function ProjectPage() {
           </div>
         )}
       </section>
+
+      {draftAsset && draftOpen ? (
+        <EbookDraftDialog
+          assetId={draftAsset.id}
+          projectId={id}
+          onClose={() => setDraftOpen(false)}
+          onSaved={() => refetch()}
+        />
+      ) : null}
     </div>
   )
 }

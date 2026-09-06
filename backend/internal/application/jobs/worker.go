@@ -241,6 +241,8 @@ func (w *Worker) runKind(ctx context.Context, job domain.GenerationJob) ([]byte,
 		return w.runIdeas(ctx, job)
 	case domain.JobEbook:
 		return w.runEbook(ctx, job)
+	case domain.JobEbookDraft:
+		return w.runEbookDraft(ctx, job)
 	case domain.JobCover:
 		return w.runCover(ctx, job)
 	case domain.JobPosters:
@@ -330,13 +332,11 @@ func (w *Worker) runEbook(ctx context.Context, job domain.GenerationJob) ([]byte
 		HasCover: coverPNG != nil,
 	}
 
-	// Version portrait (PDF).
-	pdf, err := w.docs.GenerateEbook(ctx, ebookReq)
+	// Version portrait (PDF) : on réutilise le brouillon HTML édité s'il
+	// existe (plus d'appel LLM), sinon génération complète.
+	pdf, err := w.buildEbookPDF(ctx, job, c.language, ebookReq, coverPNG)
 	if err != nil {
 		return nil, err
-	}
-	if coverPNG != nil {
-		pdf = document.PrependCoverPage(pdf, coverPNG)
 	}
 	if _, err := w.storeAsset(ctx, job, domain.AssetEbookPDF, c.topic+".pdf", "application/pdf", pdf); err != nil {
 		return nil, err
@@ -373,6 +373,80 @@ func (w *Worker) latestCoverPNG(ctx context.Context, job domain.GenerationJob) (
 	var latest *domain.Asset
 	for i := range assets {
 		if assets[i].Kind == domain.AssetCover && (latest == nil || assets[i].CreatedAt.After(latest.CreatedAt)) {
+			latest = &assets[i]
+		}
+	}
+	if latest == nil {
+		return nil, nil
+	}
+	return w.storage.Get(ctx, latest.StorageKey)
+}
+
+// runEbookDraft génère uniquement le brouillon HTML éditable d'un ebook.
+func (w *Worker) runEbookDraft(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	c, err := w.context(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+	minPages, maxPages := c.config.ResolvedPageRange()
+	coverPNG, err := w.latestCoverPNG(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+	req := document.EbookRequest{
+		Topic: c.topic, Audience: c.audience, Language: c.language, Country: c.country,
+		Product: c.format, Palette: c.palette, Style: c.config.Style,
+		MinPages: minPages, MaxPages: maxPages, HasCover: coverPNG != nil,
+	}
+	html, err := w.docs.GenerateEbookDraftHTML(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	asset, err := w.storeAsset(ctx, job, domain.AssetEbookHTML, c.topic+".draft.html", "text/html; charset=utf-8", html)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(map[string]any{"asset_ids": []string{asset.ID}})
+}
+
+// buildEbookPDF produit le PDF : à partir du brouillon HTML édité s'il
+// existe (pas de LLM), sinon par génération complète ; cover en 1re page.
+func (w *Worker) buildEbookPDF(ctx context.Context, job domain.GenerationJob, language string, req document.EbookRequest, coverPNG []byte) ([]byte, error) {
+	var (
+		pdf []byte
+		err error
+	)
+	draft, err := w.loadEbookDraft(ctx, job)
+	if err != nil {
+		return nil, err
+	}
+	if len(draft) > 0 {
+		pdf, err = w.docs.RenderEbookFromDraft(ctx, draft, language)
+	} else {
+		pdf, err = w.docs.GenerateEbook(ctx, req)
+	}
+	if err != nil {
+		return nil, err
+	}
+	if coverPNG != nil {
+		pdf = document.PrependCoverPage(pdf, coverPNG)
+	}
+	return pdf, nil
+}
+
+// loadEbookDraft charge le brouillon HTML le plus récent du projet (kind
+// ebook_html). Renvoie nil si aucun brouillon n'existe.
+func (w *Worker) loadEbookDraft(ctx context.Context, job domain.GenerationJob) ([]byte, error) {
+	if job.ProjectID == nil {
+		return nil, nil
+	}
+	assets, err := w.assets.ListByProject(ctx, *job.ProjectID)
+	if err != nil {
+		return nil, err
+	}
+	var latest *domain.Asset
+	for i := range assets {
+		if assets[i].Kind == domain.AssetEbookHTML && (latest == nil || assets[i].CreatedAt.After(latest.CreatedAt)) {
 			latest = &assets[i]
 		}
 	}
@@ -821,6 +895,8 @@ func operationFor(kind string) string {
 	case domain.JobIdeas:
 		return domain.OperationIdeaGeneration
 	case domain.JobEbook:
+		return domain.OperationEbookGen
+	case domain.JobEbookDraft:
 		return domain.OperationEbookGen
 	case domain.JobCover:
 		return domain.OperationImageGen
